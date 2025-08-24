@@ -9,19 +9,33 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@gmcfall/yjs-firestore-provider": "^1.0.0-rc.5",
+    "@mcpbr/abacatepay": "^1.0.1",
+    "@solar-icons/react": "^1.0.1",
+    "@stream-io/video-react-sdk": "^1.20.1",
+    "@stripe/react-stripe-js": "^3.9.1",
+    "@tiptap/core": "^3.3.0",
+    "firebase": "^12.1.0",
+    "framer-motion": "^12.23.12",
+    "jsonwebtoken": "^9.0.2",
+    "lottie": "^0.0.1",
+    "lottie-react": "^2.4.1",
+    "next": "15.5.0",
+    "next-auth": "^4.24.11",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "next": "15.5.0"
+    "resend": "^6.0.1",
+    "yjs": "^13.6.27"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "15.5.0",
-    "@eslint/eslintrc": "^3"
+    "tailwindcss": "^4",
+    "typescript": "^5"
   }
 }

@@ -1,0 +1,68 @@
+import * as React from "react";
+import { twMerge } from "tailwind-merge";
+
+// Define the component's props with all the possible variants
+export interface BadgeProps
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, "style"> {
+  /**
+   * The color variant of the badge, mapped to your theme.
+   * @default 'primary'
+   */
+  variant?: "primary" | "secondary" | "success" | "info" | "warning" | "danger";
+  /**
+   * The style of the badge.
+   * @default 'solid'
+   */
+  style?: "solid" | "outline";
+}
+
+// Helper function to generate the correct Tailwind classes
+const getBadgeClasses = ({
+  variant,
+  style,
+}: Pick<BadgeProps, "variant" | "style">): string => {
+  const baseClasses =
+    "inline-flex items-center rounded-2xl border-2 px-3 py-1.5 text-sm font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 shadow-sm hover:shadow-md";
+
+  const styleVariants = {
+    solid: {
+      primary: "border-transparent bg-primary text-primary-text shadow-lg",
+      secondary:
+        "border-transparent bg-secondary text-secondary-text shadow-lg",
+      success: "border-transparent bg-success text-white shadow-lg",
+      info: "border-transparent bg-info text-white shadow-lg",
+      warning: "border-transparent bg-warning text-white shadow-lg",
+      danger: "border-transparent bg-danger text-white shadow-lg",
+    },
+    outline: {
+      primary: "text-primary border-primary bg-primary/10 hover:bg-primary/20",
+      secondary:
+        "text-secondary border-secondary bg-secondary/10 hover:bg-secondary/20",
+      success: "text-success border-success bg-success/10 hover:bg-success/20",
+      info: "text-info border-info bg-info/10 hover:bg-info/20",
+      warning: "text-warning border-warning bg-warning/10 hover:bg-warning/20",
+      danger: "text-danger border-danger bg-danger/10 hover:bg-danger/20",
+    },
+  };
+
+  return twMerge(
+    baseClasses,
+    styleVariants[style || "solid"][variant || "primary"]
+  );
+};
+
+const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
+  ({ className, variant, style, ...props }, ref) => {
+    return (
+      <div
+        ref={ref}
+        className={twMerge(getBadgeClasses({ variant, style }), className)}
+        {...props}
+      />
+    );
+  }
+);
+
+Badge.displayName = "Badge";
+
+export { Badge };

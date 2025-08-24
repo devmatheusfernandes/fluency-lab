@@ -1,7 +1,0 @@
-> **ADMIN:** has full system access and management capabilities
-> **MANAGER:** has access to all reports and finances and manager teachers and students
-> **STUDENT:** has access to classes with teachers, games, contract & payment (if over 18) and sometimes courses
-> **TEACHER:** has access to the classes with students, contract, payment, material and courses 
-> **GUARDED_STUDENT:** has access to the STUDENT things and contract & payment
-> **OCCASIONAL_STUDENT:** has access to the courses, materials and/or class packs that they bought
-> **MATERIAL_MANAGER:** has access to create and edit courses and materials

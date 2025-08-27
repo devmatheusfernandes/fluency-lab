@@ -93,34 +93,34 @@ const iconMap: Record<NonNullable<ToastProps["variant"]>, React.ReactNode> = {
 // --- Modern Variant Styles ---
 const variantStyles = {
   success: {
-    icon: "text-emerald-500",
-    iconBg: "bg-emerald-50 dark:bg-emerald-500/10",
-    border: "border-emerald-200/50 dark:border-emerald-500/20",
-    accent: "bg-gradient-to-r from-emerald-500/10 to-transparent",
+    icon: "text-success",
+    iconBg: "bg-success-light/10",
+    border: "border-success/20",
+    accent: "bg-gradient-to-r from-success/10 to-transparent",
   },
   error: {
-    icon: "text-red-500",
-    iconBg: "bg-red-50 dark:bg-red-500/10",
-    border: "border-red-200/50 dark:border-red-500/20",
-    accent: "bg-gradient-to-r from-red-500/10 to-transparent",
+    icon: "text-error",
+    iconBg: "bg-error/10",
+    border: "border-error/20",
+    accent: "bg-gradient-to-r from-error/10 to-transparent",
   },
   warning: {
-    icon: "text-amber-500",
-    iconBg: "bg-amber-50 dark:bg-amber-500/10",
-    border: "border-amber-200/50 dark:border-amber-500/20",
-    accent: "bg-gradient-to-r from-amber-500/10 to-transparent",
+    icon: "text-warning",
+    iconBg: "bg-warning/10",
+    border: "border-warning/20",
+    accent: "bg-gradient-to-r from-warning/10 to-transparent",
   },
   info: {
-    icon: "text-blue-500",
-    iconBg: "bg-blue-50 dark:bg-blue-500/10",
-    border: "border-blue-200/50 dark:border-blue-500/20",
-    accent: "bg-gradient-to-r from-blue-500/10 to-transparent",
+    icon: "text-info",
+    iconBg: "bg-info/10",
+    border: "border-info/20",
+    accent: "bg-gradient-to-r from-info/10 to-transparent",
   },
   default: {
-    icon: "text-slate-600 dark:text-slate-300",
-    iconBg: "bg-slate-50 dark:bg-slate-800/50",
-    border: "border-slate-200/50 dark:border-slate-700/50",
-    accent: "bg-gradient-to-r from-slate-500/5 to-transparent",
+    icon: "text-paragraph",
+    iconBg: "bg-surface-1",
+    border: "border-surface-2",
+    accent: "bg-gradient-to-r from-surface-1/20 to-transparent",
   },
 };
 
@@ -146,13 +146,13 @@ const ToastComponent = React.forwardRef<HTMLDivElement, ToastProps>(
         className={twMerge(
           // Modern glass morphism container
           "group relative max-w-sm w-full",
-          "bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl",
-          "border border-white/20 dark:border-slate-700/30",
+          "bg-container/90 backdrop-blur-xl",
+          "border border-surface-2/30",
           variantStyle.border,
-          "rounded-2xl shadow-xl shadow-black/5 dark:shadow-black/20",
+          "rounded-2xl shadow-xl shadow-paragraph/5",
           "pointer-events-auto overflow-hidden",
           "transform transition-all duration-500 ease-out",
-          "hover:scale-[1.02] hover:shadow-2xl hover:shadow-black/10",
+          "hover:scale-[1.02] hover:shadow-2xl hover:shadow-paragraph/10",
           className
         )}
         {...props}
@@ -160,7 +160,7 @@ const ToastComponent = React.forwardRef<HTMLDivElement, ToastProps>(
         {/* Subtle accent gradient */}
         <div
           className={twMerge(
-            "absolute inset-0 opacity-30",
+            "absolute inset-0 opacity-10 dark:opacity-20",
             variantStyle.accent
           )}
         />
@@ -171,7 +171,7 @@ const ToastComponent = React.forwardRef<HTMLDivElement, ToastProps>(
           <div
             className={twMerge(
               "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center",
-              "ring-1 ring-black/5 dark:ring-white/10",
+              "ring-1 ring-surface-2/20",
               "shadow-sm",
               variantStyle.iconBg
             )}
@@ -182,12 +182,12 @@ const ToastComponent = React.forwardRef<HTMLDivElement, ToastProps>(
           {/* Content area */}
           <div className="flex-1 min-w-0 space-y-2">
             {title && (
-              <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 leading-tight tracking-tight">
+              <h4 className="text-sm font-semibold text-title leading-tight tracking-tight">
                 {title}
               </h4>
             )}
             {description && (
-              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+              <p className="text-sm text-paragraph leading-relaxed">
                 {description}
               </p>
             )}
@@ -199,12 +199,12 @@ const ToastComponent = React.forwardRef<HTMLDivElement, ToastProps>(
                   onClick={action.onClick}
                   className={twMerge(
                     "inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium",
-                    "bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700",
-                    "text-slate-700 dark:text-slate-300",
-                    "rounded-xl border border-slate-200/50 dark:border-slate-700/50",
+                    "bg-surface-1 hover:bg-surface-hover",
+                    "text-paragraph",
+                    "rounded-xl border border-surface-2",
                     "transition-all duration-200 ease-out",
                     "hover:scale-105 hover:shadow-sm",
-                    "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500/50"
+                    "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring/50"
                   )}
                 >
                   {action.label}
@@ -229,7 +229,7 @@ const ToastComponent = React.forwardRef<HTMLDivElement, ToastProps>(
           {closable && (
             <button
               onClick={() => toast.dismiss()}
-              className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 rounded-lg hover:bg-surface-1"
             >
               <svg
                 width="14"
@@ -292,14 +292,14 @@ const useToast = () => {
       position === "top-center"
         ? "top-center"
         : position === "bottom-center"
-        ? "bottom-center"
-        : position === "top-left"
-        ? "top-left"
-        : position === "bottom-left"
-        ? "bottom-left"
-        : position === "bottom-right"
-        ? "bottom-right"
-        : "top-right";
+          ? "bottom-center"
+          : position === "top-left"
+            ? "top-left"
+            : position === "bottom-left"
+              ? "bottom-left"
+              : position === "bottom-right"
+                ? "bottom-right"
+                : "top-right";
 
     return toast.custom(
       (id) => (

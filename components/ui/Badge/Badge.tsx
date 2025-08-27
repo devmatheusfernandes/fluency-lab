@@ -22,17 +22,16 @@ const getBadgeClasses = ({
   style,
 }: Pick<BadgeProps, "variant" | "style">): string => {
   const baseClasses =
-    "inline-flex items-center rounded-2xl border-2 px-3 py-1.5 text-sm font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 shadow-sm hover:shadow-md";
+    "inline-flex items-center rounded-2xl border-1 px-3 py-1 text-sm font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1";
 
   const styleVariants = {
     solid: {
-      primary: "border-transparent bg-primary text-primary-text shadow-lg",
-      secondary:
-        "border-transparent bg-secondary text-secondary-text shadow-lg",
-      success: "border-transparent bg-success text-white shadow-lg",
-      info: "border-transparent bg-info text-white shadow-lg",
-      warning: "border-transparent bg-warning text-white shadow-lg",
-      danger: "border-transparent bg-danger text-white shadow-lg",
+      primary: "border-transparent bg-primary text-primary-text",
+      secondary: "border-transparent bg-secondary text-secondary-text",
+      success: "border-transparent bg-success text-white",
+      info: "border-transparent bg-info text-white",
+      warning: "border-transparent bg-warning text-white",
+      danger: "border-transparent bg-danger text-white",
     },
     outline: {
       primary: "text-primary border-primary bg-primary/10 hover:bg-primary/20",

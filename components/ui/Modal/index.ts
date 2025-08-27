@@ -1,1 +1,1 @@
-export { Modal, ModalContent, ModalHeader, ModalTitle, ModalDescription, ModalBody, ModalField, ModalInput, ModalFooter, ModalPrimaryButton, ModalSecondaryButton, ModalTrigger, ModalIcon, ModalClose } from ".//Modal";
+export { Modal, ModalTrigger, ModalPortal, ModalOverlay, ModalContent, ModalHeader, ModalTitle, ModalDescription, ModalClose, ModalBody, ModalForm, ModalField, ModalInput, ModalFooter, ModalIcon, ModalPrimaryButton, ModalSecondaryButton } from "./Modal";

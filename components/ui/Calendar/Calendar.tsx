@@ -31,6 +31,7 @@ export interface CalendarEvent {
   };
   location?: string; // Event location
   priority?: "low" | "medium" | "high";
+  slotId?: string;
 }
 
 export type CalendarView = "month" | "week" | "day";
@@ -81,34 +82,8 @@ const formatDate = (date: Date, locale: string = "pt-BR") => {
 
 const getEventsForDate = (events: CalendarEvent[], date: Date) => {
   return events.filter((event) => {
-    // Check if it's a repeating event
-    if (event.repeating) {
-      const eventStart = new Date(event.date);
-      const currentDate = new Date(date);
-
-      switch (event.repeating.type) {
-        case "daily":
-          return true; // Daily events appear every day
-        case "weekly":
-          const daysDiff = Math.floor(
-            (currentDate.getTime() - eventStart.getTime()) /
-              (1000 * 60 * 60 * 24)
-          );
-          return (
-            daysDiff >= 0 && daysDiff % (7 * event.repeating.interval) === 0
-          );
-        case "monthly":
-          return currentDate.getDate() === eventStart.getDate();
-        case "yearly":
-          return (
-            currentDate.getMonth() === eventStart.getMonth() &&
-            currentDate.getDate() === eventStart.getDate()
-          );
-        default:
-          return isSameDay(event.date, date);
-      }
-    }
-
+    // Since your mapping function already generates individual events for each occurrence,
+    // we only need to check for exact date matches - NO repetition logic here
     return isSameDay(event.date, date);
   });
 };
@@ -223,7 +198,6 @@ export const Calendar: React.FC<CalendarProps> = ({
   const goToToday = () => {
     const today = new Date();
     setCurrentDate(today);
-    onDateSelect?.(today);
   };
 
   const handleDateClick = (date: Date) => {
@@ -304,8 +278,8 @@ export const Calendar: React.FC<CalendarProps> = ({
             {event.priority === "high"
               ? "🔴"
               : event.priority === "medium"
-              ? "🟡"
-              : "🟢"}{" "}
+                ? "🟡"
+                : "🟢"}{" "}
             {event.priority}
           </div>
         )}
@@ -648,8 +622,8 @@ export const Calendar: React.FC<CalendarProps> = ({
                           {event.priority === "high"
                             ? "🔴"
                             : event.priority === "medium"
-                            ? "🟡"
-                            : "🟢"}{" "}
+                              ? "🟡"
+                              : "🟢"}{" "}
                           {event.priority}
                         </Text>
                       )}

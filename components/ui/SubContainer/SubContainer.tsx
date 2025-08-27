@@ -12,7 +12,7 @@ const SubContainer = React.forwardRef<HTMLDivElement, SubContainerProps>(
     <div
       ref={ref}
       className={twMerge(
-        "w-full bg-surface-1 p-4 sm:p-6 rounded-lg",
+        "w-full bg-surface-1 p-4 sm:p-6 rounded-b-lg",
         className
       )}
       {...props}

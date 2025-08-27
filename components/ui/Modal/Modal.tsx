@@ -5,7 +5,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { twMerge } from "tailwind-merge";
 import { VisuallyHidden } from "../VisuallyHidden";
 import { Input } from "../Input";
-import { CloseCircle } from "@solar-icons/react/ssr";
+import { CloseSquare } from "@solar-icons/react/ssr";
 import Image from "next/image";
 
 // Modal Root Component
@@ -19,14 +19,14 @@ const ModalPortal = Dialog.Portal;
 
 // Modal Overlay Component
 const ModalOverlay = React.forwardRef<
-  React.ElementRef<typeof Dialog.Overlay>,
+  React.ComponentRef<typeof Dialog.Overlay>,
   React.ComponentPropsWithoutRef<typeof Dialog.Overlay>
 >(({ className, ...props }, ref) => {
   return (
     <Dialog.Overlay
       ref={ref}
       className={twMerge(
-        "fixed inset-0 z-50 bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        "fixed inset-0 z-50 bg-black/60 backdrop-blur-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
         className
       )}
       {...props}
@@ -37,7 +37,7 @@ ModalOverlay.displayName = "ModalOverlay";
 
 // Modal Content Component
 const ModalContent = React.forwardRef<
-  React.ElementRef<typeof Dialog.Content>,
+  React.ComponentRef<typeof Dialog.Content>,
   React.ComponentPropsWithoutRef<typeof Dialog.Content>
 >(({ className, children, ...props }, ref) => {
   return (
@@ -46,7 +46,7 @@ const ModalContent = React.forwardRef<
       <Dialog.Content
         ref={ref}
         className={twMerge(
-          "rounded-2xl fixed left-[50%] top-[50%] z-50 grid w-full max-w-sm translate-x-[-50%] translate-y-[-50%] gap-4 border border-gray-200 bg-white p-6 shadow-xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
+          "rounded-2xl fixed left-[50%] top-[50%] z-50 grid w-full max-w-sm translate-x-[-50%] translate-y-[-50%] gap-4 border border-ring-offset bg-white-light p-6 shadow-xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
           className
         )}
         {...props}
@@ -79,14 +79,14 @@ ModalHeader.displayName = "ModalHeader";
 
 // Modal Title Component
 const ModalTitle = React.forwardRef<
-  React.ElementRef<typeof Dialog.Title>,
+  React.ComponentRef<typeof Dialog.Title>,
   React.ComponentPropsWithoutRef<typeof Dialog.Title>
 >(({ className, ...props }, ref) => {
   return (
     <Dialog.Title
       ref={ref}
       className={twMerge(
-        "text-xl font-bold leading-tight tracking-tight text-gray-900",
+        "text-xl font-bold leading-tight tracking-tight text-title",
         className
       )}
       {...props}
@@ -97,13 +97,13 @@ ModalTitle.displayName = "ModalTitle";
 
 // Modal Description Component
 const ModalDescription = React.forwardRef<
-  React.ElementRef<typeof Dialog.Description>,
+  React.ComponentRef<typeof Dialog.Description>,
   React.ComponentPropsWithoutRef<typeof Dialog.Description>
 >(({ className, ...props }, ref) => {
   return (
     <Dialog.Description
       ref={ref}
-      className={twMerge("text-sm text-gray-600 leading-relaxed", className)}
+      className={twMerge("text-sm text-subtitle leading-relaxed", className)}
       {...props}
     />
   );
@@ -112,21 +112,24 @@ ModalDescription.displayName = "ModalDescription";
 
 // Modal Close Component
 const ModalClose = React.forwardRef<
-  React.ElementRef<typeof Dialog.Close>,
+  React.ComponentRef<typeof Dialog.Close>,
   React.ComponentPropsWithoutRef<typeof Dialog.Close>
 >(({ className, children, ...props }, ref) => {
   return (
     <Dialog.Close
       ref={ref}
       className={twMerge(
-        "absolute right-4 top-4 rounded-full p-2 opacity-70  transition-all hover:opacity-100 hover:bg-gray-100 disabled:pointer-events-none",
+        "absolute right-4 top-4 opacity-70 transition-all",
         className
       )}
       {...props}
     >
       {children || (
         <>
-          <CloseCircle className="h-5 w-5 text-gray-500" />
+          <CloseSquare
+            weight="BoldDuotone"
+            className="h-7 w-7 text-primary/50 hover:text-secondary duration-300 ease-in-out transition-all"
+          />
           <span className="sr-only">Close</span>
         </>
       )}
@@ -306,7 +309,7 @@ const ModalIcon = ({
           </div>
         </div>
       ) : (
-        <div className="flex justify-center items-center w-12 h-12 bg-gray-50 rounded-full">
+        <div className="flex justify-center items-center w-12 h-12 bg-background rounded-full">
           {iconContent}
         </div>
       )}
@@ -351,7 +354,7 @@ const ModalField = ({
   return (
     <div className="space-y-1" {...props}>
       {label && (
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-paragraph">
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>
@@ -365,12 +368,12 @@ ModalField.displayName = "ModalField";
 
 // Modal Input Component (wrapper para o Input do UI)
 const ModalInput = React.forwardRef<
-  React.ElementRef<typeof Input>,
+  React.ComponentRef<typeof Input>,
   React.ComponentPropsWithoutRef<typeof Input> & {
     error?: boolean;
   }
 >(({ ...props }, ref) => {
-  return <Input ref={ref} className="!bg-white-light !py-4" {...props} />;
+  return <Input ref={ref} className="!py-4" {...props} />;
 });
 
 ModalInput.displayName = "ModalInput";
@@ -386,13 +389,13 @@ const ModalPrimaryButton = React.forwardRef<
     <button
       ref={ref}
       className={twMerge(
-        `w-full sm:flex-1 rounded-3xl ${
+        `w-full sm:flex-1 rounded-3xl flex flex-row justify-center items-center gap-2 cursor-pointer ${
           variant === "destructive"
-            ? "bg-danger hover:bg-danger-dark focus:ring-danger"
+            ? "bg-danger hover:bg-danger-light"
             : variant === "secondary"
-            ? "bg-secondary hover:bg-secondary-dark focus:ring-secondary"
-            : "bg-primary hover:bg-primary-dark focus:ring-primary"
-        } px-6 py-4 text-sm font-bold text-white shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50`,
+              ? "bg-warning hover:bg-warning-light"
+              : "bg-success hover:bg-success-light"
+        } px-6 py-4 text-md font-bold text-white shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50`,
         className
       )}
       {...props}

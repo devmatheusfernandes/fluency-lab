@@ -35,7 +35,7 @@ const getTextClasses = ({
   weight,
 }: Omit<TextProps, "as" | "className">): string => {
   const variantClasses = {
-    title: "text-title",
+    title: "text-title pb-3",
     subtitle: "text-subtitle",
     paragraph: "text-paragraph",
     placeholder: "text-placeholder",
@@ -84,24 +84,34 @@ const Text = React.forwardRef<HTMLParagraphElement, TextProps>(
     // Use conditional rendering based on the 'as' prop
     if (as === "span") {
       return (
-        <span className={finalClassName} ref={ref as React.Ref<HTMLSpanElement>} {...(props as React.HTMLAttributes<HTMLSpanElement>)} />
+        <span
+          className={finalClassName}
+          ref={ref as React.Ref<HTMLSpanElement>}
+          {...(props as React.HTMLAttributes<HTMLSpanElement>)}
+        />
       );
     }
     if (as === "div") {
       return (
-        <div className={finalClassName} ref={ref as React.Ref<HTMLDivElement>} {...(props as React.HTMLAttributes<HTMLDivElement>)} />
+        <div
+          className={finalClassName}
+          ref={ref as React.Ref<HTMLDivElement>}
+          {...(props as React.HTMLAttributes<HTMLDivElement>)}
+        />
       );
     }
     if (as === "label") {
       return (
-        <label className={finalClassName} ref={ref as React.Ref<HTMLLabelElement>} {...(props as React.HTMLAttributes<HTMLLabelElement>)} />
+        <label
+          className={finalClassName}
+          ref={ref as React.Ref<HTMLLabelElement>}
+          {...(props as React.HTMLAttributes<HTMLLabelElement>)}
+        />
       );
     }
-    
+
     // Default to paragraph
-    return (
-      <p className={finalClassName} ref={ref} {...props} />
-    );
+    return <p className={finalClassName} ref={ref} {...props} />;
   }
 );
 

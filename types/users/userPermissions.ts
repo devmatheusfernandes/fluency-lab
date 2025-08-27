@@ -1,0 +1,43 @@
+//@types/users/userPermissions.ts
+
+//Examples of possible permissions, but not all of them are here yet
+export type UserPermission =
+  // Student / Guarded / Occasional
+  | "class.view"                // ver aulas próprias ou do protegido
+  | "class.cancel.self"         // cancelar aulas próprias
+  | "class.reschedule.self"     // reagendar aulas próprias
+  | "contract.view.self"        // ver contrato próprio
+  | "profile.update.self"       // atualizar perfil próprio
+  | "feedback.create"           // enviar feedback pós-aula
+  | "payment.view.self"         // visualizar histórico de pagamentos
+
+  // Teacher
+  | "class.view.assigned"       // ver aulas que leciona
+  | "class.update.status"       // marcar aula como concluída, no-show, etc.
+  | "class.reschedule.teacher"  // reagendar aula como professor
+  | "vacation.create"           // criar férias
+  | "vacation.view"             // ver férias próprias
+  | "student.feedback.read"     // ler feedbacks de alunos
+
+  // Admin
+  | "user.create"               // criar usuários, menos o OCCASIONAL_STUDENT
+  | "user.update"               // atualizar qualquer usuário
+  | "user.delete"               // deletar/arquivar usuários
+  | "class.view.all"            // visualizar todas aulas
+  | "class.update.any"          // atualizar qualquer aula
+  | "contract.create"           // criar contratos
+  | "contract.update"           // atualizar contratos
+  | "vacation.override"         // aprovar/editar férias de professores
+  | "report.view"               // gerar relatórios
+  | "payment.manage"            // gerenciar pagamentos
+
+  // Manager / Support
+  | "student.support"           // agir em nome do aluno
+  | "teacher.support"           // agir em nome do professor
+  | "report.view.limited"       // acessar relatórios limitados
+
+  // Material Manager
+  | "material.create"           // criar material
+  | "material.update"           // atualizar material
+  | "material.delete"           // deletar material
+  | "material.view";            // visualizar material

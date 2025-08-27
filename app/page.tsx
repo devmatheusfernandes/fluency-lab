@@ -1,29 +1,19 @@
 "use client";
-import { useToast } from "@/components/ui/Toast";
+import { ThemeToggle } from "@/components/features/ThemeToggle";
+import { Button } from "@/components/ui/Button";
+import { toast } from "sonner";
 
-function MyComponent() {
-  const toast = useToast();
-
-  const handleSuccess = () => {
-    toast.success({
-      title: "Success!",
-      description: "Your action was completed successfully.",
+export default function Home() {
+  const handleClick = () => {
+    toast.success("Hello World", {
+      description: "This is a description",
     });
   };
-
-  const handleError = () => {
-    toast.error({
-      title: "Error!",
-      description: "Something went wrong. Please try again.",
-    });
-  };
-
   return (
-    <div>
-      <button onClick={handleSuccess}>Show Success</button>
-      <button onClick={handleError}>Show Error</button>
+    <div className="flex flex-col items-center justify-center h-screen bg-surface-1">
+      Hello World
+      <Button onClick={handleClick}>Click me</Button>
+      <ThemeToggle />
     </div>
   );
 }
-
-export default MyComponent;

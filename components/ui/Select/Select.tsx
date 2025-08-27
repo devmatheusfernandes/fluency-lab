@@ -37,7 +37,7 @@ const SelectTrigger = React.forwardRef<
 >(({ className, hasError = false, size = "base", children, ...props }, ref) => {
   // Base classes for the select trigger with modern styling
   const baseClasses =
-    "flex w-full items-center justify-between rounded-2xl border-1 border-surface-1 bg-surface-1 text-base text-paragraph placeholder:text-placeholder focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 ease-in-out hover:border-surface-2 focus:border-surface-2 focus:bg-surface-1 focus:shadow-lg";
+    "flex w-full hover:text-primary items-center justify-between rounded-2xl border-2 border-surface-0/60 hover:border-surface-0/80 focus:border-surface-0/50 focus:bg-surface-0/70 bg-surface-0/30 hover:bg-surface-0/50 backdrop-blur-xl text-base text-paragraph placeholder:text-placeholder focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 ease-in-out focus:bg-white-30";
 
   // Size classes
   const sizeClasses = {
@@ -63,7 +63,10 @@ const SelectTrigger = React.forwardRef<
     >
       {children}
       <SelectPrimitive.Icon asChild>
-        <ArrowDown className="h-4 w-4 text-paragraph transition-transform duration-200 ease-in-out" />
+        <ArrowDown
+          weight="Broken"
+          className="h-4 w-4 text-paragraph transition-transform duration-200 ease-in-out"
+        />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   );
@@ -90,7 +93,7 @@ const SelectContent = React.forwardRef<
     <SelectPrimitive.Content
       ref={ref}
       className={twMerge(
-        "relative z-50 min-w-[8rem] overflow-hidden rounded-2xl border border-surface-2 bg-surface-1 text-paragraph shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+        "relative z-50 min-w-[8rem] overflow-hidden rounded-2xl bg-surface-0/70 backdrop-blur-xl text-paragraph data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
         position === "popper" &&
           "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
         className
@@ -118,7 +121,7 @@ const SelectOption = React.forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={twMerge(
-      "relative flex w-full cursor-pointer select-none items-center rounded-xl px-3 py-2 text-sm outline-none transition-colors focus:bg-surface-2 focus:text-paragraph data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-surface-2 data-[highlighted]:text-paragraph",
+      "relative flex cursor-default select-none items-center rounded-xl px-3 py-2.5 text-base outline-none transition-all duration-200 ease-in-out focus:bg-primary/10 focus:text-primary hover:bg-surface-hover hover:text-paragraph data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       className
     )}
     {...props}

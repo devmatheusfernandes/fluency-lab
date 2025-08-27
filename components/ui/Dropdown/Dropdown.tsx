@@ -19,7 +19,7 @@ const DropdownMenuContent = React.forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       className={twMerge(
-        "z-50 min-w-[8rem] overflow-hidden rounded-2xl border-1 border-surface-1 bg-surface-1 p-2 text-paragraph shadow-2xl animate-in fade-in-0 zoom-in-95 backdrop-blur-sm",
+        "z-50 min-w-[8rem] bg-surface-0/50 overflow-hidden rounded-2xl p-2 text-paragraph shadow-2xl animate-in fade-in-0 zoom-in-95 backdrop-blur-sm",
         className
       )}
       {...props}

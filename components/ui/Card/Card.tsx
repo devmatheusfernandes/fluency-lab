@@ -8,7 +8,7 @@ const Card = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={twMerge("rounded-lg p-2 bg-surface-2 text-paragraph", className)}
+    className={twMerge("rounded-lg p-4 bg-surface-2 text-paragraph", className)}
     {...props}
   />
 ));

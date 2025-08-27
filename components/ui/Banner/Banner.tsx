@@ -19,21 +19,19 @@ export interface BannerProps extends React.HTMLAttributes<HTMLDivElement> {
 const getBannerClasses = ({ variant }: Pick<BannerProps, "variant">) => {
   const variantStyles = {
     info: {
-      container: "bg-info/10 text-info border-2 border-info/20 shadow-lg",
+      container: "bg-info/10 text-info border-2 border-info/20",
       iconContainer: "text-info",
     },
     success: {
-      container:
-        "bg-success/10 text-success border-2 border-success/20 shadow-lg",
+      container: "bg-success/10 text-success border-2 border-success/20",
       iconContainer: "text-success",
     },
     warning: {
-      container:
-        "bg-warning/10 text-warning border-2 border-warning/20 shadow-lg",
+      container: "bg-warning/10 text-warning border-2 border-warning/20",
       iconContainer: "text-warning",
     },
     danger: {
-      container: "bg-danger/10 text-danger border-2 border-danger/20 shadow-lg",
+      container: "bg-danger/10 text-danger border-2 border-danger/20",
       iconContainer: "text-danger",
     },
   };

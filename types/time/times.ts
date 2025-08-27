@@ -1,3 +1,4 @@
+//@types/time/times.ts
 export const hourFormat = "HH:mm";
 export const daysOfWeek = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 export const months = [

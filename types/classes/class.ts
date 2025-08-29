@@ -1,7 +1,7 @@
 // types/classes/class.ts
 import { daysOfWeek } from "../time/times";
 import { User } from "../users/users";
-// 👇 ALTERADO de 'type' para 'enum'
+
 export enum ClassStatus {
     SCHEDULED = "scheduled",
     COMPLETED = "completed",
@@ -38,8 +38,8 @@ export type StudentClass = {
   reason?: string;
 
   completedAt?: Date;
-  feedback?: string; 
-  notes?: string;
+  feedback?: string;  //TEACHER ADDS A NOTE AFTER CLASS, LIKE A REPORT OR FEEDBACK ON THE CALSS OR STUDENT
+  notes?: string; //OCASIONAL STUDENT ADDS A NOTE ABOUT HIS CLASS
   
   createdAt: Date;
   updatedAt: Date;

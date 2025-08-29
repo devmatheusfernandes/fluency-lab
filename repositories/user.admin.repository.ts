@@ -57,7 +57,7 @@ export class UserAdminRepository {
     return {
       id: docSnap.id,
       ...data,
-      createdAt: (data.createdAt as Timestamp).toDate(),
+      createdAt: data.createdAt ? (data.createdAt as Timestamp).toDate() : new Date(), // Fallback para data atual
       birthDate: data.birthDate ? (data.birthDate as Timestamp).toDate() : undefined,
     } as User;
   }
@@ -122,4 +122,35 @@ export class UserAdminRepository {
       deactivatedAt: isActive ? FieldValue.delete() : FieldValue.serverTimestamp(),
     });
   }
+
+    /**
+   * Atualiza um documento de utilizador com novos dados.
+   * @param userId - O ID do utilizador a ser atualizado.
+   * @param data - Um objeto com os campos a serem atualizados.
+   */
+    async update(userId: string, data: Partial<User>): Promise<void> {
+      const userRef = this.usersCollection.doc(userId);
+      await userRef.update(data);
+    }
+
+    async countNewUsersThisMonth(): Promise<number> {
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      
+      const snapshot = await this.usersCollection
+        .where('createdAt', '>=', Timestamp.fromDate(startOfMonth))
+        .count()
+        .get();
+      return snapshot.data().count;
+    }
+  
+    async countActiveTeachers(): Promise<number> {
+      const snapshot = await this.usersCollection
+        .where('role', '==', 'teacher')
+        .where('isActive', '==', true)
+        .count()
+        .get();
+      return snapshot.data().count;
+    }
 }

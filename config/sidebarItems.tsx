@@ -1,5 +1,4 @@
 // config/sidebarItems.tsx
-import { Sidebar } from "@/components/shared/Sidebar";
 import { SidebarItemType } from "@/components/shared/Sidebar/Sidebar";
 import { UserRoles } from "@/types/users/userRoles";
 import {
@@ -9,15 +8,43 @@ import {
   List,
   Settings,
   Book,
+  Layers,
+  MoneyBag,
+  VideoLibrary,
+  DocumentAdd,
 } from "@solar-icons/react/ssr";
 
 // Define os links para cada papel
 const adminItems: SidebarItemType[] = [
-  { href: "/hub/plataforma/admin", label: "Dashboard", icon: <Home /> },
   {
-    href: "/hub/plataforma/admin/users",
+    href: "/hub/plataforma/profile",
+    label: "Meu Perfil",
+    icon: <Home />,
+  },
+  {
+    href: "/hub/plataforma/dashboard",
+    label: "Dashboard",
+    icon: <Layers weight="BoldDuotone" className="w-9 h-9" />,
+  },
+  {
+    href: "/hub/plataforma/users",
     label: "Usuários",
-    icon: <UsersGroupRounded />,
+    icon: <UsersGroupRounded weight="BoldDuotone" className="w-9 h-9" />,
+  },
+  {
+    href: "/hub/plataforma/finances",
+    label: "Financeiro",
+    icon: <MoneyBag weight="BoldDuotone" className="w-9 h-9" />,
+  },
+  {
+    href: "/hub/plataforma/courses",
+    label: "Cursos",
+    icon: <VideoLibrary weight="BoldDuotone" className="w-9 h-9" />,
+  },
+  {
+    href: "/hub/plataforma/documents",
+    label: "Documentos",
+    icon: <DocumentAdd weight="BoldDuotone" className="w-9 h-9" />,
   },
 ];
 

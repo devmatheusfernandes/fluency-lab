@@ -40,6 +40,7 @@ import AddUserModal from "./AddUserModal";
 import { useAdmin } from "@/hooks/useAdmin";
 import { Header } from "../ui/Header";
 import { MenuDots, UserPlus } from "@solar-icons/react";
+import { useRouter } from "next/navigation";
 
 export default function UserManagementTable() {
   const {
@@ -55,6 +56,7 @@ export default function UserManagementTable() {
     successMessage: adminSuccess,
   } = useAdmin();
 
+  const router = useRouter();
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -90,6 +92,13 @@ export default function UserManagementTable() {
           statusFilter === "all" ? undefined : statusFilter === "active",
       });
     }
+  };
+
+  const handleRowClick = (userId: string, userName: string) => {
+    // Formata o nome para ser seguro para a URL (minúsculas, sem espaços)
+    const sanitizedName = userName.toLowerCase().replace(/\s+/g, "-");
+    const encodedName = encodeURIComponent(sanitizedName);
+    router.push(`/hub/plataforma/users/${encodedName}?id=${userId}`);
   };
 
   return (
@@ -149,7 +158,11 @@ export default function UserManagementTable() {
             </TableHeader>
             <TableBody className="bg-container divide-y divide-surface-2">
               {users.map((user) => (
-                <TableRow key={user.id}>
+                <TableRow
+                  key={user.id}
+                  onClick={() => handleRowClick(user.id, user.name)}
+                  className="cursor-pointer hover:bg-surface-hover"
+                >
                   <TableCell>
                     <div className="flex items-center">
                       <Avatar>
@@ -194,7 +207,11 @@ export default function UserManagementTable() {
                         >
                           {user.isActive ? "Desativar" : "Reativar"}
                         </DropdownMenuItem>
-                        <DropdownMenuItem>Editar Perfil</DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={() => handleRowClick(user.id, user.name)}
+                        >
+                          Editar Perfil
+                        </DropdownMenuItem>
                         <DropdownMenuItem className="text-danger focus:bg-danger/10 focus:text-danger">
                           Deletar
                         </DropdownMenuItem>

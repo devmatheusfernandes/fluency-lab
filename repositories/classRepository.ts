@@ -1,7 +1,7 @@
 // repositories/classRepository.ts
 
 import { adminDb } from "@/lib/firebase/admin";
-import { StudentClass } from "@/types/classes/class";
+import { PopulatedStudentClass, StudentClass } from "@/types/classes/class";
 import { Timestamp, Transaction } from "firebase-admin/firestore";
 
 export class ClassRepository {
@@ -156,4 +156,43 @@ export class ClassRepository {
       updatedAt: (data.updatedAt as Timestamp).toDate(),
     } as StudentClass;
   }
+
+  async countClassesForToday(): Promise<number> {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const snapshot = await this.collectionRef
+      .where('scheduledAt', '>=', Timestamp.fromDate(startOfDay))
+      .where('scheduledAt', '<=', Timestamp.fromDate(endOfDay))
+      .count()
+      .get();
+    return snapshot.data().count;
+  }
+
+  async findRecentClassesWithUserDetails(limit: number): Promise<PopulatedStudentClass[]> {
+    const snapshot = await this.collectionRef
+      .orderBy('createdAt', 'desc')
+      .limit(limit)
+      .get();
+      
+    if (snapshot.empty) return [];
+
+    const classes = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        scheduledAt: (data.scheduledAt as Timestamp).toDate(),
+        createdAt: (data.createdAt as Timestamp).toDate(),
+        updatedAt: (data.updatedAt as Timestamp).toDate(),
+      } as StudentClass;
+    });
+
+    // Lógica para popular com nomes de alunos e professores (similar ao que fizemos antes)
+    // ... (esta lógica pode ser movida para um serviço para reutilização)
+    return classes as PopulatedStudentClass[]; // Retorno simplificado por enquanto
+  }
+  
 }

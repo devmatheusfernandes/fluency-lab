@@ -16,6 +16,7 @@ export type User = {
 
     avatarUrl: string;
     interfaceLanguage: string;
+    theme?: 'light' | 'dark'; // 👈 Adicione este campo opcional
     tutorialCompleted: boolean;
 
     //PERSONAL INFO

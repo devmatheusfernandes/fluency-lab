@@ -4,10 +4,12 @@ import { adminAuth } from "@/lib/firebase/admin";
 import { ClassRepository } from "@/repositories/classRepository";
 import { PaymentRepository } from "@/repositories/paymentRepository";
 import { UserAdminRepository } from "@/repositories/user.admin.repository";
+import { userRepository } from "@/repositories/userRepository";
 import { StudentClass } from "@/types/classes/class";
 import { Payment } from "@/types/financial/payments";
 import { FullUserDetails } from "@/types/users/user-details";
 import { User } from "@/types/users/users";
+import { FieldValue } from "firebase-admin/firestore";
 
 const userAdminRepo = new UserAdminRepository();
 const classRepo = new ClassRepository();
@@ -21,32 +23,31 @@ export class UserService {
     return await userAdminRepo.listUsers(filters);
   }
 
-  /**
-   * Desativa um usuário, marcando-o como inativo.
-   * @param userId - O ID do usuário a ser desativado.
-   */
+// Método principal que o PATCH vai usar
+  async updateUser(userId: string, userData: Partial<User>): Promise<void> {
+    const allowedUpdates = { ...userData };
+    // Adicione aqui outros campos que não podem ser alterados se necessário
+    delete allowedUpdates.id; 
+    delete allowedUpdates.email;
+
+    if (Object.keys(allowedUpdates).length > 0) {
+      await userRepository.update(userId, allowedUpdates);
+    }
+  }
+
+  // Método específico para desativar
   async deactivateUser(userId: string): Promise<void> {
-    return await userAdminRepo.updateUserStatus(userId, false);
+    await this.updateUser(userId, { isActive: false, deactivatedAt: new Date() });
   }
-
-  /**
-   * Reativa um usuário, marcando-o como ativo.
-   * @param userId - O ID do usuário a ser reativado.
-   */
+  
+  // Método específico para reativar
   async reactivateUser(userId: string): Promise<void> {
-    return await userAdminRepo.updateUserStatus(userId, true);
+    // Usamos 'null' ou FieldValue.delete() para remover o campo deactivatedAt
+    await this.updateUser(userId, { 
+      isActive: true, 
+      deactivatedAt: FieldValue.delete() as any 
+    });
   }
-
-  /**
-   * Atualiza os dados de um usuário.
-   * (Esta função pode ser expandida para atualizar outros campos no futuro).
-   */
-  async updateUser(userId: string, data: Partial<User>): Promise<void> {
-    // A lógica de atualização de outros campos viria aqui.
-    // Por enquanto, focamos no status.
-    console.log(`Atualizando usuário ${userId} com dados:`, data);
-  }
-
   /**
    * Atualiza o perfil de um utilizador com dados seguros.
    * @param userId - O ID do utilizador que está a ser atualizado.
@@ -110,9 +111,9 @@ export class UserService {
       // CORREÇÃO: Adiciona o tipo explícito para a variável
       let scheduledClasses: StudentClass[] = [];
       if (userProfile.role === 'student' || userProfile.role === 'occasional_student') {
-        scheduledClasses = await classRepo.findClassesByStudentId(userId);
+        scheduledClasses = await classRepo.findAllClassesByStudentId(userId); // Usando o novo método
       } else if (userProfile.role === 'teacher') {
-        scheduledClasses = await classRepo.findClassesByTeacherId(userId);
+        scheduledClasses = await classRepo.findAllClassesByTeacherId(userId);
       }
       // Adicione outras buscas aqui (contratos, pagamentos, etc.)
   

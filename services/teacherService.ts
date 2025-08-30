@@ -49,7 +49,7 @@ export class TeacherService {
 
   async getPopulatedScheduledClasses(teacherId: string): Promise<PopulatedStudentClass[]> {
     // 1. Busca todas as aulas futuras do professor
-    const classes = await classRepository.findClassesByTeacherId(teacherId);
+    const classes = await classRepository.findAllClassesByTeacherId(teacherId);
     if (classes.length === 0) {
       return [];
     }

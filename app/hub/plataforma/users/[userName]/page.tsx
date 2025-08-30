@@ -45,6 +45,8 @@ export default async function UserDetailsPage({
     userAdminRepo.findUsersByRole("teacher"),
   ]);
 
+  const plainUserDetails = JSON.parse(JSON.stringify(userDetails));
+
   if (!userDetails) {
     return (
       <div>
@@ -57,5 +59,7 @@ export default async function UserDetailsPage({
   }
 
   // Passa os dados completos, incluindo a lista de professores, para o componente de cliente
-  return <UserDetailsClient user={userDetails} allTeachers={allTeachers} />;
+  return (
+    <UserDetailsClient user={plainUserDetails} allTeachers={allTeachers} />
+  );
 }

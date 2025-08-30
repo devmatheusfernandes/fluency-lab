@@ -1,6 +1,7 @@
 // types/users.ts
 import { UserRoles } from "./userRoles";
 import { UserPermission } from "./userPermissions";
+import { RegularClassCredit } from "../credits/regularClassCredits";
 
 //firebase > db > users > user.id
 export type User = {
@@ -16,13 +17,13 @@ export type User = {
 
     avatarUrl: string;
     interfaceLanguage: string;
-    theme?: 'light' | 'dark'; // 👈 Adicione este campo opcional
+    theme?: 'light' | 'dark';
     tutorialCompleted: boolean;
 
     //PERSONAL INFO
     birthDate?: Date; //Required
     gender?: "male" | "female";
-    phoneNumber?: string; 
+    phoneNumber?: string;
     address?: { //Required
         street: string;
         number: string;
@@ -38,29 +39,41 @@ export type User = {
     badges?: string[]; //Maybe put in a differente collection
     coursesIds?: string[]; //Maybe put in a differente collection
     languages?: string[];
-    rescheduleCount?: number; //Maybe put in a differente collection inside users/userid
-    contractSigned?: boolean; //Maybe put in a differente collection inside users/userid
-    placementDone?: boolean; //Maybe put in a differente collection inside users/userid
+
+    // CAMPOS ADICIONADOS PARA CONTRATO E REAGENDAMENTO
+    contractStartDate?: Date;
+    contractLengthMonths?: 6 | 12;
+    monthlyReschedules?: {
+        month: string; // Formato "YYYY-MM"
+        count: number;
+    }[];
+
+    placementDone?: boolean;
 
     //OCCASIONAL_STUDENT
     classCredits?: number;
-    // PAYMENT / STRIPE FIELDS  👈 ADICIONE ESTA SEÇÃO
+
+    // REGULAR STUDENTS - Extra class credits system
+    regularClassCredits?: RegularClassCredit[];
+
+    // PAYMENT / STRIPE FIELDS
     stripeCustomerId?: string | null;
     stripeSubscriptionId?: string | null;
     subscriptionStatus?: 'active' | 'canceled' | 'incomplete' | null;
     lastPaymentIntentId?: string | null;
 
     //TEACHER
+    vacationDaysRemaining?: number; // <<< NOVO CAMPO ADICIONADO
     schedulingSettings?: {
-        bookingLeadTimeHours?: number; // Antecedência mínima em horas (Regra 1)
-        bookingHorizonDays?: number;   // Até quantos dias no futuro pode agendar (Regra 3)
-        cancellationPolicyHours?: number; // Limite para cancelar com reembolso (Regra 2)
-        maxOccasionalClassesPerDay?: number; // Limite de aulas avulsas por dia (Regra 5)
+        bookingLeadTimeHours?: number;
+        bookingHorizonDays?: number;
+        cancellationPolicyHours?: number;
+        maxOccasionalClassesPerDay?: number;
     }
-    
+
     profile?: {
         bio?: string;
         specialties?: string[];
-        languages?: string[]; // 👈 Adicione este campo
-      }
+        languages?: string[];
+    }
 };

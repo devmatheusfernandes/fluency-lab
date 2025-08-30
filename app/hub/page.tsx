@@ -18,6 +18,7 @@ export default function HubEntryPoint() {
         admin: "hub/plataforma/admin",
         teacher: "hub/plataforma/teacher",
         occasional_student: "hub/plataforma/occasional-student",
+        student: "hub/plataforma/student",
       };
 
       const destination = roleToPathMap[userRole] || "/";

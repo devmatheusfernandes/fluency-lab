@@ -13,7 +13,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const availabilityData = await schedulingService.getTeacherAvailability(teacherId);
+    const availabilityData = await schedulingService.getTeacherAvailabilityForStudent(teacherId);
     return NextResponse.json(availabilityData);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

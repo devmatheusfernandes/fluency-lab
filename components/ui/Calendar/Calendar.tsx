@@ -32,6 +32,12 @@ export interface CalendarEvent {
   location?: string; // Event location
   priority?: "low" | "medium" | "high";
   slotId?: string;
+  // Student information for booked classes
+  studentInfo?: {
+    studentId: string;
+    studentName?: string;
+    studentAvatarUrl?: string;
+  };
 }
 
 export type CalendarView = "month" | "week" | "day";
@@ -267,7 +273,13 @@ export const Calendar: React.FC<CalendarProps> = ({
             <span className="ml-1 text-xs opacity-80">🔄</span>
           )}
         </div>
-        {event.person && (
+        {/* Display student information if available, otherwise fallback to person */}
+        {event.studentInfo?.studentName && (
+          <div className="text-xs opacity-80 mt-1">
+            👤 {event.studentInfo.studentName}
+          </div>
+        )}
+        {!event.studentInfo?.studentName && event.person && (
           <div className="text-xs opacity-80 mt-1">👤 {event.person}</div>
         )}
         {event.location && (
@@ -607,7 +619,13 @@ export const Calendar: React.FC<CalendarProps> = ({
                           ⏰ {event.startTime} - {event.endTime}
                         </Text>
                       )}
-                      {event.person && (
+                      {/* Display student information if available, otherwise fallback to person */}
+                      {event.studentInfo?.studentName && (
+                        <Text size="sm" className="opacity-80 mb-1">
+                          👤 {event.studentInfo.studentName}
+                        </Text>
+                      )}
+                      {!event.studentInfo?.studentName && event.person && (
                         <Text size="sm" className="opacity-80 mb-1">
                           👤 {event.person}
                         </Text>
@@ -689,7 +707,13 @@ export const Calendar: React.FC<CalendarProps> = ({
                           {event.startTime} - {event.endTime}
                         </Text>
                       )}
-                      {event.person && (
+                      {/* Display student information if available, otherwise fallback to person */}
+                      {event.studentInfo?.studentName && (
+                        <Text size="xs" className="opacity-80">
+                          👤 {event.studentInfo.studentName}
+                        </Text>
+                      )}
+                      {!event.studentInfo?.studentName && event.person && (
                         <Text size="xs" className="opacity-80">
                           👤 {event.person}
                         </Text>

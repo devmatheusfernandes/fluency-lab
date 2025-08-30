@@ -6,6 +6,8 @@ import { User } from "./users";
 export interface FullUserDetails extends User {
   // Dados agregados
   scheduledClasses?: StudentClass[];
+  vacationDaysRemaining?: number;
+  
   // contractStatus?: 'signed' | 'pending' | 'none'; // Exemplo para o futuro
   // paymentHistory?: any[]; // Exemplo para o futuro
 }

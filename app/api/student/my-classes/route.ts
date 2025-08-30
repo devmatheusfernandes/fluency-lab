@@ -1,20 +1,22 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import { ClassRepository } from '@/repositories/classRepository';
+import { schedulingService } from '@/services/schedulingService';
+import { authOptions } from '../../auth/[...nextauth]/route';
 
-const classRepository = new ClassRepository();
-
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    return NextResponse.json({ error: 'Acesso não autorizado.' }, { status: 401 });
   }
 
   try {
-    const myClasses = await classRepository.findClassesByStudentId(session.user.id);
-    return NextResponse.json(myClasses);
+    const studentId = session.user.id;
+    // Usamos o serviço para obter as aulas já "populadas" com os dados do professor
+    const populatedClasses = await schedulingService.getPopulatedClassesForStudent(studentId);
+    return NextResponse.json(populatedClasses);
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Erro ao buscar as aulas do aluno:", error);
+    return NextResponse.json({ error: 'Erro interno do servidor.' }, { status: 500 });
   }
 }
+

@@ -44,9 +44,9 @@ export const useAdmin = () => {
     setIsLoading(true);
     setError(null);
     setSuccessMessage(null);
-    try {
+ try {
       const response = await fetch(`/api/admin/users/${userId}`, {
-        method: 'PUT',
+        method: 'PATCH', // <<< MUDANÇA AQUI
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData),
       });
@@ -63,35 +63,37 @@ export const useAdmin = () => {
     }
   };
 
-  /**
-   * Atualiza a lista de professores associados a um aluno.
-   * @param studentId - O ID do aluno a ser atualizado.
-   * @param teacherIds - O array completo com os novos IDs de professores.
-   */
-  const updateStudentTeachers = async (studentId: string, teacherIds: string[]): Promise<boolean> => {
+    // Função para desativar
+  const deactivateUser = async (userId: string): Promise<boolean> => {
     setIsLoading(true);
     setError(null);
     setSuccessMessage(null);
     try {
-      const response = await fetch(`/api/admin/users/${studentId}/teachers`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ teacherIds }),
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'DELETE',
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Falha ao atualizar professores.");
-
-      setSuccessMessage("Professores associados atualizados com sucesso!");
+      if (!response.ok) throw new Error(data.error || "Falha ao desativar utilizador.");
+      setSuccessMessage("Utilizador desativado com sucesso!");
       return true;
     } catch (err: any) {
       setError(err.message);
-      // Usamos toast aqui para feedback imediato de erro
-      toast.error(err.message);
       return false;
     } finally {
       setIsLoading(false);
     }
   };
 
-  return { createUser, updateUser, updateStudentTeachers, isLoading, error, successMessage };
+  // Função para reativar (chama o updateUser com PATCH)
+  const reactivateUser = (userId: string): Promise<boolean> => {
+    return updateUser(userId, { isActive: true });
+  };
+
+    return { 
+    createUser, 
+    updateUser, // Para atualizações gerais (nome, contrato, etc.)
+    deactivateUser, // Para desativar
+    reactivateUser, // Para reativar
+    isLoading, error, successMessage 
+  };
 };

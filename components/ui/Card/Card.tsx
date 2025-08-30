@@ -43,6 +43,22 @@ const CardTitle = React.forwardRef<
 ));
 CardTitle.displayName = "CardTitle";
 
+// --- Card Description ---
+const CardDescription = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLParagraphElement>
+>(({ className, ...props }, ref) => (
+  <p
+    ref={ref}
+    className={twMerge(
+      "text-sm text-muted-foreground text-paragraph opacity-70",
+      className
+    )}
+    {...props}
+  />
+));
+CardDescription.displayName = "CardDescription";
+
 // --- Card Content ---
 const CardContent = React.forwardRef<
   HTMLDivElement,
@@ -65,4 +81,11 @@ const CardFooter = React.forwardRef<
 ));
 CardFooter.displayName = "CardFooter";
 
-export { Card, CardHeader, CardContent, CardFooter, CardTitle };
+export {
+  Card,
+  CardHeader,
+  CardContent,
+  CardFooter,
+  CardTitle,
+  CardDescription,
+};

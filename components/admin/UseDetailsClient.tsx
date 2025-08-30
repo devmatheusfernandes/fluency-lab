@@ -7,8 +7,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import UserOverviewTab from "./UserOverviewTab";
 import UserClassesTab from "./UserClassesTab";
 import UserFinancialTab from "./UserFinancialTab";
-import TeacherAssociation from "./TeacherAssociation";
+
 import { User } from "@/types/users/users";
+import UserScheduleManager from "./UsersScheduleManager";
+import UserCreditsTab from "./UserCreditsTab";
 
 interface UserDetailsClientProps {
   user: FullUserDetails;
@@ -37,24 +39,38 @@ export default function UserDetailsClient({
       <Tabs defaultValue="overview">
         <TabsList>
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+
+          <TabsTrigger value="schedule">Horário Fixo</TabsTrigger>
+
           <TabsTrigger value="classes">Aulas</TabsTrigger>
+          {user.role === "student" && (
+            <TabsTrigger value="credits">Créditos</TabsTrigger>
+          )}
           <TabsTrigger value="financial">Financeiro</TabsTrigger>
           <TabsTrigger value="contracts">Contratos</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-4">
           <UserOverviewTab user={user} />
-          <TeacherAssociation student={user} allTeachers={allTeachers} />
-          {/* Futuro: <StudentDetails user={user} /> ou <TeacherDetails user={user} /> */}
+          {/* <TeacherAssociation student={user} allTeachers={allTeachers} /> */}
         </TabsContent>
         <TabsContent value="classes" className="mt-4">
           <UserClassesTab classes={user.scheduledClasses || []} />
         </TabsContent>
+        {user.role === "student" && (
+          <TabsContent value="credits" className="mt-4">
+            <UserCreditsTab studentId={user.id} />
+          </TabsContent>
+        )}
         <TabsContent value="financial" className="mt-4">
           <UserFinancialTab userId={user.id} />
         </TabsContent>
         <TabsContent value="contracts" className="mt-4">
           <Text>Aqui ficará a gestão de contratos.</Text>
+        </TabsContent>
+
+        <TabsContent value="schedule" className="mt-4">
+          <UserScheduleManager user={user} allTeachers={allTeachers} />
         </TabsContent>
       </Tabs>
     </div>

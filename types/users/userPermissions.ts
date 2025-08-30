@@ -10,6 +10,7 @@ export type UserPermission =
   | "profile.update.self"       // atualizar perfil próprio
   | "feedback.create"           // enviar feedback pós-aula
   | "payment.view.self"         // visualizar histórico de pagamentos
+  | "credits.view.self"         // visualizar próprios créditos de aulas
 
   // Teacher
   | "class.view.assigned"       // ver aulas que leciona
@@ -18,6 +19,8 @@ export type UserPermission =
   | "vacation.create"           // criar férias
   | "vacation.view"             // ver férias próprias
   | "student.feedback.read"     // ler feedbacks de alunos
+  | "class.create.with.credits" // criar aula usando créditos do estudante
+  | "credits.view.students"     // ver créditos dos próprios estudantes
 
   // Admin
   | "user.create"               // criar usuários, menos o OCCASIONAL_STUDENT
@@ -30,11 +33,16 @@ export type UserPermission =
   | "vacation.override"         // aprovar/editar férias de professores
   | "report.view"               // gerar relatórios
   | "payment.manage"            // gerenciar pagamentos
+  | "credits.manage"            // gerenciar créditos de aulas regulares
+  | "credits.grant"             // conceder créditos a estudantes
+  | "credits.view.all"          // visualizar créditos de todos os estudantes
 
   // Manager / Support
   | "student.support"           // agir em nome do aluno
   | "teacher.support"           // agir em nome do professor
   | "report.view.limited"       // acessar relatórios limitados
+  | "credits.grant"             // conceder créditos a estudantes
+  | "credits.view.assigned"     // visualizar créditos dos estudantes atribuídos
 
   // Material Manager
   | "material.create"           // criar material

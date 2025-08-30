@@ -14,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/Select";
-import { Text } from "@/components/ui/Text";
 import { FullUserDetails } from "@/types/users/user-details";
 import { UserRoles } from "@/types/users/userRoles";
 
@@ -25,13 +24,27 @@ interface UserOverviewTabProps {
 export default function UserOverviewTab({ user }: UserOverviewTabProps) {
   const [name, setName] = useState(user.name);
   const [role, setRole] = useState(user.role);
-  const { updateUser, isLoading } = useAdmin();
+  const [contractStartDate, setContractStartDate] = useState(
+    user.contractStartDate
+      ? new Date(user.contractStartDate).toISOString().split("T")[0]
+      : ""
+  );
+  const [contractLengthMonths, setContractLengthMonths] = useState(
+    user.contractLengthMonths || ""
+  );
 
-  // Verifica se o utilizador logado tem permissão para editar
+  const { updateUser, isLoading } = useAdmin();
   const canEditUser = useCan("user.update");
 
   const handleSaveChanges = async () => {
-    const success = await updateUser(user.id, { name, role });
+    const success = await updateUser(user.id, {
+      name,
+      role,
+      contractStartDate: contractStartDate
+        ? new Date(contractStartDate)
+        : undefined,
+      contractLengthMonths: Number(contractLengthMonths) as 6 | 12 | undefined,
+    });
     if (success) {
       toast.success("Perfil do utilizador salvo com sucesso!");
     } else {
@@ -97,6 +110,42 @@ export default function UserOverviewTab({ user }: UserOverviewTabProps) {
             value={new Date(user.createdAt).toLocaleDateString("pt-BR")}
             disabled
           />
+        </div>
+        <div>
+          <label
+            htmlFor="contractStartDate"
+            className="block text-sm font-medium text-subtitle"
+          >
+            Data de Início do Contrato
+          </label>
+          <Input
+            id="contractStartDate"
+            type="date"
+            value={contractStartDate}
+            onChange={(e) => setContractStartDate(e.target.value)}
+            disabled={!canEditUser || isLoading}
+          />
+        </div>
+        <div>
+          <label
+            htmlFor="contractLength"
+            className="block text-sm font-medium text-subtitle"
+          >
+            Duração do Contrato (Meses)
+          </label>
+          <Select
+            value={String(contractLengthMonths)}
+            onValueChange={(value) => setContractLengthMonths(value)}
+            disabled={!canEditUser || isLoading}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectOption value="6">6 Meses</SelectOption>
+              <SelectOption value="12">12 Meses</SelectOption>
+            </SelectContent>
+          </Select>
         </div>
       </div>
       {canEditUser && (

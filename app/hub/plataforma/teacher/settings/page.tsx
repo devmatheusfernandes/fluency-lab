@@ -2,6 +2,7 @@ import TeacherSettingsForm from "@/components/teacher/TeacherSettingsForm";
 import { UserAdminRepository } from "@/repositories/user.admin.repository";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import TeacherVacationManager from "@/components/teacher/TeacherVacationManager";
 
 const userAdminRepo = new UserAdminRepository();
 
@@ -16,6 +17,7 @@ export default async function TeacherSettingsPage() {
       <h1>Configurações da Agenda</h1>
       <p>Defina suas regras para o agendamento de aulas.</p>
       <TeacherSettingsForm currentSettings={currentSettings} />
+      <TeacherVacationManager />
     </div>
   );
 }

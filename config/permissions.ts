@@ -13,11 +13,16 @@ export const rolePermissionsMap: Record<UserRoles, UserPermission[]> = {
     "contract.update",
     "report.view",
     "payment.manage",
+    "credits.manage",
+    "credits.grant",
+    "credits.view.all",
   ],
   [UserRoles.MANAGER]: [
     "student.support",
     "teacher.support",
     "report.view.limited",
+    "credits.grant",
+    "credits.view.assigned",
   ],
   [UserRoles.TEACHER]: [
     "class.view.assigned",
@@ -26,6 +31,8 @@ export const rolePermissionsMap: Record<UserRoles, UserPermission[]> = {
     "vacation.create",
     "vacation.view",
     "student.feedback.read",
+    "class.create.with.credits",
+    "credits.view.students",
   ],
   [UserRoles.STUDENT]: [
     "class.view",
@@ -35,6 +42,7 @@ export const rolePermissionsMap: Record<UserRoles, UserPermission[]> = {
     "profile.update.self",
     "feedback.create",
     "payment.view.self",
+    "credits.view.self",
   ],
   [UserRoles.GUARDED_STUDENT]: [
     "class.view",
@@ -42,6 +50,7 @@ export const rolePermissionsMap: Record<UserRoles, UserPermission[]> = {
     "class.reschedule.self",
     "profile.update.self",
     "feedback.create",
+    "credits.view.self",
   ],
   [UserRoles.MATERIAL_MANAGER]: [
     "material.create",

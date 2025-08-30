@@ -1,7 +1,7 @@
 'use client';
 import { useState, useCallback } from 'react';
 import { AvailabilitySlot, AvailabilityException } from '@/types/time/availability';
-import { StudentClass } from '@/types/classes/class';
+import { PopulatedStudentClass, StudentClass, TeacherAvailability } from '@/types/classes/class';
 
 export const useStudent = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -16,7 +16,8 @@ export const useStudent = () => {
     exceptions: [],
     bookedClasses: []
   });
-  const [myClasses, setMyClasses] = useState<StudentClass[]>([]); // 👈 NOVO ESTADO
+  const [myClasses, setMyClasses] = useState<PopulatedStudentClass[]>([]);
+  const [rescheduleInfo, setRescheduleInfo] = useState({ allowed: false, count: 0, limit: 2 });
 
   const fetchAvailability = useCallback(async (teacherId: string) => {
     if (!teacherId) return;
@@ -114,5 +115,87 @@ export const useStudent = () => {
     }
   };
 
-  return { isLoading, error, availability, fetchAvailability, bookClass, myClasses, fetchMyClasses, cancelClass };
+  const checkRescheduleStatus = useCallback(async () => {
+    try {
+      const response = await fetch('/api/student/can-reschedule');
+      if (!response.ok) return;
+      const data = await response.json();
+      setRescheduleInfo(data);
+    } catch (err) {
+      // Falha silenciosa, não precisa de incomodar o utilizador
+    }
+  }, []);
+
+  /**
+   * Busca os dados de reagendamento para um mês específico.
+   * @param monthStr - String no formato "YYYY-MM" (ex: "2024-03")
+   * @returns Objeto com informações de reagendamento do mês
+   */
+  const getUserMonthlyReschedules = useCallback(async (monthStr: string) => {
+    try {
+      const response = await fetch(`/api/student/monthly-reschedules?month=${monthStr}`);
+      if (!response.ok) {
+        // Return default values if API fails
+        return { month: monthStr, count: 0, limit: 2 };
+      }
+      const data = await response.json();
+      return data;
+    } catch (err) {
+      // Return default values on error
+      return { month: monthStr, count: 0, limit: 2 };
+    }
+  }, []);
+
+  /**
+   * Solicita o reagendamento de uma aula.
+   * @param classId - O ID da aula a ser reagendada.
+   * @param newScheduledAt - A nova data e hora da aula.
+   * @param reason - O motivo opcional para o reagendamento.
+   * @param availabilitySlotId - O ID do slot de disponibilidade usado.
+   * @returns {Promise<boolean>} - Retorna true se for bem-sucedido.
+   */
+  const rescheduleClass = async (
+    classId: string,
+    newScheduledAt: Date,
+    reason?: string,
+    availabilitySlotId?: string
+  ): Promise<boolean> => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/classes/${classId}/reschedule`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newScheduledAt, reason, availabilitySlotId }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error);
+      
+      //("Aula reagendada com sucesso!");
+      // Recarrega os dados para refletir as alterações na UI
+      await Promise.all([fetchMyClasses(), checkRescheduleStatus()]);
+      return true;
+    } catch (err: any) {
+      setError(`Falha ao reagendar: ${err.message}`);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * Busca a disponibilidade de um professor, incluindo as suas regras de negócio.
+   * @param teacherId - O ID do professor cuja disponibilidade será buscada.
+   * @returns {Promise<TeacherAvailability>} - Os dados de disponibilidade do professor.
+   */
+  const fetchTeacherAvailability = async (teacherId: string): Promise<TeacherAvailability> => {
+    // Esta função não altera o estado do hook, apenas retorna os dados para o componente que a chama.
+    const response = await fetch(`/api/student/teacher-availability/${teacherId}`);
+    if (!response.ok) {
+      setError("Não foi possível carregar os horários do professor.");
+      return { slots: [], exceptions: [], bookedClasses: [], settings: {} };
+    }
+    return response.json();
+  };
+  return { isLoading, error, availability, fetchAvailability, bookClass, myClasses, fetchMyClasses, cancelClass, checkRescheduleStatus, rescheduleInfo, rescheduleClass, fetchTeacherAvailability, getUserMonthlyReschedules };
 };

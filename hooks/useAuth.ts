@@ -1,29 +1,33 @@
 'use client';
 
 import { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
 export const useAuth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { data: session } = useSession();
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     setError(null);
-    // Esta função chama a API do NextAuth de forma segura
+    
+    // This function calls the API of NextAuth securely
     const result = await signIn('credentials', {
       redirect: false,
       email,
       password,
     });
+    
     setIsLoading(false);
 
     if (result?.error) {
       setError("Email ou senha inválidos.");
     } else if (result?.ok) {
-      window.location.href = '/hub'; 
+      // Redirect to hub after successful login
+      router.push('/hub'); 
     }
   };
 
@@ -31,7 +35,7 @@ export const useAuth = () => {
     setIsLoading(true);
     setError(null);
     try {
-      // Esta função chama a API de signup via fetch
+      // This function calls the signup API via fetch
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -51,7 +55,8 @@ export const useAuth = () => {
       });
 
       if (loginResult?.ok) {
-        router.push('/signup/success');
+        // Redirect new students to hub where onboarding will be triggered automatically
+        router.push('/hub/plataforma');
       } else {
         throw new Error('Conta criada, mas o login automático falhou. Por favor, faça login.');
       }
@@ -66,5 +71,8 @@ export const useAuth = () => {
     }
   };
 
-  return { login, signup, isLoading, error };
+  // Check if user is authenticated
+  const isAuthenticated = !!session?.user;
+
+  return { login, signup, isLoading, error, isAuthenticated };
 };

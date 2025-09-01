@@ -9,7 +9,7 @@ const userService = new UserService();
 
 export async function GET(
   request: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   const session = await getServerSession(authOptions);
   // Apenas Admins e Managers podem aceder a esta rota
@@ -18,7 +18,8 @@ export async function GET(
   }
 
   try {
-    const userDetails = await userService.getFullUserDetails(params.userId);
+    const { userId } = await params;
+    const userDetails = await userService.getFullUserDetails(userId);
     if (!userDetails) {
       return NextResponse.json({ error: 'Utilizador não encontrado.' }, { status: 404 });
     }

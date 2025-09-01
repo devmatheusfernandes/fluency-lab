@@ -11,6 +11,9 @@ import UserFinancialTab from "./UserFinancialTab";
 import { User } from "@/types/users/users";
 import UserScheduleManager from "./UsersScheduleManager";
 import UserCreditsTab from "./UserCreditsTab";
+import UserContractsTab from "./UserContractsTab";
+import UserPermissionsTab from "./UserPermissionsTab";
+import { useSession } from "next-auth/react";
 
 interface UserDetailsClientProps {
   user: FullUserDetails;
@@ -21,6 +24,9 @@ export default function UserDetailsClient({
   user,
   allTeachers,
 }: UserDetailsClientProps) {
+  const { data: session } = useSession();
+  const currentUserRole = session?.user?.role;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -48,6 +54,9 @@ export default function UserDetailsClient({
           )}
           <TabsTrigger value="financial">Financeiro</TabsTrigger>
           <TabsTrigger value="contracts">Contratos</TabsTrigger>
+          {currentUserRole === "admin" && (
+            <TabsTrigger value="permissions">Permissões</TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="overview" className="mt-4">
@@ -63,15 +72,25 @@ export default function UserDetailsClient({
           </TabsContent>
         )}
         <TabsContent value="financial" className="mt-4">
-          <UserFinancialTab userId={user.id} />
+          <UserFinancialTab user={user} />
         </TabsContent>
         <TabsContent value="contracts" className="mt-4">
-          <Text>Aqui ficará a gestão de contratos.</Text>
+          {currentUserRole ? (
+            <UserContractsTab user={user} currentUserRole={currentUserRole} />
+          ) : (
+            <Text>Carregando informações do contrato...</Text>
+          )}
         </TabsContent>
 
         <TabsContent value="schedule" className="mt-4">
           <UserScheduleManager user={user} allTeachers={allTeachers} />
         </TabsContent>
+
+        {currentUserRole === "admin" && (
+          <TabsContent value="permissions" className="mt-4">
+            <UserPermissionsTab user={user} />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

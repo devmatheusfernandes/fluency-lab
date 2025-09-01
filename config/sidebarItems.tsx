@@ -89,10 +89,28 @@ const occasionalStudentItems: SidebarItemType[] = [
   },
 ];
 
+const studentItems: SidebarItemType[] = [
+  {
+    href: "/hub/plataforma/profile",
+    label: "Meu Perfil",
+    icon: <Home />,
+  },
+  {
+    href: "/hub/plataforma/student/schedule",
+    label: "Agendar Aula",
+    icon: <Calendar />,
+  },
+  {
+    href: "/hub/plataforma/student/my-classes",
+    label: "Minhas Aulas",
+    icon: <List />,
+  },
+];
+
 // Mapeia os papéis para suas respectivas listas de itens
 export const sidebarItemsByRole: Record<string, SidebarItemType[]> = {
   [UserRoles.ADMIN]: adminItems,
   [UserRoles.TEACHER]: teacherItems,
   [UserRoles.OCCASIONAL_STUDENT]: occasionalStudentItems,
-  // Adicione outros papéis (MANAGER, STUDENT, etc.) aqui
+  [UserRoles.STUDENT]: studentItems,
 };

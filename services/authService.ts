@@ -36,6 +36,7 @@ export class AuthService {
           name: userProfile.name,
           role: userProfile.role,
           permissions: userProfile.permissions,
+          tutorialCompleted: userProfile.tutorialCompleted,
         };
       }
       return null;

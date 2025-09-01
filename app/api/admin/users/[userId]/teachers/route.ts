@@ -10,7 +10,7 @@ const userService = new UserService();
 // Usamos PUT para substituir completamente a lista de professores
 export async function PUT(
   request: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   const session = await getServerSession(authOptions);
   // Apenas Admins e Managers podem realizar esta ação
@@ -19,8 +19,9 @@ export async function PUT(
   }
 
   try {
+    const { userId } = await params;
     const { teacherIds } = await request.json();
-    await userService.manageStudentTeachers(params.userId, teacherIds);
+    await userService.manageStudentTeachers(userId, teacherIds);
     return NextResponse.json({ message: 'Professores do aluno atualizados com sucesso.' });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

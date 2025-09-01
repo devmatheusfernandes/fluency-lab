@@ -9,7 +9,7 @@ const userService = new UserService();
 // PATCH é usado para ATUALIZAR PARCIALMENTE qualquer dado do usuário, incluindo o status.
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (session?.user?.role !== 'admin' && session?.user?.role !== 'manager') {
@@ -17,7 +17,7 @@ export async function PATCH(
   }
 
   try {
-    const { userId } = params; 
+    const { userId } = await params; 
     const userDataToUpdate = (await request.json()) as Partial<User>;
 
     await userService.updateUser(userId, userDataToUpdate);
@@ -32,7 +32,7 @@ export async function PATCH(
 // DELETE continua sendo usado para DESATIVAR (soft delete) um usuário.
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { userId:string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (session?.user?.role !== 'admin') {
@@ -40,7 +40,7 @@ export async function DELETE(
   }
 
   try {
-    const { userId } = params;
+    const { userId } = await params;
     await userService.deactivateUser(userId);
     return NextResponse.json({ message: 'Usuário desativado com sucesso.' });
   } catch (error: any) {

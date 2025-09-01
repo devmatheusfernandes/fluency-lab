@@ -31,6 +31,7 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = user.role;
         token.permissions = user.permissions;
+        token.tutorialCompleted = user.tutorialCompleted;
       }
       return token;
     },
@@ -39,6 +40,7 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
         session.user.permissions = token.permissions as string[];
+        session.user.tutorialCompleted = token.tutorialCompleted as boolean;
       }
       return session;
     }

@@ -6,6 +6,50 @@ import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import admin from 'firebase-admin'; // 👈 ADICIONE ESTA IMPORTAÇÃO
 
 /**
+ * Utility function to convert Firebase Timestamps to JavaScript Dates
+ * This ensures consistent serialization for React Server Components
+ */
+function serializeTimestamps(data: any): any {
+  // Helper function to safely convert timestamp to date
+  const safeToDate = (timestamp: any): Date | undefined => {
+    if (!timestamp) return undefined;
+    if (timestamp instanceof Date) return timestamp;
+    if (typeof timestamp.toDate === 'function') return timestamp.toDate();
+    // If it's a string or number, try to convert it to a Date
+    if (typeof timestamp === 'string' || typeof timestamp === 'number') {
+      const date = new Date(timestamp);
+      return isNaN(date.getTime()) ? undefined : date;
+    }
+    return undefined;
+  };
+
+  // Handle regularClassCredits timestamps
+  let serializedCredits = data.regularClassCredits;
+  if (serializedCredits && Array.isArray(serializedCredits)) {
+    serializedCredits = serializedCredits.map((credit: any) => ({
+      ...credit,
+      grantedAt: safeToDate(credit.grantedAt) || new Date(),
+      expiresAt: safeToDate(credit.expiresAt) || new Date(),
+      usedAt: safeToDate(credit.usedAt),
+    }));
+  }
+
+  return {
+    ...data,
+    createdAt: safeToDate(data.createdAt) || new Date(),
+    updatedAt: safeToDate(data.updatedAt),
+    birthDate: safeToDate(data.birthDate),
+    onboardingCompletedAt: safeToDate(data.onboardingCompletedAt),
+    contractStartDate: safeToDate(data.contractStartDate),
+    deactivatedAt: safeToDate(data.deactivatedAt),
+    subscriptionNextBilling: safeToDate(data.subscriptionNextBilling),
+    subscriptionCreatedAt: safeToDate(data.subscriptionCreatedAt),
+    subscriptionCanceledAt: safeToDate(data.subscriptionCanceledAt),
+    regularClassCredits: serializedCredits,
+  };
+}
+
+/**
  * Busca um usuário pelo ID usando o Firebase Admin SDK.
  * Esta função SÓ DEVE ser usada em ambientes de servidor (API Routes, Server Components).
  * @param userId - O ID do usuário a ser buscado.
@@ -19,8 +63,13 @@ export async function getUserById_Admin(userId: string): Promise<User | null> {
       return null;
     }
 
-    // O 'as User' garante que o tipo retornado corresponda à nossa interface
-    return { id: userDoc.id, ...userDoc.data() } as User;
+    const data = userDoc.data()!;
+    const serializedData = serializeTimestamps(data);
+
+    return {
+      id: userDoc.id,
+      ...serializedData,
+    } as unknown as User;
   } catch (error) {
     console.error("Erro ao buscar usuário com Admin SDK:", error);
     return null;
@@ -36,12 +85,12 @@ export class UserAdminRepository {
     
     return snapshot.docs.map(doc => {
       const data = doc.data();
-      return { 
+      const serializedData = serializeTimestamps(data);
+      
+      return {
         id: doc.id,
-        ...data,
-        createdAt: (data.createdAt as Timestamp).toDate(),
-        birthDate: data.birthDate ? (data.birthDate as Timestamp).toDate() : undefined,
-      } as User;
+        ...serializedData,
+      } as unknown as User;
     });
   }
 
@@ -54,12 +103,12 @@ export class UserAdminRepository {
     }
     
     const data = docSnap.data()!;
+    const serializedData = serializeTimestamps(data);
+    
     return {
       id: docSnap.id,
-      ...data,
-      createdAt: data.createdAt ? (data.createdAt as Timestamp).toDate() : new Date(), // Fallback para data atual
-      birthDate: data.birthDate ? (data.birthDate as Timestamp).toDate() : undefined,
-    } as User;
+      ...serializedData,
+    } as unknown as User;
   }
 
   async findUsersByIds(userIds: string[]): Promise<User[]> {
@@ -72,12 +121,12 @@ export class UserAdminRepository {
 
     return snapshot.docs.map(doc => {
       const data = doc.data();
-      return { 
+      const serializedData = serializeTimestamps(data);
+      
+      return {
         id: doc.id,
-        ...data,
-        createdAt: (data.createdAt as Timestamp).toDate(),
-        birthDate: data.birthDate ? (data.birthDate as Timestamp).toDate() : undefined,
-      } as User;
+        ...serializedData,
+      } as unknown as User;
     });
   }
 
@@ -101,12 +150,12 @@ export class UserAdminRepository {
 
     return snapshot.docs.map(doc => {
       const data = doc.data();
-      return { 
+      const serializedData = serializeTimestamps(data);
+      
+      return {
         id: doc.id,
-        ...data,
-        createdAt: (data.createdAt as Timestamp).toDate(),
-        birthDate: data.birthDate ? (data.birthDate as Timestamp).toDate() : undefined,
-      } as User;
+        ...serializedData,
+      } as unknown as User;
     });
   }
 

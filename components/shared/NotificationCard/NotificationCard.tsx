@@ -17,7 +17,7 @@ export interface Notification {
   title: string;
   message: string;
   type: "info" | "success" | "warning" | "error";
-  timestamp: Date;
+  timestamp: Date | string;
   read: boolean;
   action?: {
     label: string;
@@ -54,15 +54,23 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
     }
   };
 
-  const formatTime = (date: Date) => {
+  const formatTime = (date: Date | string) => {
+    // Convert string to Date if needed
+    const dateObj = typeof date === "string" ? new Date(date) : date;
+
+    // Validate that we have a valid date
+    if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) {
+      return "Invalid date";
+    }
+
     const now = new Date();
     const diffInHours = Math.floor(
-      (now.getTime() - date.getTime()) / (1000 * 60 * 60)
+      (now.getTime() - dateObj.getTime()) / (1000 * 60 * 60)
     );
 
     if (diffInHours < 1) {
       const diffInMinutes = Math.floor(
-        (now.getTime() - date.getTime()) / (1000 * 60)
+        (now.getTime() - dateObj.getTime()) / (1000 * 60)
       );
       return `${diffInMinutes}m`;
     }
@@ -319,7 +327,7 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({
   const unreadCount = notifications.filter((n) => !n.read).length;
   const hasNotifications = notifications.length > 0;
 
-  // Quando colapsado, mostrar apenas o ícone Bell com badge
+  // When collapsed, show only the Bell icon with badge
   if (isCollapsed) {
     return (
       <div className={twMerge("w-full flex justify-center", className)}>
@@ -344,7 +352,7 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({
     );
   }
 
-  // No mobile, mostrar todas as notificações
+  // On mobile, show all notifications
   if (isMobile) {
     return (
       <div className={twMerge("w-full", className)}>
@@ -405,7 +413,7 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({
     );
   }
 
-  // No desktop, mostrar máximo 2 notificações com botão "Ver todas"
+  // On desktop, show maximum 2 notifications with "View all" button
   const displayNotifications = notifications.slice(0, 2);
   const hasMoreNotifications = notifications.length > 2;
 

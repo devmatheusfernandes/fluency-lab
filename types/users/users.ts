@@ -12,6 +12,7 @@ export type User = {
     role: UserRoles;
     permissions: UserPermission[];
     createdAt: Date;
+    updatedAt?: Date; // Campo para armazenar a data de última atualização
     isActive: boolean;
     deactivatedAt?: Date; //If the user is deactivated, this field will be filled
 
@@ -19,6 +20,7 @@ export type User = {
     interfaceLanguage: string;
     theme?: 'light' | 'dark';
     tutorialCompleted: boolean;
+    onboardingCompletedAt?: Date; // Campo para armazenar quando o onboarding foi concluído
 
     //PERSONAL INFO
     birthDate?: Date; //Required
@@ -61,6 +63,16 @@ export type User = {
     stripeSubscriptionId?: string | null;
     subscriptionStatus?: 'active' | 'canceled' | 'incomplete' | null;
     lastPaymentIntentId?: string | null;
+
+    // MERCADO PAGO SUBSCRIPTION FIELDS
+    mercadoPagoCustomerId?: string | null;
+    mercadoPagoSubscriptionId?: string | null;
+    subscriptionPaymentMethod?: 'pix' | 'credit_card' | null;
+    subscriptionBillingDay?: number; // Day of month for billing (1-28)
+    subscriptionNextBilling?: Date;
+    subscriptionCreatedAt?: Date;
+    subscriptionCanceledAt?: Date;
+    subscriptionCancellationReason?: string;
 
     //TEACHER
     vacationDaysRemaining?: number; // <<< NOVO CAMPO ADICIONADO

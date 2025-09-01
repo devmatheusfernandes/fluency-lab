@@ -9,7 +9,7 @@ const creditService = new CreditService();
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { studentId: string } }
+  { params }: { params: Promise<{ studentId: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -25,7 +25,7 @@ export async function GET(
   }
 
   try {
-    const { studentId } = params;
+    const { studentId } = await params;
     
     if (!studentId) {
       return NextResponse.json({ error: 'ID do estudante é obrigatório' }, { status: 400 });

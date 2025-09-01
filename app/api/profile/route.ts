@@ -1,23 +1,22 @@
 // app/api/profile/route.ts
 
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { UserService } from '@/services/userService';
+import { requireAuth } from '@/lib/auth';
 
 const userService = new UserService();
 
 export async function PUT(request: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
-  }
-
   try {
+    const user = await requireAuth();
+    
     const profileData = await request.json();
-    await userService.updateUserProfile(session.user.id, profileData);
+    await userService.updateUserProfile(user.id, profileData);
     return NextResponse.json({ message: 'Perfil atualizado com sucesso.' });
   } catch (error: any) {
+    if (error.message === "Authentication required") {
+      return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

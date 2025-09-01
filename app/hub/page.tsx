@@ -13,22 +13,22 @@ export default function HubEntryPoint() {
     if (status === "authenticated" && session?.user?.role) {
       const userRole = session.user.role;
 
-      // ATUALIZADO: Mapeia cada role para a nova estrutura de URL
+      // UPDATED: Maps each role to the new URL structure
       const roleToPathMap: { [key: string]: string } = {
         admin: "hub/plataforma/admin",
         teacher: "hub/plataforma/teacher",
         occasional_student: "hub/plataforma/occasional-student",
-        student: "hub/plataforma/student",
+        student: "hub/plataforma/profile",
       };
 
       const destination = roleToPathMap[userRole] || "/";
 
-      // router.replace para não adicionar esta página ao histórico do navegador
+      // router.replace to not add this page to browser history
       router.replace(destination);
     }
   }, [status, session, router]);
 
-  // Exibe uma tela de carregamento enquanto a sessão é verificada
+  // Displays a loading screen while session is being verified
   return (
     <div className="flex max-h-screen max-w-screen justify-center items-center">
       <Loading />

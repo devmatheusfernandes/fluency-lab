@@ -9,7 +9,7 @@ const userService = new UserService();
 
 export async function GET(
   request: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user || !['admin', 'manager'].includes(session.user.role)) {
@@ -17,7 +17,8 @@ export async function GET(
   }
 
   try {
-    const paymentHistory = await userService.getUserFinancialHistory(params.userId);
+    const { userId } = await params;
+    const paymentHistory = await userService.getUserFinancialHistory(userId);
     return NextResponse.json(paymentHistory);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

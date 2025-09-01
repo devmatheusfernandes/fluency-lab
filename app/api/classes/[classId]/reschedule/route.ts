@@ -5,7 +5,7 @@ import { schedulingService } from '@/services/schedulingService';
 
 export async function POST(
     request: NextRequest,
-    { params }: { params: { classId: string } }
+    { params }: { params: Promise<{ classId: string }> }
 ) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -13,7 +13,7 @@ export async function POST(
     }
 
     try {
-        const { classId } = params;
+        const { classId } = await params;
         const { newScheduledAt, reason, availabilitySlotId } = await request.json();
         const reschedulerId = session.user.id;
 

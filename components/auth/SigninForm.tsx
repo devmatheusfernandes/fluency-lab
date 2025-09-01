@@ -1,16 +1,29 @@
 "use client";
 import { useAuth } from "@/hooks/useAuth";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function SigninForm() {
-  const { login, isLoading, error } = useAuth();
+  const { login, isLoading, error, isAuthenticated } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const router = useRouter();
+
+  // If user is already authenticated, redirect to hub
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/hub");
+    }
+  }, [isAuthenticated, router]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     login(email, password);
   };
+
+  if (isAuthenticated) {
+    return null; // Don't render form if already authenticated
+  }
 
   return (
     <form onSubmit={handleSubmit}>

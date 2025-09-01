@@ -732,12 +732,19 @@ export class SchedulingService {
     if (!student.contractStartDate || !student.contractLengthMonths) {
       throw new Error(`O aluno ${studentId} não possui data de início ou duração de contrato definidas.`);
     }
+    
+    // Validar se contractStartDate é uma data válida
+    const contractStartDate = new Date(student.contractStartDate);
+    if (isNaN(contractStartDate.getTime())) {
+      throw new Error(`A data de início do contrato para o aluno ${studentId} é inválida.`);
+    }
+    
     if (!template || !template.days || template.days.length === 0) {
       throw new Error(`Nenhum template de horário encontrado para o aluno ${studentId}.`);
     }
 
     // 3. Calcular o período de geração das aulas de forma segura
-    const startDateString = new Date(student.contractStartDate).toISOString().split('T')[0];
+    const startDateString = contractStartDate.toISOString().split('T')[0];
     const [year, month, day] = startDateString.split('-').map(Number);
     const startDate = new Date(year, month - 1, day);
     const endDate = new Date(startDate);

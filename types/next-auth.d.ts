@@ -11,6 +11,7 @@ declare module "next-auth/jwt" {
     id: string;
     role?: UserRoles;
     permissions?: UserPermission[];
+    tutorialCompleted?: boolean;
   }
 }
 
@@ -20,6 +21,7 @@ declare module "next-auth" {
     id: string;
     role?: UserRoles;
     permissions?: UserPermission[];
+    tutorialCompleted?: boolean;
   }
 
   interface Session extends DefaultSession {
@@ -27,6 +29,7 @@ declare module "next-auth" {
       id: string;
       role?: UserRoles;
       permissions?: UserPermission[];
+      tutorialCompleted?: boolean;
     } & DefaultSession["user"]; // Mantém os campos padrão como name, email, image
   }
 }

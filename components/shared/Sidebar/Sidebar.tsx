@@ -18,6 +18,7 @@ import {
   NotificationBadge,
   Notification,
 } from "../NotificationCard/NotificationCard";
+import { signOut } from "next-auth/react";
 
 // --- Type Definitions ---
 export interface SubItem {
@@ -40,9 +41,7 @@ interface SidebarItemProps {
 }
 
 const handleLogout = () => {
-  // Sua lógica de logout aqui
-  console.log("Fazendo logout...");
-  // Exemplo: limpar tokens, redirecionar, etc.
+  signOut({ callbackUrl: "/" });
 };
 
 const SidebarItem: React.FC<SidebarItemProps> = ({ item, isCollapsed }) => {

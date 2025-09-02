@@ -4,6 +4,7 @@ import { adminAuth } from '@/lib/firebase/admin';
 import { AnnouncementService } from '@/services/announcementService';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { UserRoles } from '@/types/users/userRoles';
 
 const announcementService = new AnnouncementService();
 
@@ -15,14 +16,22 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Type assertion to convert string role to UserRoles enum
+    const userRole = session.user.role as UserRoles | undefined;
+    
+    // Check if userRole is valid
+    if (!userRole || !Object.values(UserRoles).includes(userRole)) {
+      return NextResponse.json({ error: 'Invalid user role' }, { status: 400 });
+    }
+
     const announcements = await announcementService.getAnnouncementsForUser(
       session.user.id,
-      session.user.role
+      userRole
     );
     
     const unreadCount = await announcementService.getUnreadAnnouncementCount(
       session.user.id,
-      session.user.role
+      userRole
     );
 
     return NextResponse.json({ announcements, unreadCount });

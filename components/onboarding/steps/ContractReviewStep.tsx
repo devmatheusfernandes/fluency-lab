@@ -4,29 +4,17 @@
 import React, { useState, useRef } from "react";
 import { OnboardingStepProps } from "../OnboardingModal";
 import { Card } from "@/components/ui/Card";
-import { Heading } from "@/components/ui/Heading";
 import { Text } from "@/components/ui/Text";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Checkbox } from "@/components/ui/Checkbox";
-import {
-  FileText,
-  ScrollText,
-  CheckCircle,
-  AlertCircle,
-  Calendar,
-  User,
-  MapPin,
-  Phone,
-  CreditCard,
-  Signature,
-  Shield,
-} from "lucide-react";
+
 import { SignatureFormData } from "@/components/contract/contrato-types";
 import ContratoPDF from "@/components/contract/ContratoPDF";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { formatPrice } from "@/config/pricing";
+import { LinkRoundAngle } from "@solar-icons/react/ssr";
 
 export const ContractReviewStep: React.FC<OnboardingStepProps> = ({
   data,
@@ -246,15 +234,10 @@ export const ContractReviewStep: React.FC<OnboardingStepProps> = ({
       <div className="p-8 text-center">
         <div className="max-w-2xl mx-auto">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-800 rounded-full mb-6">
-            <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-300" />
+            <LinkRoundAngle className="w-8 h-8 text-green-600 dark:text-green-300" />
           </div>
 
-          <Heading
-            size="2xl"
-            className="mb-4 text-green-800 dark:text-green-100"
-          >
-            Contrato Assinado com Sucesso!
-          </Heading>
+          <Text variant="title">Contrato Assinado com Sucesso!</Text>
 
           <Text size="lg" className="text-green-700 dark:text-green-200 mb-8">
             Seu contrato foi processado e está válido. Agora vamos para o
@@ -279,12 +262,10 @@ export const ContractReviewStep: React.FC<OnboardingStepProps> = ({
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full mb-4">
-            <FileText className="w-8 h-8 text-white" />
+            <LinkRoundAngle className="w-8 h-8 text-white" />
           </div>
 
-          <Heading size="2xl" className="mb-4">
-            Revisão e Assinatura do Contrato
-          </Heading>
+          <Text variant="title">Revisão e Assinatura do Contrato</Text>
           <Text size="lg" className="text-gray-600 dark:text-gray-300">
             Revise os termos do seu contrato e preencha seus dados para a
             assinatura digital.
@@ -293,14 +274,12 @@ export const ContractReviewStep: React.FC<OnboardingStepProps> = ({
 
         {/* Contract Summary */}
         <Card className="p-6 mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 border border-blue-200 dark:border-blue-700">
-          <Heading size="lg" className="mb-4 text-blue-900 dark:text-blue-100">
-            Resumo do Seu Contrato
-          </Heading>
+          <Text variant="title">Resumo do Seu Contrato</Text>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-300" />
+                <LinkRoundAngle className="w-5 h-5 text-blue-600 dark:text-blue-300" />
                 <div>
                   <Text className="font-medium">Duração do Contrato</Text>
                   <Text size="sm" className="text-gray-600 dark:text-gray-300">
@@ -310,7 +289,7 @@ export const ContractReviewStep: React.FC<OnboardingStepProps> = ({
               </div>
 
               <div className="flex items-center gap-3">
-                <User className="w-5 h-5 text-blue-600 dark:text-blue-300" />
+                <LinkRoundAngle className="w-5 h-5 text-blue-600 dark:text-blue-300" />
                 <div>
                   <Text className="font-medium">Tipo de Estudante</Text>
                   <Text size="sm" className="text-gray-600 dark:text-gray-300">
@@ -322,7 +301,7 @@ export const ContractReviewStep: React.FC<OnboardingStepProps> = ({
 
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-300" />
+                <LinkRoundAngle className="w-5 h-5 text-blue-600 dark:text-blue-300" />
                 <div>
                   <Text className="font-medium">Valor Mensal</Text>
                   <Text size="sm" className="text-gray-600 dark:text-gray-300">
@@ -337,7 +316,7 @@ export const ContractReviewStep: React.FC<OnboardingStepProps> = ({
               </div>
 
               <div className="flex items-center gap-3">
-                <Shield className="w-5 h-5 text-blue-600 dark:text-blue-300" />
+                <LinkRoundAngle className="w-5 h-5 text-blue-600 dark:text-blue-300" />
                 <div>
                   <Text className="font-medium">Valor Total do Contrato</Text>
                   <Text size="sm" className="text-gray-600 dark:text-gray-300">
@@ -355,7 +334,7 @@ export const ContractReviewStep: React.FC<OnboardingStepProps> = ({
             onClick={() => setShowContract(!showContract)}
             className="flex items-center gap-2"
           >
-            <ScrollText className="w-4 h-4" />
+            <LinkRoundAngle className="w-4 h-4" />
             {showContract ? "Ocultar" : "Visualizar"} Contrato Completo
           </Button>
         </div>
@@ -388,7 +367,7 @@ export const ContractReviewStep: React.FC<OnboardingStepProps> = ({
           <div className="text-center">
             <Card className="p-6 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-200 dark:border-yellow-700 mb-6">
               <div className="flex items-center justify-center gap-3 mb-3">
-                <AlertCircle className="w-6 h-6 text-yellow-600 dark:text-yellow-300" />
+                <LinkRoundAngle className="w-6 h-6 text-yellow-600 dark:text-yellow-300" />
                 <Text className="font-semibold text-yellow-900 dark:text-yellow-100">
                   Leia com atenção
                 </Text>
@@ -405,16 +384,14 @@ export const ContractReviewStep: React.FC<OnboardingStepProps> = ({
               size="lg"
               className="px-8 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold"
             >
-              <Signature className="w-5 h-5 mr-2" />
+              <LinkRoundAngle className="w-5 h-5 mr-2" />
               Prosseguir para Assinatura Digital
             </Button>
           </div>
         ) : (
           /* Signature Mode */
           <Card className="p-8">
-            <Heading size="lg" className="mb-6 text-center">
-              Dados para Assinatura Digital
-            </Heading>
+            <Text variant="title">Dados para Assinatura Digital</Text>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
@@ -581,7 +558,7 @@ export const ContractReviewStep: React.FC<OnboardingStepProps> = ({
                 isLoading={isSubmitting}
                 className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
               >
-                <Signature className="w-4 h-4 mr-2" />
+                <LinkRoundAngle className="w-4 h-4 mr-2" />
                 Assinar Contrato Digitalmente
               </Button>
             </div>

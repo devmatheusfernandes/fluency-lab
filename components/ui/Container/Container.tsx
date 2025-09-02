@@ -8,7 +8,7 @@ interface ContainerProps {
 export const Container = ({ children, className = "" }: ContainerProps) => {
   return (
     <div
-      className={`flex flex-col gap-2 min-w-screen min-h-screen h-full p-2 bg-container transition-colors duration-300 ${className}`}
+      className={`w-full bg-container rounded-b-lg transition-colors duration-300 overflow-y-scroll no-scrollbar gap-2 p-3 ${className}`}
     >
       {children}
     </div>

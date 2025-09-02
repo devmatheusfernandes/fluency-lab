@@ -40,8 +40,8 @@ const Loading = React.forwardRef<HTMLDivElement, LoadingProps>(
     ref
   ) => {
     const sizeClasses = {
-      sm: "w-4 h-4",
-      base: "w-6 h-6",
+      sm: "w-5 h-5",
+      base: "w-8 h-8",
       lg: "w-8 h-8",
     };
 
@@ -54,7 +54,7 @@ const Loading = React.forwardRef<HTMLDivElement, LoadingProps>(
     const renderSpinner = () => (
       <div
         className={twMerge(
-          "animate-spin rounded-full border-2 border-surface-2 border-t-primary",
+          "animate-spin rounded-full border-4 border-surface-2 border-t-primary",
           sizeClasses[size]
         )}
       />
@@ -70,8 +70,8 @@ const Loading = React.forwardRef<HTMLDivElement, LoadingProps>(
               size === "sm"
                 ? "w-2 h-2"
                 : size === "base"
-                ? "w-3 h-3"
-                : "w-4 h-4"
+                  ? "w-2 h-2"
+                  : "w-2 h-2"
             )}
             style={{
               animationDelay: `${i * 0.2}s`,
@@ -91,8 +91,8 @@ const Loading = React.forwardRef<HTMLDivElement, LoadingProps>(
               size === "sm"
                 ? "w-2 h-2"
                 : size === "base"
-                ? "w-3 h-3"
-                : "w-4 h-4"
+                  ? "w-3 h-3"
+                  : "w-4 h-4"
             )}
             style={{
               animationDelay: `${i * 0.15}s`,

@@ -2,6 +2,12 @@
 import { SidebarItemType } from "@/components/shared/Sidebar/Sidebar";
 import { UserRoles } from "@/types/users/userRoles";
 import {
+  Gameboy,
+  MonitorSmartphone,
+  Notebook,
+  SettingsMinimalistic,
+} from "@solar-icons/react/ssr";
+import {
   Home,
   UsersGroupRounded,
   Calendar,
@@ -91,19 +97,34 @@ const occasionalStudentItems: SidebarItemType[] = [
 
 const studentItems: SidebarItemType[] = [
   {
-    href: "/hub/plataforma/profile",
+    href: "/hub/plataforma/student/meu-perfil",
     label: "Meu Perfil",
     icon: <Home />,
   },
   {
     href: "/hub/plataforma/student/schedule",
-    label: "Agendar Aula",
-    icon: <Calendar />,
+    label: "Caderno",
+    icon: <Notebook weight="BoldDuotone" />,
   },
   {
     href: "/hub/plataforma/student/my-classes",
-    label: "Minhas Aulas",
-    icon: <List />,
+    label: "Prática",
+    icon: <Gameboy weight="BoldDuotone" />,
+  },
+  {
+    href: "/hub/plataforma/profile",
+    label: "Calendário",
+    icon: <Calendar weight="BoldDuotone" />,
+  },
+  {
+    href: "/hub/plataforma/student/schedule",
+    label: "Cursos",
+    icon: <MonitorSmartphone weight="BoldDuotone" />,
+  },
+  {
+    href: "/hub/plataforma/student/my-classes",
+    label: "Configuração",
+    icon: <SettingsMinimalistic weight="BoldDuotone" />,
   },
 ];
 

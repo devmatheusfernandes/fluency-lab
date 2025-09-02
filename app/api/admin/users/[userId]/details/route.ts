@@ -13,7 +13,7 @@ export async function GET(
 ) {
   const session = await getServerSession(authOptions);
   // Apenas Admins e Managers podem aceder a esta rota
-  if (!session?.user || !['admin', 'manager'].includes(session.user.role)) {
+  if (!session?.user || !session.user.role || !['admin', 'manager'].includes(session.user.role)) {
     return NextResponse.json({ error: 'Acesso não autorizado.' }, { status: 403 });
   }
 

@@ -5,12 +5,7 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { twMerge } from "tailwind-merge";
-import {
-  ArrowDown,
-  CloseCircle,
-  HamburgerMenu,
-  Bell,
-} from "@solar-icons/react/ssr";
+import { ArrowDown, CloseCircle, HamburgerMenu } from "@solar-icons/react/ssr";
 import { useSidebar } from "@/context/SidebarContext";
 import { UserCard, UserData } from "../UserCard/UserCard";
 import {
@@ -54,8 +49,8 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ item, isCollapsed }) => {
         <Collapsible.Trigger className="w-full">
           <div
             className={twMerge(
-              "flex items-center h-12 px-3 py-3 rounded-lg text-paragraph hover:bg-surface-hover transition-colors duration-200",
-              isActive && "bg-surface-hover text-title",
+              "flex items-center h-12 px-3 py-3 rounded-lg text-paragraph hover:bg-container transition-colors duration-200",
+              isActive && "bg-subcontainer text-title",
               isCollapsed && "justify-center px-3"
             )}
           >
@@ -111,8 +106,8 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ item, isCollapsed }) => {
     <Link
       href={item.href}
       className={twMerge(
-        "flex items-center h-12 px-3 py-3 rounded-lg text-paragraph hover:text-primary-hover hover:bg-primary/5 transition-all ease-in-out duration-300",
-        isActive && "bg-primary/15 text-primary font-medium",
+        "flex items-center h-12 px-3 py-3 rounded-lg text-paragraph hover:text-primary hover:bg-primary/15 transition-all ease-in-out duration-300",
+        isActive && "bg-primary/25 text-primary-text font-semibold",
         isCollapsed && "justify-center px-3"
       )}
     >

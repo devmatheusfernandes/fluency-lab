@@ -4,7 +4,6 @@
 import React from "react";
 import { OnboardingStepProps } from "../OnboardingModal";
 import { Card } from "@/components/ui/Card";
-import { Heading } from "@/components/ui/Heading";
 import { Text } from "@/components/ui/Text";
 import { Input } from "@/components/ui/Input";
 import {
@@ -15,17 +14,15 @@ import {
   SelectOption,
 } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
-import {
-  User,
-  Globe,
-  Palette,
-  Sun,
-  Moon,
-  Monitor,
-  Languages,
-  Sparkles,
-} from "lucide-react";
+
 import { useSession } from "next-auth/react";
+import {
+  LinkRoundAngle,
+  Moon,
+  Speaker,
+  Sun,
+  User,
+} from "@solar-icons/react/ssr";
 
 interface ThemeOptionProps {
   value: "light" | "dark" | "system";
@@ -138,9 +135,7 @@ export const BasicInfoStep: React.FC<OnboardingStepProps> = ({
             <User className="w-8 h-8 text-white" />
           </div>
 
-          <Heading size="2xl" className="mb-4">
-            Vamos personalizar sua experiência
-          </Heading>
+          <Text variant="title">Vamos personalizar sua experiência</Text>
           <Text size="lg" className="text-gray-600 dark:text-gray-300">
             Essas informações nos ajudarão a criar uma experiência mais
             personalizada para você.
@@ -153,10 +148,10 @@ export const BasicInfoStep: React.FC<OnboardingStepProps> = ({
           <Card className="p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 bg-blue-100 dark:bg-blue-800 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-blue-600 dark:text-blue-300" />
+                <Speaker className="w-5 h-5 text-blue-600 dark:text-blue-300" />
               </div>
               <div>
-                <Heading size="lg">Como gostaria de ser chamado?</Heading>
+                <Text variant="title">Como gostaria de ser chamado?</Text>
                 <Text size="sm" className="text-gray-600 dark:text-gray-300">
                   Escolha um apelido ou use seu nome completo
                 </Text>
@@ -190,10 +185,10 @@ export const BasicInfoStep: React.FC<OnboardingStepProps> = ({
           <Card className="p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 bg-green-100 dark:bg-green-800 rounded-lg flex items-center justify-center">
-                <Languages className="w-5 h-5 text-green-600 dark:text-green-300" />
+                <LinkRoundAngle className="w-5 h-5 text-green-600 dark:text-green-300" />
               </div>
               <div>
-                <Heading size="lg">Idioma da interface</Heading>
+                <Text variant="title">Idioma da interface</Text>
                 <Text size="sm" className="text-gray-600 dark:text-gray-300">
                   Em que idioma você prefere navegar pela plataforma?
                 </Text>
@@ -221,10 +216,10 @@ export const BasicInfoStep: React.FC<OnboardingStepProps> = ({
           <Card className="p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 bg-purple-100 dark:bg-purple-800 rounded-lg flex items-center justify-center">
-                <Palette className="w-5 h-5 text-purple-600 dark:text-purple-300" />
+                <LinkRoundAngle className="w-5 h-5 text-purple-600 dark:text-purple-300" />
               </div>
               <div>
-                <Heading size="lg">Aparência</Heading>
+                <Text variant="title">Aparência</Text>
                 <Text size="sm" className="text-gray-600 dark:text-gray-300">
                   Escolha o tema que mais combina com você
                 </Text>

@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/Select";
 import { Switch } from "@/components/ui/Switch";
+import TwoFactorSetup from "./TwoFactorSetup";
 
 interface SettingsFormProps {
   currentLanguage: string;
@@ -67,6 +68,15 @@ export default function SettingsForm({
             />
           </div>
         </div>
+      </section>
+
+      <div className="border-t border-surface-2" />
+
+      <section>
+        <Text variant="subtitle" size="lg" weight="semibold">
+          Security
+        </Text>
+        <TwoFactorSetup />
       </section>
 
       <div className="border-t border-surface-2" />

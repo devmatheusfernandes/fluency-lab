@@ -19,7 +19,7 @@ const DropdownMenuContent = React.forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       className={twMerge(
-        "z-50 min-w-[8rem] bg-surface-0/50 overflow-hidden rounded-2xl p-2 text-paragraph shadow-2xl animate-in fade-in-0 zoom-in-95 backdrop-blur-sm",
+        "z-50 min-w-[8rem] bg-background/30 overflow-hidden rounded-2xl p-2 text-paragraph shadow-2xl animate-in fade-in-0 zoom-in-95 backdrop-blur-sm",
         className
       )}
       {...props}
@@ -38,7 +38,7 @@ const DropdownMenuItem = React.forwardRef<
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={twMerge(
-      "relative flex cursor-default select-none items-center rounded-xl px-3 py-2.5 text-base outline-none transition-all duration-200 ease-in-out focus:bg-primary/10 focus:text-primary hover:bg-surface-hover hover:text-paragraph data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex cursor-default select-none items-center rounded-xl px-4 py-2.5 text-base outline-none transition-all duration-200 ease-in-out hover:bg-background dark:hover:bg-background/40 hover:text-paragraph data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       inset && "pl-8",
       className
     )}

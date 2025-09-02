@@ -41,6 +41,8 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { Header } from "../ui/Header";
 import { MenuDots, UserPlus } from "@solar-icons/react";
 import { useRouter } from "next/navigation";
+import { Container } from "../ui/Container";
+import { SubContainer } from "../ui/SubContainer";
 
 export default function UserManagementTable() {
   const {
@@ -102,7 +104,7 @@ export default function UserManagementTable() {
   };
 
   return (
-    <Card>
+    <SubContainer>
       <Header
         heading={"Gerenciamento de Usuários"}
         icon={
@@ -144,24 +146,24 @@ export default function UserManagementTable() {
       {isLoadingUsers && <Loading />}
 
       {!isLoadingUsers && users.length > 0 && (
-        <div className="rounded-lg border border-surface-2 overflow-hidden">
+        <div className="rounded-lg border-1 border-card/95 bg-card/75 p-4 overflow-hidden">
           <Table>
-            <TableHeader className="bg-surface-1">
+            <TableHeader>
               <TableRow>
                 <TableHead className="text-subtitle">Usuário</TableHead>
                 <TableHead className="text-subtitle">Tipo</TableHead>
                 <TableHead className="text-subtitle">Status</TableHead>
-                <TableHead className="text-right text-subtitle">
+                <TableHead className="text-right text-paragraph">
                   Ações
                 </TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody className="bg-container divide-y divide-surface-2">
+            <TableBody className="divide-y divide-gray-500">
               {users.map((user) => (
                 <TableRow
                   key={user.id}
                   onClick={() => handleRowClick(user.id, user.name)}
-                  className="cursor-pointer hover:bg-surface-hover"
+                  className="cursor-pointer hover:bg-card/95"
                 >
                   <TableCell>
                     <div className="flex items-center">
@@ -192,7 +194,7 @@ export default function UserManagementTable() {
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
+                        <Button variant="glass" className="h-8 w-8 p-0">
                           <span className="sr-only">Abrir menu</span>
                           <MenuDots weight="BoldDuotone" className="h-4 w-4" />
                         </Button>
@@ -212,7 +214,7 @@ export default function UserManagementTable() {
                         >
                           Editar Perfil
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-danger focus:bg-danger/10 focus:text-danger">
+                        <DropdownMenuItem className="text-danger hover:bg-danger/20 hover:text-danger">
                           Deletar
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -231,6 +233,6 @@ export default function UserManagementTable() {
         onUserCreated={handleUserCreated}
         isLoading={isLoadingUsers}
       />
-    </Card>
+    </SubContainer>
   );
 }

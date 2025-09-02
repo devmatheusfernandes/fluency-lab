@@ -4,23 +4,10 @@
 import React, { useState } from "react";
 import { OnboardingStepProps } from "../OnboardingModal";
 import { Card } from "@/components/ui/Card";
-import { Heading } from "@/components/ui/Heading";
 import { Text } from "@/components/ui/Text";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import {
-  Calendar,
-  CreditCard,
-  BookOpen,
-  Video,
-  Clock,
-  Users,
-  BarChart3,
-  MessageSquare,
-  ArrowRight,
-  Play,
-  Pause,
-} from "lucide-react";
+import { LinkRoundAngle } from "@solar-icons/react/ssr";
 
 interface FeatureCardProps {
   icon: React.ReactNode;
@@ -84,9 +71,9 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
         <div className={classes.iconColor}>{icon}</div>
       </div>
 
-      <Heading size="lg" className="mb-3">
+      <Text size="lg" className="mb-3">
         {title}
-      </Heading>
+      </Text>
       <Text className="text-gray-600 dark:text-gray-300 mb-4">
         {description}
       </Text>
@@ -113,7 +100,7 @@ export const PlatformOverviewStep: React.FC<OnboardingStepProps> = ({
 
   const features = [
     {
-      icon: <Calendar className="w-6 h-6" />,
+      icon: <LinkRoundAngle className="w-6 h-6" />,
       title: "Agendamento Inteligente",
       description:
         "Agende suas aulas de forma fácil e flexível, de acordo com sua disponibilidade e preferências.",
@@ -125,7 +112,7 @@ export const PlatformOverviewStep: React.FC<OnboardingStepProps> = ({
       color: "blue" as const,
     },
     {
-      icon: <Video className="w-6 h-6" />,
+      icon: <LinkRoundAngle className="w-6 h-6" />,
       title: "Aulas Online ao Vivo",
       description:
         "Tenha aulas personalizadas com professores qualificados através de videoconferência.",
@@ -137,7 +124,7 @@ export const PlatformOverviewStep: React.FC<OnboardingStepProps> = ({
       color: "green" as const,
     },
     {
-      icon: <BarChart3 className="w-6 h-6" />,
+      icon: <LinkRoundAngle className="w-6 h-6" />,
       title: "Acompanhe seu Progresso",
       description:
         "Visualize seu desenvolvimento através de relatórios detalhados e métricas de aprendizado.",
@@ -149,7 +136,7 @@ export const PlatformOverviewStep: React.FC<OnboardingStepProps> = ({
       color: "purple" as const,
     },
     {
-      icon: <CreditCard className="w-6 h-6" />,
+      icon: <LinkRoundAngle className="w-6 h-6" />,
       title: "Pagamentos Flexíveis",
       description:
         "Escolha entre planos mensais com PIX ou cartão de crédito, com total transparência.",
@@ -168,9 +155,9 @@ export const PlatformOverviewStep: React.FC<OnboardingStepProps> = ({
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <Heading size="2xl" className="mb-4">
+          <Text size="2xl" className="mb-4">
             Conheça a Plataforma Fluency Lab
-          </Heading>
+          </Text>
           <Text
             size="lg"
             className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto"
@@ -185,9 +172,7 @@ export const PlatformOverviewStep: React.FC<OnboardingStepProps> = ({
         <Card className="p-6 mb-8 bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900/30">
           <div className="flex flex-col md:flex-row items-center gap-6">
             <div className="flex-1">
-              <Heading size="lg" className="mb-3">
-                Veja como funciona na prática
-              </Heading>
+              <Text variant="title">Veja como funciona na prática</Text>
               <Text className="text-gray-600 dark:text-gray-300 mb-4">
                 Assista a este vídeo rápido para entender como você vai usar a
                 plataforma no seu dia a dia de estudos.
@@ -197,9 +182,9 @@ export const PlatformOverviewStep: React.FC<OnboardingStepProps> = ({
                 className="flex items-center gap-2"
               >
                 {isPlaying ? (
-                  <Pause className="w-4 h-4" />
+                  <LinkRoundAngle className="w-4 h-4" />
                 ) : (
-                  <Play className="w-4 h-4" />
+                  <LinkRoundAngle className="w-4 h-4" />
                 )}
                 {isPlaying ? "Pausar" : "Assistir"} demonstração (2 min)
               </Button>
@@ -209,7 +194,7 @@ export const PlatformOverviewStep: React.FC<OnboardingStepProps> = ({
               {isPlaying ? (
                 <div className="text-center">
                   <div className="animate-pulse">
-                    <Video className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+                    <LinkRoundAngle className="w-12 h-12 mx-auto mb-2 text-gray-400" />
                     <Text size="sm" className="text-gray-500">
                       Reproduzindo...
                     </Text>
@@ -222,7 +207,7 @@ export const PlatformOverviewStep: React.FC<OnboardingStepProps> = ({
                   className="flex flex-col items-center gap-2 h-full w-full"
                 >
                   <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center">
-                    <Play className="w-8 h-8 text-white ml-1" />
+                    <LinkRoundAngle className="w-8 h-8 text-white ml-1" />
                   </div>
                   <Text size="sm" className="text-gray-600">
                     Clique para assistir
@@ -243,9 +228,9 @@ export const PlatformOverviewStep: React.FC<OnboardingStepProps> = ({
         {/* Learning Path Preview */}
         <Card className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 border border-blue-200 dark:border-blue-700">
           <div className="text-center mb-6">
-            <Heading size="lg" className="mb-3">
+            <Text size="lg" className="mb-3">
               Sua jornada de aprendizado
-            </Heading>
+            </Text>
             <Text className="text-gray-600 dark:text-gray-300">
               Veja como será sua experiência desde o primeiro dia até a fluência
             </Text>
@@ -283,7 +268,7 @@ export const PlatformOverviewStep: React.FC<OnboardingStepProps> = ({
                   {item.desc}
                 </Text>
                 {index < 3 && (
-                  <ArrowRight className="w-4 h-4 text-gray-400 mx-auto mt-2 hidden md:block" />
+                  <LinkRoundAngle className="w-4 h-4 text-gray-400 mx-auto mt-2 hidden md:block" />
                 )}
               </div>
             ))}

@@ -4,6 +4,7 @@ import { stripe } from '@/lib/stripe/stripe';
 import { UserRoles } from '@/types/users/userRoles';
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
+import { AuditService } from '@/services/auditService';
 // Não precisamos mais do UserRepository aqui
 // import { UserRepository } from '@/repositories/userRepository';
 
@@ -86,6 +87,18 @@ export class PaymentService {
       }
     });
 
+    // Log the checkout session creation
+    await AuditService.logEvent(
+      userId,
+      'CHECKOUT_SESSION_CREATED',
+      'payment',
+      {
+        priceId,
+        credits,
+        sessionId: session.id
+      }
+    );
+
     return session;
   }
 
@@ -102,5 +115,16 @@ export class PaymentService {
 
     const userRef = adminDb.collection('users').doc(userId);
     await userRef.update(updatedData);
+    
+    // Log the payment fulfillment
+    await AuditService.logEvent(
+      userId,
+      'PAYMENT_FULFILLED',
+      'payment',
+      {
+        credits,
+        stripeCustomerId
+      }
+    );
   }
 }

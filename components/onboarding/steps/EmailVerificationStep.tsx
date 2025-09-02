@@ -4,19 +4,12 @@
 import React, { useState, useEffect } from "react";
 import { OnboardingStepProps } from "../OnboardingModal";
 import { Card } from "@/components/ui/Card";
-import { Heading } from "@/components/ui/Heading";
 import { Text } from "@/components/ui/Text";
 import { Button } from "@/components/ui/Button";
-import {
-  Mail,
-  CheckCircle,
-  Clock,
-  RefreshCw,
-  AlertCircle,
-  Shield,
-} from "lucide-react";
+
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
+import { LinkRoundAngle } from "@solar-icons/react/ssr";
 
 export const EmailVerificationStep: React.FC<OnboardingStepProps> = ({
   data,
@@ -89,7 +82,7 @@ export const EmailVerificationStep: React.FC<OnboardingStepProps> = ({
     return (
       <div className="p-8 flex items-center justify-center">
         <div className="text-center">
-          <RefreshCw className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-4" />
+          <LinkRoundAngle className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-4" />
           <Text>Verificando status do email...</Text>
         </div>
       </div>
@@ -109,17 +102,17 @@ export const EmailVerificationStep: React.FC<OnboardingStepProps> = ({
             }`}
           >
             {verificationStatus === "verified" ? (
-              <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-300" />
+              <LinkRoundAngle className="w-8 h-8 text-green-600 dark:text-green-300" />
             ) : (
-              <Mail className="w-8 h-8 text-yellow-600 dark:text-yellow-300" />
+              <LinkRoundAngle className="w-8 h-8 text-yellow-600 dark:text-yellow-300" />
             )}
           </div>
 
-          <Heading size="2xl" className="mb-4">
+          <Text variant="title">
             {verificationStatus === "verified"
               ? "Email Verificado!"
               : "Verificação de Email"}
-          </Heading>
+          </Text>
 
           <Text size="lg" className="text-gray-600 dark:text-gray-300">
             {verificationStatus === "verified"
@@ -132,13 +125,13 @@ export const EmailVerificationStep: React.FC<OnboardingStepProps> = ({
           /* Email Verified Content */
           <Card className="p-6 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700">
             <div className="text-center">
-              <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
-              <Heading
+              <LinkRoundAngle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+              <Text
                 size="lg"
                 className="text-green-800 dark:text-green-100 mb-2"
               >
                 Tudo certo!
-              </Heading>
+              </Text>
               <Text className="text-green-700 dark:text-green-200 mb-6">
                 Seu email <strong>{session?.user?.email}</strong> foi verificado
                 com sucesso. Você receberá todas as notificações importantes
@@ -147,11 +140,11 @@ export const EmailVerificationStep: React.FC<OnboardingStepProps> = ({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div className="flex items-center gap-3 p-3 bg-white dark:bg-green-800/50 rounded-lg">
-                  <Shield className="w-5 h-5 text-green-600 dark:text-green-300" />
+                  <LinkRoundAngle className="w-5 h-5 text-green-600 dark:text-green-300" />
                   <Text size="sm">Conta protegida</Text>
                 </div>
                 <div className="flex items-center gap-3 p-3 bg-white dark:bg-green-800/50 rounded-lg">
-                  <Mail className="w-5 h-5 text-green-600 dark:text-green-300" />
+                  <LinkRoundAngle className="w-5 h-5 text-green-600 dark:text-green-300" />
                   <Text size="sm">Notificações ativas</Text>
                 </div>
               </div>
@@ -169,14 +162,14 @@ export const EmailVerificationStep: React.FC<OnboardingStepProps> = ({
           <div className="space-y-6">
             <Card className="p-6 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700">
               <div className="flex items-start gap-4">
-                <AlertCircle className="w-6 h-6 text-yellow-600 dark:text-yellow-300 mt-1" />
+                <LinkRoundAngle className="w-6 h-6 text-yellow-600 dark:text-yellow-300 mt-1" />
                 <div className="flex-1">
-                  <Heading
+                  <Text
                     size="lg"
                     className="text-yellow-800 dark:text-yellow-100 mb-2"
                   >
                     Email não verificado
-                  </Heading>
+                  </Text>
                   <Text className="text-yellow-700 dark:text-yellow-200 mb-4">
                     Enviamos um link de verificação para{" "}
                     <strong>{session?.user?.email}</strong>. Verifique sua caixa
@@ -194,7 +187,7 @@ export const EmailVerificationStep: React.FC<OnboardingStepProps> = ({
                         `Reenviar em ${cooldown}s`
                       ) : (
                         <>
-                          <RefreshCw className="w-4 h-4 mr-2" />
+                          <LinkRoundAngle className="w-4 h-4 mr-2" />
                           Reenviar email de verificação
                         </>
                       )}
@@ -205,7 +198,7 @@ export const EmailVerificationStep: React.FC<OnboardingStepProps> = ({
                       variant="ghost"
                       className="w-full sm:w-auto ml-0 sm:ml-3"
                     >
-                      <CheckCircle className="w-4 h-4 mr-2" />
+                      <LinkRoundAngle className="w-4 h-4 mr-2" />
                       Já verifiquei, atualizar status
                     </Button>
                   </div>
@@ -215,22 +208,22 @@ export const EmailVerificationStep: React.FC<OnboardingStepProps> = ({
 
             {/* Why Verify Section */}
             <Card className="p-6">
-              <Heading size="lg" className="mb-4">
+              <Text variant="title" className="mb-4">
                 Por que verificar seu email?
-              </Heading>
+              </Text>
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <Shield className="w-5 h-5 text-blue-500" />
+                  <LinkRoundAngle className="w-5 h-5 text-blue-500" />
                   <Text>Maior segurança para sua conta</Text>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Mail className="w-5 h-5 text-green-500" />
+                  <LinkRoundAngle className="w-5 h-5 text-green-500" />
                   <Text>
                     Receber lembretes de aulas e notificações importantes
                   </Text>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Clock className="w-5 h-5 text-purple-500" />
+                  <LinkRoundAngle className="w-5 h-5 text-purple-500" />
                   <Text>Recuperação de conta em caso de problemas</Text>
                 </div>
               </div>

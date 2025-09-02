@@ -8,15 +8,9 @@ import { Badge } from "@/components/ui/Badge/Badge";
 import { Loading } from "@/components/ui/Loading/Loading";
 import { formatPrice } from "@/config/pricing";
 import { PaymentStatus } from "@/types/financial/subscription";
-import {
-  Copy,
-  CreditCard,
-  Calendar,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-} from "lucide-react";
+
 import { toast } from "sonner";
+import { LinkRoundAngle } from "@solar-icons/react/ssr";
 
 interface PaymentStatusWidgetProps {
   className?: string;
@@ -102,35 +96,35 @@ export function PaymentStatusWidget({ className }: PaymentStatusWidgetProps) {
         return {
           color: "success" as const,
           text: "Em dia",
-          icon: CheckCircle,
+          icon: LinkRoundAngle,
           description: "Sua mensalidade está em dia",
         };
       case "overdue":
         return {
           color: "danger" as const,
           text: "Em atraso",
-          icon: AlertCircle,
+          icon: LinkRoundAngle,
           description: "Sua mensalidade está em atraso",
         };
       case "canceled":
         return {
           color: "warning" as const,
           text: "Cancelado",
-          icon: AlertCircle,
+          icon: LinkRoundAngle,
           description: "Sua assinatura foi cancelada",
         };
       case "pending":
         return {
           color: "warning" as const,
           text: "Pendente",
-          icon: Clock,
+          icon: LinkRoundAngle,
           description: "Aguardando confirmação do pagamento",
         };
       default:
         return {
           color: "secondary" as const,
           text: "Indefinido",
-          icon: AlertCircle,
+          icon: LinkRoundAngle,
           description: "Status não definido",
         };
     }
@@ -150,7 +144,7 @@ export function PaymentStatusWidget({ className }: PaymentStatusWidgetProps) {
     return (
       <Card className={`p-6 ${className}`}>
         <div className="text-center">
-          <AlertCircle className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+          <LinkRoundAngle className="w-8 h-8 text-gray-400 mx-auto mb-2" />
           <p className="text-gray-600">Nenhuma assinatura encontrada</p>
         </div>
       </Card>
@@ -182,7 +176,7 @@ export function PaymentStatusWidget({ className }: PaymentStatusWidgetProps) {
         paymentStatus.paymentMethod === "pix" && (
           <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
-              <AlertCircle className="w-4 h-4 text-yellow-600" />
+              <LinkRoundAngle className="w-4 h-4 text-yellow-600" />
               <span className="text-sm font-medium text-yellow-800">
                 Pagamento em atraso
               </span>
@@ -205,7 +199,7 @@ export function PaymentStatusWidget({ className }: PaymentStatusWidgetProps) {
                     onClick={copyPixCode}
                     className="flex items-center gap-1"
                   >
-                    <Copy className="w-3 h-3" />
+                    <LinkRoundAngle className="w-3 h-3" />
                     Copiar PIX
                   </Button>
                   {paymentStatus.pixExpiresAt && (
@@ -268,7 +262,7 @@ export function PaymentStatusWidget({ className }: PaymentStatusWidgetProps) {
             <div className="flex items-center gap-1">
               {paymentStatus.paymentMethod === "credit_card" ? (
                 <>
-                  <CreditCard className="w-4 h-4" />
+                  <LinkRoundAngle className="w-4 h-4" />
                   <span>Cartão de crédito</span>
                 </>
               ) : (
@@ -291,7 +285,7 @@ export function PaymentStatusWidget({ className }: PaymentStatusWidgetProps) {
           }
           className="w-full flex items-center gap-2"
         >
-          <Calendar className="w-4 h-4" />
+          <LinkRoundAngle className="w-4 h-4" />
           Gerenciar Pagamentos
         </Button>
       </div>

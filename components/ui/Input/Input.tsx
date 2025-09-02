@@ -24,7 +24,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ) => {
     // Base classes for the input element with modern styling
     const baseClasses =
-      "flex w-full rounded-2xl border-2 border-surface-0/60 hover:border-surface-0/80 focus:border-surface-0/50 focus:bg-surface-0/70 bg-surface-0/30 hover:bg-surface-0/50 backdrop-blur-xl text-base text-paragraph placeholder:text-placeholder/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 ease-in-out";
+      "flex w-full rounded-xl border-2 border-input/60 hover:border-input/80 focus:border-input/50 focus:bg-input/70 bg-input/30 hover:bg-input/50 backdrop-blur-xl text-base text-placeholder placeholder:text-placeholder/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 ease-in-out";
 
     // Size classes
     const sizeClasses = {

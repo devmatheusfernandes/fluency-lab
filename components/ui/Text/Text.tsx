@@ -35,7 +35,7 @@ const getTextClasses = ({
   weight,
 }: Omit<TextProps, "as" | "className">): string => {
   const variantClasses = {
-    title: "text-title pb-3",
+    title: "text-title",
     subtitle: "text-subtitle",
     paragraph: "text-paragraph",
     placeholder: "text-placeholder",

@@ -14,6 +14,7 @@ import UserCreditsTab from "./UserCreditsTab";
 import UserContractsTab from "./UserContractsTab";
 import UserPermissionsTab from "./UserPermissionsTab";
 import { useSession } from "next-auth/react";
+import { UserRoles } from "@/types/users/userRoles";
 
 interface UserDetailsClientProps {
   user: FullUserDetails;
@@ -25,7 +26,7 @@ export default function UserDetailsClient({
   allTeachers,
 }: UserDetailsClientProps) {
   const { data: session } = useSession();
-  const currentUserRole = session?.user?.role;
+  const currentUserRole = session?.user?.role as UserRoles | undefined;
 
   return (
     <div className="space-y-6">
@@ -54,7 +55,7 @@ export default function UserDetailsClient({
           )}
           <TabsTrigger value="financial">Financeiro</TabsTrigger>
           <TabsTrigger value="contracts">Contratos</TabsTrigger>
-          {currentUserRole === "admin" && (
+          {currentUserRole === UserRoles.ADMIN && (
             <TabsTrigger value="permissions">Permissões</TabsTrigger>
           )}
         </TabsList>
@@ -86,7 +87,7 @@ export default function UserDetailsClient({
           <UserScheduleManager user={user} allTeachers={allTeachers} />
         </TabsContent>
 
-        {currentUserRole === "admin" && (
+        {currentUserRole === UserRoles.ADMIN && (
           <TabsContent value="permissions" className="mt-4">
             <UserPermissionsTab user={user} />
           </TabsContent>

@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/Select";
 import { Payment } from "@/types/financial/payments";
 import { MonthlyPayment } from "@/types/financial/subscription";
+import { useSession } from "next-auth/react";
 
 interface UserFinancialTabProps {
   user: FullUserDetails;
@@ -100,12 +101,17 @@ const useTeacherClasses = (userId: string, userRole: string) => {
 };
 
 // Function to fetch student payment history
-const useStudentPaymentHistory = (userId: string, userRole: string) => {
+const useStudentPaymentHistory = (
+  userId: string,
+  userRole: string,
+  enabled: boolean
+) => {
   const [payments, setPayments] = useState<MonthlyPayment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (
+      !enabled ||
       !userId ||
       (userRole !== UserRoles.STUDENT && userRole !== UserRoles.GUARDED_STUDENT)
     )
@@ -131,21 +137,27 @@ const useStudentPaymentHistory = (userId: string, userRole: string) => {
     };
 
     fetchPaymentHistory();
-  }, [userId, userRole]);
+  }, [userId, userRole, enabled]);
 
   return { payments, isLoading };
 };
 
-// Function to fetch occasional student payment history
-const useOccasionalStudentPaymentHistory = (
+// Function to fetch student payment history for admins (uses different endpoint and data type)
+const useAdminStudentPaymentHistory = (
   userId: string,
-  userRole: string
+  userRole: string,
+  enabled: boolean
 ) => {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!userId || userRole !== UserRoles.OCCASIONAL_STUDENT) return;
+    if (
+      !enabled ||
+      !userId ||
+      (userRole !== UserRoles.STUDENT && userRole !== UserRoles.GUARDED_STUDENT)
+    )
+      return;
 
     const fetchPaymentHistory = async () => {
       setIsLoading(true);
@@ -167,12 +179,55 @@ const useOccasionalStudentPaymentHistory = (
     };
 
     fetchPaymentHistory();
-  }, [userId, userRole]);
+  }, [userId, userRole, enabled]);
+
+  return { payments, isLoading };
+};
+
+// Function to fetch occasional student payment history
+const useOccasionalStudentPaymentHistory = (
+  userId: string,
+  userRole: string,
+  enabled: boolean
+) => {
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!enabled || !userId || userRole !== UserRoles.OCCASIONAL_STUDENT)
+      return;
+
+    const fetchPaymentHistory = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`/api/admin/users/${userId}/financials`);
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(
+            data.error || "Falha ao buscar histórico de pagamentos."
+          );
+        }
+        const data = await response.json();
+        setPayments(data);
+      } catch (error: any) {
+        toast.error(error.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPaymentHistory();
+  }, [userId, userRole, enabled]);
 
   return { payments, isLoading };
 };
 
 export default function UserFinancialTab({ user }: UserFinancialTabProps) {
+  const { data: session } = useSession();
+  const isAdmin =
+    session?.user?.role === UserRoles.ADMIN ||
+    session?.user?.role === UserRoles.MANAGER;
+
   const {
     classes,
     isLoading: isClassesLoading,
@@ -183,12 +238,21 @@ export default function UserFinancialTab({ user }: UserFinancialTabProps) {
   } = useTeacherClasses(user.id, user.role);
 
   const { payments: studentPayments, isLoading: isStudentPaymentsLoading } =
-    useStudentPaymentHistory(user.id, user.role);
+    useStudentPaymentHistory(user.id, user.role, !isAdmin);
+
+  const {
+    payments: adminStudentPayments,
+    isLoading: isAdminStudentPaymentsLoading,
+  } = useAdminStudentPaymentHistory(user.id, user.role, isAdmin);
 
   const {
     payments: occasionalPayments,
     isLoading: isOccasionalPaymentsLoading,
-  } = useOccasionalStudentPaymentHistory(user.id, user.role);
+  } = useOccasionalStudentPaymentHistory(
+    user.id,
+    user.role,
+    isAdmin || user.role === UserRoles.OCCASIONAL_STUDENT
+  );
 
   // Calculate classes per month for teacher
   const classesPerMonth = classes.length;
@@ -196,6 +260,7 @@ export default function UserFinancialTab({ user }: UserFinancialTabProps) {
   if (
     isClassesLoading ||
     isStudentPaymentsLoading ||
+    isAdminStudentPaymentsLoading ||
     isOccasionalPaymentsLoading
   ) {
     return <Loading />;
@@ -331,7 +396,7 @@ export default function UserFinancialTab({ user }: UserFinancialTabProps) {
           Histórico de Pagamentos
         </Text>
 
-        {user.subscriptionStatus && (
+        {user.subscriptionStatus && !isAdmin && (
           <div className="mb-6 p-4 bg-surface-1 rounded-lg">
             <h3 className="font-medium mb-2">Assinatura Atual</h3>
             <div className="grid grid-cols-2 gap-2">
@@ -363,9 +428,48 @@ export default function UserFinancialTab({ user }: UserFinancialTabProps) {
           </div>
         )}
 
-        {studentPayments.length === 0 ? (
-          <Text>Nenhum pagamento encontrado para este utilizador.</Text>
-        ) : (
+        {/* Show admin-specific payment history or student payment history */}
+        {isAdmin && adminStudentPayments.length > 0 ? (
+          <div className="rounded-lg border border-surface-2 overflow-hidden">
+            <Table>
+              <TableHeader className="bg-surface-1">
+                <TableRow>
+                  <TableHead className="text-subtitle">Data</TableHead>
+                  <TableHead className="text-subtitle">Descrição</TableHead>
+                  <TableHead className="text-subtitle">Valor</TableHead>
+                  <TableHead className="text-subtitle">Status</TableHead>
+                  <TableHead className="text-subtitle">Provedor</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody className="bg-container divide-y divide-surface-2">
+                {adminStudentPayments.map((payment) => (
+                  <TableRow key={payment.id}>
+                    <TableCell>
+                      {new Date(payment.createdAt).toLocaleDateString("pt-BR")}
+                    </TableCell>
+                    <TableCell>{payment.description}</TableCell>
+                    <TableCell>
+                      {new Intl.NumberFormat("pt-BR", {
+                        style: "currency",
+                        currency: payment.currency,
+                      }).format(payment.amount)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          payment.status === "completed" ? "success" : "warning"
+                        }
+                      >
+                        {payment.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{payment.provider}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        ) : !isAdmin && studentPayments.length > 0 ? (
           <div className="rounded-lg border border-surface-2 overflow-hidden">
             <Table>
               <TableHeader className="bg-surface-1">
@@ -412,6 +516,8 @@ export default function UserFinancialTab({ user }: UserFinancialTabProps) {
               </TableBody>
             </Table>
           </div>
+        ) : (
+          <Text>Nenhum pagamento encontrado para este utilizador.</Text>
         )}
       </Card>
     );

@@ -11,7 +11,7 @@ export interface BadgeProps
   variant?: "primary" | "secondary" | "success" | "info" | "warning" | "danger";
   /**
    * The style of the badge.
-   * @default 'solid'
+   * @default 'outline'
    */
   style?: "solid" | "outline";
 }
@@ -22,7 +22,7 @@ const getBadgeClasses = ({
   style,
 }: Pick<BadgeProps, "variant" | "style">): string => {
   const baseClasses =
-    "inline-flex items-center rounded-2xl border-1 px-3 py-1 text-sm font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1";
+    "inline-flex items-center rounded-2xl px-3 py-1 text-xs font-regular transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1";
 
   const styleVariants = {
     solid: {
@@ -34,19 +34,22 @@ const getBadgeClasses = ({
       danger: "border-transparent bg-danger text-white",
     },
     outline: {
-      primary: "text-primary border-primary bg-primary/10 hover:bg-primary/20",
+      primary:
+        "text-indigo-800 dark:text-indigo-500 border-primary bg-primary/20 dark:bg-primary/40 hover:bg-primary/20",
       secondary:
-        "text-secondary border-secondary bg-secondary/10 hover:bg-secondary/20",
-      success: "text-success border-success bg-success/10 hover:bg-success/20",
+        "text-amber-800 dark:text-secondary border-secondary bg-secondary/30 dark:bg-secondary/10 hover:bg-secondary/20",
+      success:
+        "text-teal-900 dark:text-teal-500 border-success bg-success/25 hover:bg-success/20",
       info: "text-info border-info bg-info/10 hover:bg-info/20",
       warning: "text-warning border-warning bg-warning/10 hover:bg-warning/20",
-      danger: "text-danger border-danger bg-danger/10 hover:bg-danger/20",
+      danger:
+        "text-rose-700 dark:text-danger border-danger bg-danger/20 dark:bg-danger/10 hover:bg-danger/20",
     },
   };
 
   return twMerge(
     baseClasses,
-    styleVariants[style || "solid"][variant || "primary"]
+    styleVariants[style || "outline"][variant || "primary"]
   );
 };
 

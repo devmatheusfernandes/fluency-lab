@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { ProgressTracker } from "@/components/ui/ProgressTracker";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "@solar-icons/react";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import "./onboarding.css";

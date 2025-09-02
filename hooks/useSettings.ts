@@ -2,13 +2,16 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useSession } from 'next-auth/react';
 
 interface SettingsData {
   interfaceLanguage?: string;
   theme?: 'light' | 'dark';
+  twoFactorEnabled?: boolean;
 }
 
 export const useSettings = () => {
+  const { data: session, update } = useSession();
   const [isLoading, setIsLoading] = useState(false);
 
   const updateSettings = async (settingsData: SettingsData) => {
@@ -25,9 +28,22 @@ export const useSettings = () => {
         throw new Error(data.error || 'Falha ao salvar as configurações.');
       }
       
+      // Update the session with new settings
+      if (settingsData.twoFactorEnabled !== undefined) {
+        await update({
+          ...session,
+          user: {
+            ...session?.user,
+            twoFactorEnabled: settingsData.twoFactorEnabled
+          }
+        });
+      }
+      
       toast.success('Configurações salvas com sucesso!');
       // Força um recarregamento da página para aplicar o novo idioma/tema
-      window.location.reload(); 
+      if (settingsData.interfaceLanguage || settingsData.theme) {
+        window.location.reload(); 
+      }
     } catch (error: any) {
       toast.error(error.message);
     } finally {

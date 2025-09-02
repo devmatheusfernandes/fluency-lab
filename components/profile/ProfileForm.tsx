@@ -7,6 +7,8 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
+import { SubContainer } from "../ui/SubContainer";
+import { Header } from "../ui/Header";
 
 interface ProfileFormProps {
   initialData: User;
@@ -45,15 +47,15 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
 
   return (
     <form onSubmit={handleSubmit}>
-      <Card className="space-y-6">
-        {/* No futuro, podemos usar os seus componentes de Tabs aqui */}
+      <Header heading="Informações Pessoais" />
+      <SubContainer>
         <section>
           <Text
             as="div"
             variant="subtitle"
             size="lg"
             weight="semibold"
-            className="mb-4"
+            className="mb-"
           >
             Informações Pessoais
           </Text>
@@ -88,9 +90,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
           </div>
         </section>
 
-        <div className="border-t border-surface-2" />
-
-        <section>
+        <section className="pt-2">
           <Text
             as="div"
             variant="subtitle"
@@ -128,7 +128,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
             {isLoading ? "A Salvar..." : "Salvar Alterações"}
           </Button>
         </div>
-      </Card>
+      </SubContainer>
     </form>
   );
 }

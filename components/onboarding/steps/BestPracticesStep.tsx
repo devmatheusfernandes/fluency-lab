@@ -4,25 +4,10 @@
 import React, { useState } from "react";
 import { OnboardingStepProps } from "../OnboardingModal";
 import { Card } from "@/components/ui/Card";
-import { Heading } from "@/components/ui/Heading";
 import { Text } from "@/components/ui/Text";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import {
-  BookOpen,
-  Clock,
-  Users,
-  Calendar,
-  Trophy,
-  Target,
-  MessageCircle,
-  FileText,
-  CheckCircle,
-  ArrowRight,
-  Lightbulb,
-  Star,
-  Heart,
-} from "lucide-react";
+import { LinkRoundAngle } from "@solar-icons/react/ssr";
 
 interface PracticeCardProps {
   icon: React.ReactNode;
@@ -86,9 +71,7 @@ const PracticeCard: React.FC<PracticeCardProps> = ({
         </div>
 
         <div className="flex-1">
-          <Heading size="lg" className="mb-2">
-            {title}
-          </Heading>
+          <Text variant="title">{title}</Text>
           <Text className="text-gray-600 dark:text-gray-300 mb-3">
             {description}
           </Text>
@@ -97,7 +80,7 @@ const PracticeCard: React.FC<PracticeCardProps> = ({
             <div className="space-y-2 mb-3">
               {tips.map((tip, index) => (
                 <div key={index} className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <LinkRoundAngle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
                   <Text size="sm" className="text-gray-600 dark:text-gray-300">
                     {tip}
                   </Text>
@@ -113,7 +96,7 @@ const PracticeCard: React.FC<PracticeCardProps> = ({
             className={`p-0 h-auto font-medium ${classes.buttonColor}`}
           >
             {isExpanded ? "Ver menos" : "Ver dicas"}
-            <ArrowRight
+            <LinkRoundAngle
               className={`w-4 h-4 ml-1 transition-transform ${isExpanded ? "rotate-90" : ""}`}
             />
           </Button>
@@ -128,7 +111,7 @@ export const BestPracticesStep: React.FC<OnboardingStepProps> = ({
 }) => {
   const practices = [
     {
-      icon: <Clock className="w-6 h-6" />,
+      icon: <LinkRoundAngle className="w-6 h-6" />,
       title: "Pontualidade e Consistência",
       description:
         "A regularidade é fundamental para o aprendizado eficaz de idiomas.",
@@ -141,7 +124,7 @@ export const BestPracticesStep: React.FC<OnboardingStepProps> = ({
       color: "blue" as const,
     },
     {
-      icon: <BookOpen className="w-6 h-6" />,
+      icon: <LinkRoundAngle className="w-6 h-6" />,
       title: "Preparação para as Aulas",
       description: "Vir preparado maximiza o aproveitamento de cada sessão.",
       tips: [
@@ -153,7 +136,7 @@ export const BestPracticesStep: React.FC<OnboardingStepProps> = ({
       color: "green" as const,
     },
     {
-      icon: <MessageCircle className="w-6 h-6" />,
+      icon: <LinkRoundAngle className="w-6 h-6" />,
       title: "Comunicação Efetiva",
       description:
         "Mantenha um diálogo aberto com seu professor sobre seu progresso.",
@@ -166,7 +149,7 @@ export const BestPracticesStep: React.FC<OnboardingStepProps> = ({
       color: "purple" as const,
     },
     {
-      icon: <Target className="w-6 h-6" />,
+      icon: <LinkRoundAngle className="w-6 h-6" />,
       title: "Definição de Objetivos",
       description: "Metas claras aceleram seu progresso no aprendizado.",
       tips: [
@@ -181,22 +164,22 @@ export const BestPracticesStep: React.FC<OnboardingStepProps> = ({
 
   const contractHighlights = [
     {
-      icon: <Calendar className="w-5 h-5" />,
+      icon: <LinkRoundAngle className="w-5 h-5" />,
       title: "Duração Flexível",
       desc: "Escolha entre contratos de 6 ou 12 meses",
     },
     {
-      icon: <Clock className="w-5 h-5" />,
+      icon: <LinkRoundAngle className="w-5 h-5" />,
       title: "Reagendamento",
       desc: "Até 2 reagendamentos gratuitos por mês",
     },
     {
-      icon: <Trophy className="w-5 h-5" />,
+      icon: <LinkRoundAngle className="w-5 h-5" />,
       title: "Acompanhamento",
       desc: "Relatórios mensais de progresso",
     },
     {
-      icon: <Heart className="w-5 h-5" />,
+      icon: <LinkRoundAngle className="w-5 h-5" />,
       title: "Suporte Total",
       desc: "Equipe disponível para dúvidas e suporte",
     },
@@ -208,12 +191,10 @@ export const BestPracticesStep: React.FC<OnboardingStepProps> = ({
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-green-500 to-blue-600 rounded-full mb-4">
-            <Lightbulb className="w-8 h-8 text-white" />
+            <LinkRoundAngle className="w-8 h-8 text-white" />
           </div>
 
-          <Heading size="2xl" className="mb-4">
-            Boas Práticas para o Sucesso
-          </Heading>
+          <Text variant="title">Boas Práticas para o Sucesso</Text>
           <Text
             size="lg"
             className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto"
@@ -227,7 +208,7 @@ export const BestPracticesStep: React.FC<OnboardingStepProps> = ({
         <Card className="p-6 mb-8 bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/30 dark:to-green-900/30 border border-blue-200 dark:border-blue-700">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-800 rounded-full flex items-center justify-center">
-              <Star className="w-6 h-6 text-yellow-600 dark:text-yellow-300" />
+              <LinkRoundAngle className="w-6 h-6 text-yellow-600 dark:text-yellow-300" />
             </div>
             <div>
               <Text className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
@@ -252,12 +233,12 @@ export const BestPracticesStep: React.FC<OnboardingStepProps> = ({
         <Card className="p-8 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/30 dark:to-blue-900/30 border border-purple-200 dark:border-purple-700 mb-8">
           <div className="text-center mb-6">
             <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-100 dark:bg-purple-800 rounded-lg mb-4">
-              <FileText className="w-6 h-6 text-purple-600 dark:text-purple-300" />
+              <LinkRoundAngle className="w-6 h-6 text-purple-600 dark:text-purple-300" />
             </div>
 
-            <Heading size="xl" className="mb-3">
+            <Text variant="title">
               Resumo do Contrato de Prestação de Serviços
-            </Heading>
+            </Text>
             <Text className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
               Nosso contrato foi desenvolvido para proteger você e garantir a
               qualidade do ensino.
@@ -284,13 +265,11 @@ export const BestPracticesStep: React.FC<OnboardingStepProps> = ({
           </div>
 
           <div className="bg-white dark:bg-purple-900/20 rounded-lg p-6">
-            <Heading size="lg" className="mb-4">
-              Principais Pontos do Contrato:
-            </Heading>
+            <Text variant="title">Principais Pontos do Contrato:</Text>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
+                  <LinkRoundAngle className="w-5 h-5 text-green-500 mt-0.5" />
                   <div>
                     <Text className="font-medium">Aulas Personalizadas</Text>
                     <Text
@@ -303,7 +282,7 @@ export const BestPracticesStep: React.FC<OnboardingStepProps> = ({
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
+                  <LinkRoundAngle className="w-5 h-5 text-green-500 mt-0.5" />
                   <div>
                     <Text className="font-medium">Pagamento Mensal</Text>
                     <Text
@@ -316,7 +295,7 @@ export const BestPracticesStep: React.FC<OnboardingStepProps> = ({
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
+                  <LinkRoundAngle className="w-5 h-5 text-green-500 mt-0.5" />
                   <div>
                     <Text className="font-medium">Aulas Online</Text>
                     <Text
@@ -331,7 +310,7 @@ export const BestPracticesStep: React.FC<OnboardingStepProps> = ({
 
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
+                  <LinkRoundAngle className="w-5 h-5 text-green-500 mt-0.5" />
                   <div>
                     <Text className="font-medium">Reajuste Anual</Text>
                     <Text
@@ -344,7 +323,7 @@ export const BestPracticesStep: React.FC<OnboardingStepProps> = ({
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
+                  <LinkRoundAngle className="w-5 h-5 text-green-500 mt-0.5" />
                   <div>
                     <Text className="font-medium">Horários Flexíveis</Text>
                     <Text
@@ -357,7 +336,7 @@ export const BestPracticesStep: React.FC<OnboardingStepProps> = ({
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
+                  <LinkRoundAngle className="w-5 h-5 text-green-500 mt-0.5" />
                   <div>
                     <Text className="font-medium">Suporte Completo</Text>
                     <Text
@@ -376,7 +355,7 @@ export const BestPracticesStep: React.FC<OnboardingStepProps> = ({
         {/* Success Tips */}
         <Card className="p-6 bg-gradient-to-r from-green-50 to-teal-50 dark:from-green-900/30 dark:to-teal-900/30 border border-green-200 dark:border-green-700">
           <div className="text-center">
-            <Trophy className="w-8 h-8 text-green-600 dark:text-green-300 mx-auto mb-3" />
+            <LinkRoundAngle className="w-8 h-8 text-green-600 dark:text-green-300 mx-auto mb-3" />
             <Text className="font-semibold text-green-800 dark:text-green-100 mb-2">
               💡 Dica de Ouro
             </Text>

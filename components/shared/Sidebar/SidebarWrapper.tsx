@@ -23,12 +23,11 @@ export default function SidebarWrapper({ items, user }: SidebarWrapperProps) {
     clearAll,
   } = useFirebaseNotifications();
 
-  // Use currentUser data if available, otherwise use passed user prop
   const userData = currentUser
     ? {
         name: currentUser.name,
         role: currentUser.role,
-        avatar: currentUser.avatarUrl, // Map avatarUrl from User to avatar in UserData
+        avatar: currentUser.avatarUrl,
       }
     : user;
 

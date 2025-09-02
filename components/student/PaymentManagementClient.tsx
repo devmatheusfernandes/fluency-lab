@@ -10,18 +10,9 @@ import { Modal } from "@/components/ui/Modal/Modal";
 import { TextArea } from "@/components/ui/TextArea/TextArea";
 import { formatPrice } from "@/config/pricing";
 import { PaymentStatus, MonthlyPayment } from "@/types/financial/subscription";
-import {
-  CreditCard,
-  Calendar,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  Copy,
-  X,
-  Download,
-  RefreshCw,
-} from "lucide-react";
+
 import { toast } from "sonner";
+import { LinkRoundAngle } from "@solar-icons/react/ssr";
 
 export function PaymentManagementClient() {
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | null>(
@@ -241,22 +232,34 @@ export function PaymentManagementClient() {
   const getStatusInfo = (status: string) => {
     switch (status) {
       case "active":
-        return { color: "success" as const, text: "Ativa", icon: CheckCircle };
+        return {
+          color: "success" as const,
+          text: "Ativa",
+          icon: LinkRoundAngle,
+        };
       case "overdue":
         return {
           color: "danger" as const,
           text: "Em atraso",
-          icon: AlertCircle,
+          icon: LinkRoundAngle,
         };
       case "canceled":
-        return { color: "warning" as const, text: "Cancelada", icon: X };
+        return {
+          color: "warning" as const,
+          text: "Cancelada",
+          icon: LinkRoundAngle,
+        };
       case "pending":
-        return { color: "warning" as const, text: "Pendente", icon: Clock };
+        return {
+          color: "warning" as const,
+          text: "Pendente",
+          icon: LinkRoundAngle,
+        };
       default:
         return {
           color: "secondary" as const,
           text: "Indefinido",
-          icon: AlertCircle,
+          icon: LinkRoundAngle,
         };
     }
   };
@@ -329,7 +332,7 @@ export function PaymentManagementClient() {
   if (!paymentStatus) {
     return (
       <Card className="p-8 text-center">
-        <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <LinkRoundAngle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
         <h3 className="text-lg font-semibold mb-2">
           Nenhuma assinatura encontrada
         </h3>
@@ -405,7 +408,7 @@ export function PaymentManagementClient() {
               <div className="flex items-center gap-2 mt-1">
                 {paymentStatus.paymentMethod === "credit_card" ? (
                   <>
-                    <CreditCard className="w-4 h-4" />
+                    <LinkRoundAngle className="w-4 h-4" />
                     <span>Cartão de crédito</span>
                   </>
                 ) : (
@@ -435,7 +438,7 @@ export function PaymentManagementClient() {
         paymentStatus.paymentMethod === "pix" && (
           <Card className="p-6 border-l-4 border-l-yellow-500">
             <div className="flex items-center gap-2 mb-4">
-              <AlertCircle className="w-5 h-5 text-yellow-600" />
+              <LinkRoundAngle className="w-5 h-5 text-yellow-600" />
               <h3 className="text-lg font-semibold text-yellow-800">
                 Pagamento em atraso
               </h3>
@@ -483,7 +486,7 @@ export function PaymentManagementClient() {
                     variant="secondary"
                     className="flex items-center gap-2"
                   >
-                    <Copy className="w-4 h-4" />
+                    <LinkRoundAngle className="w-4 h-4" />
                     Copiar código
                   </Button>
                   <Button
@@ -491,7 +494,7 @@ export function PaymentManagementClient() {
                     disabled={generatingPix}
                     variant="secondary"
                   >
-                    <RefreshCw
+                    <LinkRoundAngle
                       className={`w-4 h-4 ${generatingPix ? "animate-spin" : ""}`}
                     />
                     Gerar novo código
@@ -521,7 +524,7 @@ export function PaymentManagementClient() {
         paymentStatus.paymentMethod === "credit_card" && (
           <Card className="p-6 border-l-4 border-l-orange-500">
             <div className="flex items-center gap-2 mb-4">
-              <Clock className="w-5 h-5 text-orange-600" />
+              <LinkRoundAngle className="w-5 h-5 text-orange-600" />
               <h3 className="text-lg font-semibold text-orange-800">
                 Pagamento Pendente
               </h3>
@@ -536,7 +539,7 @@ export function PaymentManagementClient() {
 
               <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
                 <div className="flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5" />
+                  <LinkRoundAngle className="w-5 h-5 text-orange-600 mt-0.5" />
                   <div>
                     <h4 className="font-medium text-orange-800 mb-1">
                       O que fazer agora?
@@ -571,7 +574,7 @@ export function PaymentManagementClient() {
                     </>
                   ) : (
                     <>
-                      <CreditCard className="w-4 h-4 mr-2" />
+                      <LinkRoundAngle className="w-4 h-4 mr-2" />
                       Voltar ao Checkout Seguro
                     </>
                   )}
@@ -584,7 +587,7 @@ export function PaymentManagementClient() {
                   size="lg"
                   className="flex-1 sm:flex-initial"
                 >
-                  <RefreshCw
+                  <LinkRoundAngle
                     className={`w-4 h-4 mr-2 ${loadingCheckout ? "animate-spin" : ""}`}
                   />
                   Recriar Sessão
@@ -605,7 +608,7 @@ export function PaymentManagementClient() {
             onClick={exportPaymentHistory}
             disabled={paymentHistory.length === 0}
           >
-            <Download className="w-4 h-4" />
+            <LinkRoundAngle className="w-4 h-4" />
             Exportar
           </Button>
         </div>
@@ -616,7 +619,7 @@ export function PaymentManagementClient() {
           </div>
         ) : paymentHistory.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
-            <Calendar className="w-8 h-8 mx-auto mb-2" />
+            <LinkRoundAngle className="w-8 h-8 mx-auto mb-2" />
             <p>Nenhum pagamento encontrado</p>
           </div>
         ) : (
@@ -723,7 +726,7 @@ export function PaymentManagementClient() {
                                 }
                               }}
                             >
-                              <Copy className="w-3 h-3 mr-1" />
+                              <LinkRoundAngle className="w-3 h-3 mr-1" />
                               Copiar PIX
                             </Button>
                           </div>
@@ -766,7 +769,7 @@ export function PaymentManagementClient() {
           <div className="space-y-4">
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <div className="flex items-start gap-2">
-                <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />
+                <LinkRoundAngle className="w-5 h-5 text-yellow-600 mt-0.5" />
                 <div className="text-sm">
                   <p className="font-medium text-yellow-800 mb-1">Atenção</p>
                   <p className="text-yellow-700">

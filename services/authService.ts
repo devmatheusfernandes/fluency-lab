@@ -8,6 +8,9 @@ import { auth } from "@/lib/firebase/config";
 import { adminDb } from "@/lib/firebase/admin";
 import { User } from "@/types/users/users";
 import { UserRoles } from "@/types/users/userRoles";
+import { TwoFactorService } from "./twoFactorService";
+
+const twoFactorService = new TwoFactorService();
 
 export class AuthService {
 
@@ -29,7 +32,10 @@ export class AuthService {
         }
         const userProfile = userDoc.data() as User;
 
-        // 3. Retorna um objeto combinado para ser usado no token do NextAuth
+        // 3. Verifica se 2FA está habilitado para o usuário
+        const is2FAEnabled = await twoFactorService.isTwoFactorEnabled(userCredential.user.uid);
+        
+        // 4. Retorna um objeto combinado para ser usado no token do NextAuth
         return {
           id: userCredential.user.uid,
           email: userProfile.email,
@@ -37,6 +43,8 @@ export class AuthService {
           role: userProfile.role,
           permissions: userProfile.permissions,
           tutorialCompleted: userProfile.tutorialCompleted,
+          twoFactorEnabled: is2FAEnabled,
+          // Note: We don't verify the 2FA token here, that happens in a separate step
         };
       }
       return null;
@@ -45,6 +53,30 @@ export class AuthService {
       console.error("Erro de validação:", error);
       return null; // Retorna null para o NextAuth, que resulta em um erro 401
     }
+  }
+
+  /**
+   * Verifica o token 2FA do usuário
+   */
+  async verifyTwoFactorToken(userId: string, token: string): Promise<boolean> {
+    const secret = await twoFactorService.getTwoFactorSecret(userId);
+    if (!secret) return false;
+    
+    return twoFactorService.verifyToken(secret, token);
+  }
+
+  /**
+   * Verifica um código de backup 2FA
+   */
+  async verifyBackupCode(userId: string, code: string): Promise<boolean> {
+    return twoFactorService.verifyBackupCode(userId, code);
+  }
+
+  /**
+   * Invalida um código de backup usado
+   */
+  async invalidateBackupCode(userId: string, code: string): Promise<void> {
+    await twoFactorService.invalidateBackupCode(userId, code);
   }
 
   /**
@@ -77,5 +109,19 @@ export class AuthService {
       id: firebaseUser.uid,
       ...newUserProfile,
     };
+  }
+
+  /**
+   * Habilita 2FA para um usuário
+   */
+  async enableTwoFactor(userId: string, secret: string): Promise<void> {
+    await twoFactorService.enableTwoFactor(userId, secret);
+  }
+
+  /**
+   * Desabilita 2FA para um usuário
+   */
+  async disableTwoFactor(userId: string): Promise<void> {
+    await twoFactorService.disableTwoFactor(userId);
   }
 }

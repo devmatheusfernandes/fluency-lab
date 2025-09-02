@@ -1,3 +1,4 @@
+import { UserRoles } from "@/types/users/userRoles";
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -23,3 +24,89 @@ export function safeDateToISO(dateValue: any): string | undefined {
     return undefined;
   }
 }
+
+/**
+ * Sanitizes user input to prevent XSS attacks
+ * @param input - User input string
+ * @returns Sanitized string
+ */
+export function sanitizeInput(input: string): string {
+  if (!input) return '';
+  
+  // Remove HTML tags
+  let sanitized = input.replace(/<[^>]*>?/gm, '');
+  
+  // Escape special characters
+  sanitized = sanitized
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+    
+  return sanitized;
+}
+
+/**
+ * Validates and sanitizes email addresses
+ * @param email - Email address to validate
+ * @returns Valid email or null
+ */
+export function validateAndSanitizeEmail(email: string): string | null {
+  if (!email) return null;
+  
+  // Basic email validation regex
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  
+  // Sanitize input
+  const sanitized = sanitizeInput(email.trim().toLowerCase());
+  
+  if (emailRegex.test(sanitized)) {
+    return sanitized;
+  }
+  
+  return null;
+}
+
+/**
+ * Validates password strength
+ * @param password - Password to validate
+ * @returns Object with isValid flag and message
+ */
+export function validatePassword(password: string): { isValid: boolean; message: string } {
+  if (!password) {
+    return { isValid: false, message: 'Password is required' };
+  }
+  
+  if (password.length < 6) {
+    return { isValid: false, message: 'Password must be at least 6 characters long' };
+  }
+  
+  return { isValid: true, message: 'Password is valid' };
+}
+
+// Utility function to capitalize first letter
+export const capitalizeFirstLetter = (str: string) => {
+  if (!str) return "";
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+};
+
+// Role mapping to Portuguese with first letter capitalized
+export const roleLabels: Record<UserRoles, string> = {
+  [UserRoles.ADMIN]: "Administrador",
+  [UserRoles.MANAGER]: "Gerente",
+  [UserRoles.STUDENT]: "Estudante",
+  [UserRoles.TEACHER]: "Professor",
+  [UserRoles.GUARDED_STUDENT]: "Estudante Tutelado",
+  [UserRoles.OCCASIONAL_STUDENT]: "Estudante Ocasional",
+  [UserRoles.MATERIAL_MANAGER]: "Gerente de Material",
+};
+
+export const determineCEFRLevel = (score: number): number => {
+  if (score >= 90) return 5;
+  if (score >= 75) return 4;
+  if (score >= 60) return 3;
+  if (score >= 45) return 2;
+  if (score >= 30) return 1;
+  return 0;
+};

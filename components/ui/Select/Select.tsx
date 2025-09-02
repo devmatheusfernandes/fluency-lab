@@ -29,7 +29,7 @@ const Select = ({ children, ...props }: SelectProps) => {
 };
 
 const SelectTrigger = React.forwardRef<
-  React.ElementRef<typeof SelectPrimitive.Trigger>,
+  React.ComponentRef<typeof SelectPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger> & {
     hasError?: boolean;
     size?: "sm" | "base" | "lg";
@@ -37,7 +37,7 @@ const SelectTrigger = React.forwardRef<
 >(({ className, hasError = false, size = "base", children, ...props }, ref) => {
   // Base classes for the select trigger with modern styling
   const baseClasses =
-    "flex w-full hover:text-primary items-center justify-between rounded-2xl border-2 border-surface-0/60 hover:border-surface-0/80 focus:border-surface-0/50 focus:bg-surface-0/70 bg-surface-0/30 hover:bg-surface-0/50 backdrop-blur-xl text-base text-paragraph placeholder:text-placeholder focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 ease-in-out focus:bg-white-30";
+    "flex w-full hover:text-primary items-center justify-between rounded-2xl border-2 border-input/60 hover:border-input/80 focus:border-input/50 focus:bg-input/70 bg-input/30 hover:bg-input/50 backdrop-blur-xl text-base text-paragraph placeholder:text-placeholder focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 ease-in-out focus:bg-white-30";
 
   // Size classes
   const sizeClasses = {
@@ -73,7 +73,7 @@ const SelectTrigger = React.forwardRef<
 });
 
 const SelectValue = React.forwardRef<
-  React.ElementRef<typeof SelectPrimitive.Value>,
+  React.ComponentRef<typeof SelectPrimitive.Value>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Value>
 >(({ className, ...props }, ref) => (
   <SelectPrimitive.Value
@@ -86,14 +86,14 @@ const SelectValue = React.forwardRef<
 const SelectPortal = SelectPrimitive.Portal;
 
 const SelectContent = React.forwardRef<
-  React.ElementRef<typeof SelectPrimitive.Content>,
+  React.ComponentRef<typeof SelectPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
 >(({ className, children, position = "popper", ...props }, ref) => (
   <SelectPortal>
     <SelectPrimitive.Content
       ref={ref}
       className={twMerge(
-        "relative z-50 min-w-[8rem] overflow-hidden rounded-2xl bg-surface-0/70 backdrop-blur-xl text-paragraph data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+        "relative z-50 min-w-[8rem] overflow-hidden rounded-xl bg-container/70 backdrop-blur-sm text-paragraph data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
         position === "popper" &&
           "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
         className
@@ -115,13 +115,13 @@ const SelectContent = React.forwardRef<
 ));
 
 const SelectOption = React.forwardRef<
-  React.ElementRef<typeof SelectPrimitive.Item>,
+  React.ComponentRef<typeof SelectPrimitive.Item>,
   SelectOptionProps
 >(({ className, children, ...props }, ref) => (
   <SelectPrimitive.Item
     ref={ref}
     className={twMerge(
-      "relative flex cursor-default select-none items-center rounded-xl px-3 py-2.5 text-base outline-none transition-all duration-200 ease-in-out focus:bg-primary/10 focus:text-primary hover:bg-surface-hover hover:text-paragraph data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex cursor-default select-none font-medium items-center rounded-xl px-3 py-2.5 text-base outline-none transition-all duration-200 ease-in-out hover:bg-background/50 hover:text-paragraph data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       className
     )}
     {...props}
@@ -131,12 +131,12 @@ const SelectOption = React.forwardRef<
 ));
 
 const SelectSeparator = React.forwardRef<
-  React.ElementRef<typeof SelectPrimitive.Separator>,
+  React.ComponentRef<typeof SelectPrimitive.Separator>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Separator>
 >(({ className, ...props }, ref) => (
   <SelectPrimitive.Separator
     ref={ref}
-    className={twMerge("-mx-1 my-1 h-px bg-surface-2", className)}
+    className={twMerge("-mx-1 my-1 h-px bg-input2", className)}
     {...props}
   />
 ));

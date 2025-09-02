@@ -10,6 +10,7 @@ import { Payment } from "@/types/financial/payments";
 import { FullUserDetails } from "@/types/users/user-details";
 import { User } from "@/types/users/users";
 import { FieldValue } from "firebase-admin/firestore";
+import { AuditService } from "@/services/auditService";
 
 const userAdminRepo = new UserAdminRepository();
 const classRepo = new ClassRepository();
@@ -38,6 +39,14 @@ export class UserService {
   // Método específico para desativar
   async deactivateUser(userId: string): Promise<void> {
     await this.updateUser(userId, { isActive: false, deactivatedAt: new Date() });
+    
+    // Log the user deactivation event
+    await AuditService.logEvent(
+      'system', // or the admin user ID if available
+      'USER_DEACTIVATED',
+      'user',
+      { userId }
+    );
   }
   
   // Método específico para reativar
@@ -47,6 +56,14 @@ export class UserService {
       isActive: true, 
       deactivatedAt: FieldValue.delete() as any 
     });
+    
+    // Log the user reactivation event
+    await AuditService.logEvent(
+      'system', // or the admin user ID if available
+      'USER_REACTIVATED',
+      'user',
+      { userId }
+    );
   }
   /**
    * Atualiza o perfil de um utilizador com dados seguros.
@@ -82,7 +99,11 @@ export class UserService {
    * @param userId - O ID do utilizador a ser atualizado.
    * @param settingsData - Os dados de configuração (idioma, tema).
    */
-    async updateUserSettings(userId: string, settingsData: { interfaceLanguage?: string; theme?: 'light' | 'dark' }): Promise<void> {
+    async updateUserSettings(userId: string, settingsData: { 
+      interfaceLanguage?: string; 
+      theme?: 'light' | 'dark';
+      twoFactorEnabled?: boolean;
+    }): Promise<void> {
       // Define uma lista segura de campos que podem ser atualizados
       const allowedUpdates: Partial<User> = {};
   
@@ -92,9 +113,11 @@ export class UserService {
       if (settingsData.theme) {
         allowedUpdates.theme = settingsData.theme;
       }
+      // Note: twoFactorEnabled is handled separately through the AuthService
+      // We don't update it directly in the user document here
   
       if (Object.keys(allowedUpdates).length === 0) {
-        throw new Error("Nenhuma configuração válida para atualizar.");
+        throw new Error("Nenhum dado válido para atualizar foi fornecido.");
       }
   
       await userAdminRepo.update(userId, allowedUpdates);
@@ -143,11 +166,29 @@ export class UserService {
         throw new Error("Nenhum dado válido para atualizar.");
       }
   
+      // Get the current user data to check if role is changing
+      const currentUser = await userAdminRepo.findUserById(userId);
+      const isRoleChanging = data.role && currentUser?.role !== data.role;
+      
       await userAdminRepo.update(userId, allowedUpdates);
       
-      // Se o role foi alterado, atualiza também os Custom Claims no Firebase Auth
+      // If the role was changed, update Firebase Auth custom claims and log the event
       if (data.role) {
-          await adminAuth.setCustomUserClaims(userId, { role: data.role });
+        await adminAuth.setCustomUserClaims(userId, { role: data.role });
+        
+        // Log the role change event if it actually changed
+        if (isRoleChanging) {
+          await AuditService.logEvent(
+            'system', // or the admin user ID if available
+            'USER_ROLE_CHANGED',
+            'user',
+            { 
+              userId, 
+              oldRole: currentUser?.role, 
+              newRole: data.role 
+            }
+          );
+        }
       }
     }
 

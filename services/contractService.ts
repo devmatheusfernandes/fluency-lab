@@ -11,6 +11,7 @@ import {
   Student,
   ContractValidationError
 } from '@/components/contract/contrato-types';
+import { AuditService } from '@/services/auditService';
 
 export class ContractService {
   private readonly ADMIN_DATA = {
@@ -138,6 +139,17 @@ export class ContractService {
 
       await contractRepository.updateContractStatus(studentId, contractStatus);
 
+      // Log the contract signing event
+      await AuditService.logEvent(
+        studentId,
+        'CONTRACT_SIGNED',
+        'contract',
+        {
+          contractId: logId,
+          ipAddress: clientInfo.ip
+        }
+      );
+
       return {
         success: true,
         message: 'Contrato assinado com sucesso',
@@ -203,6 +215,18 @@ export class ContractService {
 
       const updatedStatus = await contractRepository.getContractStatus(studentId);
 
+      // Log the admin contract signing event
+      await AuditService.logEvent(
+        'admin', // Using a generic admin identifier since we don't have the specific admin ID
+        'CONTRACT_ADMIN_SIGNED',
+        'contract',
+        {
+          studentId,
+          contractId,
+          ipAddress: adminData.ip
+        }
+      );
+
       return {
         success: true,
         message: 'Contrato assinado pelo administrador',
@@ -246,6 +270,16 @@ export class ContractService {
     try {
       await contractRepository.invalidateContract(userId);
       console.log('Contract expired and invalidated for user:', userId);
+      
+      // Log the contract invalidation event
+      await AuditService.logEvent(
+        'system',
+        'CONTRACT_EXPIRED',
+        'contract',
+        {
+          userId
+        }
+      );
     } catch (error) {
       console.error('Error invalidating expired contract:', error);
       throw error;
@@ -274,7 +308,7 @@ export class ContractService {
 
     const signedDate = new Date(signedAt);
     const currentDate = new Date();
-    const sixMonthsInMs = 6 * 30 * 24 * 60 * 60 * 1000;
+    const sixMonthsInMs = 6 * 30 * 24 * 60 * 60 * 60 * 1000;
 
     return currentDate.getTime() - signedDate.getTime() < sixMonthsInMs;
   }

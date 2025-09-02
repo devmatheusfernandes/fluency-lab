@@ -4,25 +4,13 @@
 import React, { useState } from "react";
 import { OnboardingStepProps } from "../OnboardingModal";
 import { Card } from "@/components/ui/Card";
-import { Heading } from "@/components/ui/Heading";
 import { Text } from "@/components/ui/Text";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import {
-  Calendar,
-  TrendingUp,
-  Star,
-  Clock,
-  Target,
-  Zap,
-  Gift,
-  CheckCircle,
-  ArrowRight,
-  Calculator,
-  Award,
-} from "lucide-react";
+
 import { formatPrice } from "@/config/pricing";
 import { useSession } from "next-auth/react";
+import { LinkRoundAngle } from "@solar-icons/react/ssr";
 
 interface ContractOptionProps {
   duration: 6 | 12;
@@ -76,7 +64,7 @@ const ContractOption: React.FC<ContractOptionProps> = ({
               : "bg-gray-100 dark:bg-gray-700"
           }`}
         >
-          <Calendar
+          <LinkRoundAngle
             className={`w-8 h-8 ${
               selected
                 ? "text-blue-600 dark:text-blue-300"
@@ -85,12 +73,7 @@ const ContractOption: React.FC<ContractOptionProps> = ({
           />
         </div>
 
-        <Heading
-          size="xl"
-          className={selected ? "text-blue-900 dark:text-blue-100" : ""}
-        >
-          {title}
-        </Heading>
+        <Text variant="title">{title}</Text>
         <Text
           className={`mt-2 ${selected ? "text-blue-700 dark:text-blue-200" : "text-gray-600 dark:text-gray-300"}`}
         >
@@ -121,7 +104,7 @@ const ContractOption: React.FC<ContractOptionProps> = ({
               >
                 Economiza {formatPrice(savings)}
               </Text>
-              <TrendingUp className="w-4 h-4 text-green-500" />
+              <LinkRoundAngle className="w-4 h-4 text-green-500" />
             </div>
           )}
         </div>
@@ -132,7 +115,7 @@ const ContractOption: React.FC<ContractOptionProps> = ({
           .slice(0, isExpanded ? benefits.length : 3)
           .map((benefit, index) => (
             <div key={index} className="flex items-center gap-3">
-              <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+              <LinkRoundAngle className="w-5 h-5 text-green-500 flex-shrink-0" />
               <Text
                 size="sm"
                 className={
@@ -160,7 +143,7 @@ const ContractOption: React.FC<ContractOptionProps> = ({
           {isExpanded
             ? "Ver menos"
             : `Ver mais ${benefits.length - 3} benefícios`}
-          <ArrowRight
+          <LinkRoundAngle
             className={`w-4 h-4 ml-1 transition-transform ${isExpanded ? "rotate-90" : ""}`}
           />
         </Button>
@@ -253,12 +236,10 @@ export const ContractSelectionStep: React.FC<OnboardingStepProps> = ({
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full mb-4">
-            <Target className="w-8 h-8 text-white" />
+            <LinkRoundAngle className="w-8 h-8 text-white" />
           </div>
 
-          <Heading size="2xl" className="mb-4">
-            Escolha a Duração do seu Contrato
-          </Heading>
+          <Text variant="title">Escolha a Duração do seu Contrato</Text>
           <Text
             size="lg"
             className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-6"
@@ -297,9 +278,9 @@ export const ContractSelectionStep: React.FC<OnboardingStepProps> = ({
 
         {/* Comparison Table */}
         <Card className="p-6 mb-8">
-          <Heading size="lg" className="text-center mb-6">
+          <Text variant="title" className="text-center mb-6">
             Comparação Detalhada
-          </Heading>
+          </Text>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -365,7 +346,7 @@ export const ContractSelectionStep: React.FC<OnboardingStepProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-blue-100 dark:bg-blue-800 rounded-lg flex items-center justify-center">
-                  <CheckCircle className="w-6 h-6 text-blue-600 dark:text-blue-300" />
+                  <LinkRoundAngle className="w-6 h-6 text-blue-600 dark:text-blue-300" />
                 </div>
                 <div>
                   <Text className="font-semibold text-blue-900 dark:text-blue-100">
@@ -398,7 +379,7 @@ export const ContractSelectionStep: React.FC<OnboardingStepProps> = ({
         {/* Success Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-            <Award className="w-8 h-8 text-green-600 dark:text-green-400 mx-auto mb-2" />
+            <LinkRoundAngle className="w-8 h-8 text-green-600 dark:text-green-400 mx-auto mb-2" />
             <div className="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">
               95%
             </div>
@@ -408,7 +389,7 @@ export const ContractSelectionStep: React.FC<OnboardingStepProps> = ({
           </div>
 
           <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-            <Zap className="w-8 h-8 text-blue-600 dark:text-blue-400 mx-auto mb-2" />
+            <LinkRoundAngle className="w-8 h-8 text-blue-600 dark:text-blue-400 mx-auto mb-2" />
             <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">
               3x
             </div>
@@ -418,7 +399,7 @@ export const ContractSelectionStep: React.FC<OnboardingStepProps> = ({
           </div>
 
           <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-            <Star className="w-8 h-8 text-purple-600 dark:text-purple-400 mx-auto mb-2" />
+            <LinkRoundAngle className="w-8 h-8 text-purple-600 dark:text-purple-400 mx-auto mb-2" />
             <div className="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-1">
               4.9/5
             </div>
@@ -432,7 +413,7 @@ export const ContractSelectionStep: React.FC<OnboardingStepProps> = ({
         <Card className="p-6 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-200 dark:border-yellow-700">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-800 rounded-full flex items-center justify-center">
-              <Gift className="w-6 h-6 text-yellow-600 dark:text-yellow-300" />
+              <LinkRoundAngle className="w-6 h-6 text-yellow-600 dark:text-yellow-300" />
             </div>
             <div>
               <Text className="font-semibold text-yellow-900 dark:text-yellow-100 mb-1">

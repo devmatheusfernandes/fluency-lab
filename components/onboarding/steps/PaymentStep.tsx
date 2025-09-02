@@ -4,28 +4,15 @@
 import React, { useState, useEffect } from "react";
 import { OnboardingStepProps } from "../OnboardingModal";
 import { Card } from "@/components/ui/Card";
-import { Heading } from "@/components/ui/Heading";
 import { Text } from "@/components/ui/Text";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
-import {
-  CreditCard,
-  Smartphone,
-  Shield,
-  Clock,
-  CheckCircle,
-  ArrowRight,
-  QrCode,
-  ExternalLink,
-  AlertCircle,
-  Zap,
-  Calendar,
-  Lock,
-} from "lucide-react";
+
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { formatPrice } from "@/config/pricing";
+import { LinkRoundAngle } from "@solar-icons/react/ssr";
 
 interface PaymentMethodCardProps {
   method: "pix" | "credit_card";
@@ -74,12 +61,12 @@ const PaymentMethodCard: React.FC<PaymentMethodCardProps> = ({
           </div>
         </div>
 
-        <Heading
+        <Text
           size="lg"
           className={selected ? "text-blue-900 dark:text-blue-100" : ""}
         >
           {title}
-        </Heading>
+        </Text>
         <Text
           className={`mt-2 ${selected ? "text-blue-700 dark:text-blue-200" : "text-gray-600 dark:text-gray-300"}`}
         >
@@ -90,7 +77,7 @@ const PaymentMethodCard: React.FC<PaymentMethodCardProps> = ({
       <div className="space-y-2 mb-4">
         {benefits.map((benefit, index) => (
           <div key={index} className="flex items-center gap-2">
-            <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+            <LinkRoundAngle className="w-4 h-4 text-green-500 flex-shrink-0" />
             <Text
               size="sm"
               className={
@@ -150,7 +137,7 @@ export const PaymentStep: React.FC<OnboardingStepProps> = ({
       method: "pix" as const,
       title: "PIX",
       description: "Pagamento instantâneo via QR Code",
-      icon: <QrCode className="w-8 h-8" />,
+      icon: <LinkRoundAngle className="w-8 h-8" />,
       benefits: [
         "Pagamento instantâneo",
         "Sem taxas adicionais",
@@ -162,7 +149,7 @@ export const PaymentStep: React.FC<OnboardingStepProps> = ({
       method: "credit_card" as const,
       title: "Cartão de Crédito",
       description: "Pagamento recorrente automático",
-      icon: <CreditCard className="w-8 h-8" />,
+      icon: <LinkRoundAngle className="w-8 h-8" />,
       benefits: [
         "Pagamento automático mensal",
         "Processo seguro e criptografado",
@@ -274,15 +261,12 @@ export const PaymentStep: React.FC<OnboardingStepProps> = ({
       <div className="p-8 text-center">
         <div className="max-w-2xl mx-auto">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-800 rounded-full mb-6">
-            <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-300" />
+            <LinkRoundAngle className="w-8 h-8 text-green-600 dark:text-green-300" />
           </div>
 
-          <Heading
-            size="2xl"
-            className="mb-4 text-green-800 dark:text-green-100"
-          >
+          <Text size="2xl" className="mb-4 text-green-800 dark:text-green-100">
             Pagamento Processado!
-          </Heading>
+          </Text>
 
           <Text size="lg" className="text-green-700 dark:text-green-200 mb-8">
             {data.paymentMethod === "pix"
@@ -308,15 +292,15 @@ export const PaymentStep: React.FC<OnboardingStepProps> = ({
         <div className="max-w-2xl mx-auto">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 dark:bg-blue-800 rounded-full mb-6">
             {paymentRedirecting ? (
-              <ExternalLink className="w-8 h-8 text-blue-600 dark:text-blue-300" />
+              <LinkRoundAngle className="w-8 h-8 text-blue-600 dark:text-blue-300" />
             ) : (
               <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
             )}
           </div>
 
-          <Heading size="xl" className="mb-4">
+          <Text size="xl" className="mb-4">
             {paymentRedirecting ? "Redirecionando..." : "Processando Pagamento"}
-          </Heading>
+          </Text>
 
           <Text className="text-gray-600 dark:text-gray-300 mb-6">
             {processingMessage}
@@ -325,7 +309,7 @@ export const PaymentStep: React.FC<OnboardingStepProps> = ({
           {paymentRedirecting && (
             <Card className="p-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700">
               <div className="flex items-center justify-center gap-2 text-blue-700 dark:text-blue-200">
-                <Shield className="w-5 h-5" />
+                <LinkRoundAngle className="w-5 h-5" />
                 <Text size="sm">
                   Você será redirecionado para uma página segura do Mercado Pago
                 </Text>
@@ -343,12 +327,12 @@ export const PaymentStep: React.FC<OnboardingStepProps> = ({
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-green-500 to-teal-600 rounded-full mb-4">
-            <CreditCard className="w-8 h-8 text-white" />
+            <LinkRoundAngle className="w-8 h-8 text-white" />
           </div>
 
-          <Heading size="2xl" className="mb-4">
+          <Text size="2xl" className="mb-4">
             Escolha sua Forma de Pagamento
-          </Heading>
+          </Text>
           <Text size="lg" className="text-gray-600 dark:text-gray-300">
             Selecione como deseja pagar sua mensalidade do Fluency Lab.
           </Text>
@@ -410,8 +394,8 @@ export const PaymentStep: React.FC<OnboardingStepProps> = ({
         {/* Billing Day Selection */}
         <Card className="p-6 mb-8">
           <div className="flex items-center gap-3 mb-4">
-            <Calendar className="w-6 h-6 text-blue-600 dark:text-blue-300" />
-            <Heading size="lg">Dia de Vencimento</Heading>
+            <LinkRoundAngle className="w-6 h-6 text-blue-600 dark:text-blue-300" />
+            <Text size="lg">Dia de Vencimento</Text>
           </div>
 
           <Text className="text-gray-600 dark:text-gray-300 mb-4">
@@ -441,9 +425,9 @@ export const PaymentStep: React.FC<OnboardingStepProps> = ({
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 bg-blue-100 dark:bg-blue-800 rounded-lg flex items-center justify-center">
                 {data.paymentMethod === "pix" ? (
-                  <QrCode className="w-6 h-6 text-blue-600 dark:text-blue-300" />
+                  <LinkRoundAngle className="w-6 h-6 text-blue-600 dark:text-blue-300" />
                 ) : (
-                  <CreditCard className="w-6 h-6 text-blue-600 dark:text-blue-300" />
+                  <LinkRoundAngle className="w-6 h-6 text-blue-600 dark:text-blue-300" />
                 )}
               </div>
 
@@ -517,7 +501,7 @@ export const PaymentStep: React.FC<OnboardingStepProps> = ({
         {/* Security Notice */}
         <Card className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 mb-8">
           <div className="flex items-center gap-3">
-            <Shield className="w-6 h-6 text-green-600 dark:text-green-300" />
+            <LinkRoundAngle className="w-6 h-6 text-green-600 dark:text-green-300" />
             <div>
               <Text className="font-semibold text-green-800 dark:text-green-100">
                 Pagamento 100% Seguro

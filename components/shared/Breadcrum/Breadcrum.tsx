@@ -3,6 +3,7 @@ import * as React from "react";
 import { twMerge } from "tailwind-merge";
 import { Siderbar } from "@solar-icons/react/ssr";
 import { ThemeToggle } from "@/components/features/ThemeToggle";
+import { HamburgerMenu } from "@solar-icons/react";
 
 type BreadcrumbItem = {
   label: string;
@@ -29,14 +30,14 @@ const Breadcrumb = React.forwardRef<HTMLElement, BreadcrumbProps>(
         ref={ref}
         aria-label="Breadcrumb"
         className={twMerge(
-          "flex items-center justify-between w-full text-sm bg-surface-1 rounded-t-lg py-1 px-3",
+          "flex items-center justify-between w-full text-sm bg-container rounded-t-lg py-1 px-3",
           className
         )}
       >
         {onToggleSidebar && (
-          <Siderbar
-            weight="Bold"
-            className="hidden sm:block text-primary hover:text-placeholder/50 duration-300 ease-in-out transition-all cursor-pointer w-6.5 h-6.5"
+          <HamburgerMenu
+            weight="Broken"
+            className="hidden sm:block text-primary dark:text-secondary hover:text-secondary-hover duration-300 ease-in-out transition-all cursor-pointer w-6.5 h-6.5"
             onClick={onToggleSidebar}
           />
         )}

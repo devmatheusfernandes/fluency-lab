@@ -7,19 +7,11 @@ import { Button } from "@/components/ui/Button/Button";
 import { Badge } from "@/components/ui/Badge/Badge";
 import { Input } from "@/components/ui/Input/Input";
 import { Loading } from "@/components/ui/Loading/Loading";
-import {
-  CreditCard,
-  Smartphone,
-  Check,
-  Star,
-  Calendar,
-  CheckCircle,
-  ArrowRight,
-  Clock,
-} from "lucide-react";
+
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import { formatPrice } from "@/config/pricing";
+import { LinkRoundAngle } from "@solar-icons/react/ssr";
 
 export function SubscriptionCreationClient() {
   const { data: session } = useSession();
@@ -152,9 +144,9 @@ export function SubscriptionCreationClient() {
           <div className="flex justify-center mb-4">
             <div className={`p-3 bg-${iconColor} rounded-full`}>
               {isPending ? (
-                <Clock className="w-8 h-8 text-white" />
+                <LinkRoundAngle className="w-8 h-8 text-white" />
               ) : (
-                <CheckCircle className="w-8 h-8 text-white" />
+                <LinkRoundAngle className="w-8 h-8 text-white" />
               )}
             </div>
           </div>
@@ -215,7 +207,7 @@ export function SubscriptionCreationClient() {
             size="lg"
             className="w-full md:w-auto"
           >
-            <ArrowRight className="w-4 h-4 mr-2" />
+            <LinkRoundAngle className="w-4 h-4 mr-2" />
             {isPending ? "Finalizar Pagamento" : "Ir para Área de Pagamentos"}
           </Button>
         </Card>
@@ -234,7 +226,7 @@ export function SubscriptionCreationClient() {
       {/* Plan Information */}
       <Card className="p-6 text-center border-2 border-blue-200 bg-blue-50">
         <div className="flex items-center justify-center gap-2 mb-2">
-          <Star className="w-5 h-5 text-blue-600" />
+          <LinkRoundAngle className="w-5 h-5 text-blue-600" />
           <span className="text-sm font-medium text-blue-800">Seu Plano</span>
         </div>
         <h2 className="text-2xl font-bold text-blue-900 mb-1">{userType}</h2>
@@ -265,7 +257,7 @@ export function SubscriptionCreationClient() {
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-blue-100 rounded-lg">
-                  <Smartphone className="w-6 h-6 text-blue-600" />
+                  <LinkRoundAngle className="w-6 h-6 text-blue-600" />
                 </div>
                 <div>
                   <h4 className="font-semibold">PIX</h4>
@@ -276,22 +268,22 @@ export function SubscriptionCreationClient() {
               </div>
               {selectedMethod === "pix" && (
                 <div className="p-1 bg-blue-500 rounded-full">
-                  <Check className="w-4 h-4 text-white" />
+                  <LinkRoundAngle className="w-4 h-4 text-white" />
                 </div>
               )}
             </div>
 
             <div className="space-y-2 mb-4">
               <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-500" />
+                <LinkRoundAngle className="w-4 h-4 text-green-500" />
                 <span className="text-sm">Sem taxas adicionais</span>
               </div>
               <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-500" />
+                <LinkRoundAngle className="w-4 h-4 text-green-500" />
                 <span className="text-sm">Pagamento instantâneo</span>
               </div>
               <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-500" />
+                <LinkRoundAngle className="w-4 h-4 text-green-500" />
                 <span className="text-sm">Controle total dos pagamentos</span>
               </div>
             </div>
@@ -313,7 +305,7 @@ export function SubscriptionCreationClient() {
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-purple-100 rounded-lg">
-                  <CreditCard className="w-6 h-6 text-purple-600" />
+                  <LinkRoundAngle className="w-6 h-6 text-purple-600" />
                 </div>
                 <div>
                   <h4 className="font-semibold">Cartão de Crédito</h4>
@@ -322,26 +314,26 @@ export function SubscriptionCreationClient() {
               </div>
               {selectedMethod === "credit_card" && (
                 <div className="p-1 bg-purple-500 rounded-full">
-                  <Check className="w-4 h-4 text-white" />
+                  <LinkRoundAngle className="w-4 h-4 text-white" />
                 </div>
               )}
             </div>
 
             <div className="space-y-2 mb-4">
               <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-500" />
+                <LinkRoundAngle className="w-4 h-4 text-green-500" />
                 <span className="text-sm">Cobrança automática</span>
               </div>
               <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-500" />
+                <LinkRoundAngle className="w-4 h-4 text-green-500" />
                 <span className="text-sm">Sem preocupação com datas</span>
               </div>
               <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-500" />
+                <LinkRoundAngle className="w-4 h-4 text-green-500" />
                 <span className="text-sm">Aceita principais bandeiras</span>
               </div>
               <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-500" />
+                <LinkRoundAngle className="w-4 h-4 text-green-500" />
                 <span className="text-sm">Checkout seguro Mercado Pago</span>
               </div>
             </div>
@@ -373,17 +365,17 @@ export function SubscriptionCreationClient() {
               </div>
               {contractLength === 6 && (
                 <div className="p-1 bg-green-500 rounded-full">
-                  <Check className="w-4 h-4 text-white" />
+                  <LinkRoundAngle className="w-4 h-4 text-white" />
                 </div>
               )}
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-500" />
+                <LinkRoundAngle className="w-4 h-4 text-green-500" />
                 <span className="text-sm">6 pagamentos mensais</span>
               </div>
               <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-500" />
+                <LinkRoundAngle className="w-4 h-4 text-green-500" />
                 <span className="text-sm">Renovação flexível</span>
               </div>
             </div>
@@ -407,17 +399,17 @@ export function SubscriptionCreationClient() {
               </div>
               {contractLength === 12 && (
                 <div className="p-1 bg-green-500 rounded-full">
-                  <Check className="w-4 h-4 text-white" />
+                  <LinkRoundAngle className="w-4 h-4 text-white" />
                 </div>
               )}
             </div>
             <div className="space-y-2 mb-4">
               <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-500" />
+                <LinkRoundAngle className="w-4 h-4 text-green-500" />
                 <span className="text-sm">12 pagamentos mensais</span>
               </div>
               <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-500" />
+                <LinkRoundAngle className="w-4 h-4 text-green-500" />
                 <span className="text-sm">Estabilidade garantida</span>
               </div>
             </div>
@@ -431,7 +423,7 @@ export function SubscriptionCreationClient() {
       {/* Billing Day Selection */}
       <Card className="p-6">
         <div className="flex items-center gap-2 mb-4">
-          <Calendar className="w-5 h-5 text-gray-600" />
+          <LinkRoundAngle className="w-5 h-5 text-gray-600" />
           <h3 className="text-lg font-semibold">Dia de vencimento</h3>
         </div>
         <p className="text-gray-600 mb-4">

@@ -4,11 +4,10 @@
 import React from "react";
 import { OnboardingStepProps } from "../OnboardingModal";
 import { Card } from "@/components/ui/Card";
-import { Heading } from "@/components/ui/Heading";
 import { Text } from "@/components/ui/Text";
 import { Button } from "@/components/ui/Button";
-import { GraduationCap, Sparkles, Users, Calendar } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { LinkRoundAngle } from "@solar-icons/react/ssr";
 
 export const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
   const { data: session } = useSession();
@@ -22,22 +21,22 @@ export const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
         {/* Welcome Animation Container */}
         <div className="mb-8 relative">
           <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mb-6 relative overflow-hidden">
-            <GraduationCap className="w-12 h-12 text-white" />
+            <LinkRoundAngle className="w-12 h-12 text-white" />
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-600/20 animate-pulse rounded-full"></div>
           </div>
 
-          <Sparkles className="w-6 h-6 text-yellow-400 absolute top-4 left-1/2 transform -translate-x-8 animate-bounce" />
-          <Sparkles className="w-4 h-4 text-blue-400 absolute top-8 right-1/2 transform translate-x-12 animate-bounce delay-300" />
-          <Sparkles className="w-5 h-5 text-purple-400 absolute bottom-4 left-1/2 transform translate-x-6 animate-bounce delay-700" />
+          <LinkRoundAngle className="w-6 h-6 text-yellow-400 absolute top-4 left-1/2 transform -translate-x-8 animate-bounce" />
+          <LinkRoundAngle className="w-4 h-4 text-blue-400 absolute top-8 right-1/2 transform translate-x-12 animate-bounce delay-300" />
+          <LinkRoundAngle className="w-5 h-5 text-purple-400 absolute bottom-4 left-1/2 transform translate-x-6 animate-bounce delay-700" />
         </div>
 
         {/* Welcome Message */}
-        <Heading
+        <Text
           size="2xl"
           className="mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
         >
           Bem-vindo ao Fluency Lab, {firstName}! 🎉
-        </Heading>
+        </Text>
 
         <Text
           size="lg"
@@ -51,7 +50,7 @@ export const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <Card className="p-4 text-center border border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/20">
             <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-100 dark:bg-blue-800 rounded-lg mb-3 mx-auto">
-              <Users className="w-6 h-6 text-blue-600 dark:text-blue-300" />
+              <LinkRoundAngle className="w-6 h-6 text-blue-600 dark:text-blue-300" />
             </div>
             <Text className="font-semibold mb-2">Professores Qualificados</Text>
             <Text size="sm" className="text-gray-600 dark:text-gray-300">
@@ -61,7 +60,7 @@ export const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
 
           <Card className="p-4 text-center border border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-900/20">
             <div className="inline-flex items-center justify-center w-12 h-12 bg-green-100 dark:bg-green-800 rounded-lg mb-3 mx-auto">
-              <Calendar className="w-6 h-6 text-green-600 dark:text-green-300" />
+              <LinkRoundAngle className="w-6 h-6 text-green-600 dark:text-green-300" />
             </div>
             <Text className="font-semibold mb-2">Horários Flexíveis</Text>
             <Text size="sm" className="text-gray-600 dark:text-gray-300">
@@ -71,7 +70,7 @@ export const WelcomeStep: React.FC<OnboardingStepProps> = ({ onNext }) => {
 
           <Card className="p-4 text-center border border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-900/20">
             <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-100 dark:bg-purple-800 rounded-lg mb-3 mx-auto">
-              <GraduationCap className="w-6 h-6 text-purple-600 dark:text-purple-300" />
+              <LinkRoundAngle className="w-6 h-6 text-purple-600 dark:text-purple-300" />
             </div>
             <Text className="font-semibold mb-2">
               Aprendizado Personalizado

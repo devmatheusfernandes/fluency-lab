@@ -88,4 +88,9 @@ export type User = {
         specialties?: string[];
         languages?: string[];
     }
+
+    // TWO-FACTOR AUTHENTICATION FIELDS
+    twoFactorEnabled?: boolean;
+    twoFactorSecret?: string;
+    twoFactorBackupCodes?: string[];
 };

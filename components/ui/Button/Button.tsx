@@ -43,26 +43,26 @@ const getButtonClasses = ({
   size,
 }: Pick<ButtonProps, "variant" | "size">): string => {
   const baseClasses =
-    "inline-flex items-center justify-center rounded-3xl font-semibold border-2 transition-all ease-in-out duration-200 focus:outline-none disabled:opacity-50 transform active:scale-[0.98] disabled:cursor-not-allowed disabled:active:scale-100";
+    "inline-flex items-center justify-center rounded-xl font-semibold border-2 transition-all ease-in-out duration-200 focus:outline-none disabled:opacity-50 transform active:scale-[0.98] disabled:cursor-not-allowed disabled:active:scale-100";
 
   const variantClasses = {
     primary:
-      "bg-primary border-primary text-primary-text hover:bg-primary-hover hover:border-primary-hover hover:shadow-xl",
+      "bg-primary border-primary text-primary-text hover:bg-primary-hover hover:border-primary-hover  ",
     secondary:
-      "bg-secondary border-secondary text-secondary-text hover:bg-secondary-hover hover:border-secondary-hover hover:shadow-xl",
+      "bg-secondary border-secondary text-secondary-text hover:bg-secondary-hover hover:border-secondary-hover  ",
     danger:
-      "bg-danger border-danger text-white hover:bg-danger-light hover:border-danger-light hover:shadow-xl",
+      "bg-danger border-danger text-white hover:bg-danger-light hover:border-danger-light  ",
     warning:
-      "bg-warning border-warning text-white hover:bg-warning-light hover:border-warning-light hover:shadow-xl",
+      "bg-warning border-warning text-white hover:bg-warning-light hover:border-warning-light  ",
     success:
-      "bg-info border-info text-white hover:bg-info-light hover:border-info-light hover:shadow-xl",
+      "bg-info border-info text-white hover:bg-info-light hover:border-info-light  ",
     ghost:
-      "border-surface-2 hover:border-surface-hover bg-surface-1 text-paragraph hover:bg-surface-hover hover:text-title",
+      "border-white-2 hover:border-white-hover bg-white text-paragraph hover:bg-white hover:text-title",
     glass:
-      "bg-white/20 backdrop-blur-xl border-2 border-white/30 text-white shadow-[0_8px_32px_rgba(0,0,0,0.1)] hover:bg-white/30 hover:border-white/50 hover:shadow-[0_12px_40px_rgba(0,0,0,0.15)] transition-all duration-300",
+      "bg-white/20 backdrop-blur-xl border-2 border-white/30 text-white hover:bg-white/30 hover:border-white/50 transition-all duration-300",
     link: "border-transparent bg-transparent text-primary underline-offset-4 hover:underline",
     purple:
-      "bg-primary border-primary text-primary-text hover:bg-primary-hover hover:border-primary-hover hover:shadow-xl",
+      "bg-primary border-primary text-primary-text hover:bg-primary-hover hover:border-primary-hover  ",
   };
 
   const sizeClasses = {

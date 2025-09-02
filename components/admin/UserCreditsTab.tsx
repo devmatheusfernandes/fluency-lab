@@ -62,22 +62,30 @@ export default function UserCreditsTab({ studentId }: UserCreditsTabProps) {
       const balanceResponse = await fetch(
         `/api/admin/credits/balance/${studentId}`
       );
+
       if (!balanceResponse.ok) {
-        throw new Error("Falha ao carregar saldo de créditos");
+        const errorData = await balanceResponse.json().catch(() => ({}));
+        throw new Error(
+          errorData.error ||
+            `Falha ao carregar saldo de créditos: ${balanceResponse.status}`
+        );
       }
+
       const balanceData = await balanceResponse.json();
       setBalance(balanceData.balance);
 
       // Load transactions
       const transactionsResponse = await fetch(
-        `/api/admin/credits/transactions/${studentId}`
+        `/api/admin/credits/history/${studentId}`
       );
+
       if (transactionsResponse.ok) {
         const transactionsData = await transactionsResponse.json();
-        setTransactions(transactionsData.transactions || []);
+        setTransactions(transactionsData.history || []);
       }
     } catch (err: any) {
-      setError(err.message);
+      console.error("Error loading credit data:", err);
+      setError(err.message || "Erro desconhecido ao carregar dados");
     } finally {
       setLoading(false);
     }
@@ -129,18 +137,6 @@ export default function UserCreditsTab({ studentId }: UserCreditsTabProps) {
       setGranting(false);
     }
   };
-
-  const formatCreditType = (type: RegularCreditType) => {
-    switch (type) {
-      case RegularCreditType.BONUS:
-        return "Bônus";
-      case RegularCreditType.LATE_STUDENTS:
-        return "Alunos Tardios";
-      default:
-        return type;
-    }
-  };
-
   const formatDate = (date: Date | string) => {
     return new Date(date).toLocaleDateString("pt-BR", {
       day: "2-digit",

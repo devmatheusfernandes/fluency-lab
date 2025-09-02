@@ -15,20 +15,11 @@ export default async function ProfilePage() {
     redirect("/signin");
   }
 
-  // Busca os dados mais recentes do utilizador no servidor
   const user = await userAdminRepo.findUserById(session.user.id);
 
   if (!user) {
-    return <Text>Utilizador não encontrado.</Text>;
+    return <Text>Usuário não encontrado.</Text>;
   }
 
-  return (
-    <div>
-      <Text variant="title" size="2xl" weight="bold" className="mb-6">
-        Meu Perfil
-      </Text>
-      {/* Passa os dados do servidor como prop inicial para o formulário do cliente */}
-      <ProfileForm initialData={user} />
-    </div>
-  );
+  return <ProfileForm initialData={user} />;
 }

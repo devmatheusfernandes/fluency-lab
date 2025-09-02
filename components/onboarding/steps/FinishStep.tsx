@@ -4,26 +4,13 @@
 import React from "react";
 import { OnboardingStepProps } from "../OnboardingModal";
 import { Card } from "@/components/ui/Card";
-import { Heading } from "@/components/ui/Heading";
 import { Text } from "@/components/ui/Text";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import {
-  CheckCircle,
-  Star,
-  Calendar,
-  MessageCircle,
-  BookOpen,
-  Trophy,
-  Users,
-  ArrowRight,
-  Sparkles,
-  Gift,
-  Heart,
-  Zap,
-} from "lucide-react";
+
 import { useSession } from "next-auth/react";
 import { formatPrice } from "@/config/pricing";
+import { LinkRoundAngle } from "@solar-icons/react/ssr";
 
 interface NextStepCardProps {
   icon: React.ReactNode;
@@ -87,14 +74,14 @@ const NextStepCard: React.FC<NextStepCardProps> = ({
         <div className={classes.iconColor}>{icon}</div>
       </div>
 
-      <Heading size="lg" className={`${classes.textColor} mb-2`}>
+      <Text variant="title" className={`${classes.textColor} mb-2`}>
         {title}
-      </Heading>
+      </Text>
       <Text className={`${classes.descColor} mb-3`}>{description}</Text>
 
       <div className="flex items-center gap-2 text-sm font-medium">
         <span className={classes.textColor}>{action}</span>
-        <ArrowRight className={`w-4 h-4 ${classes.iconColor}`} />
+        <LinkRoundAngle className={`w-4 h-4 ${classes.iconColor}`} />
       </div>
     </Card>
   );
@@ -114,7 +101,7 @@ export const FinishStep: React.FC<OnboardingStepProps> = ({ data }) => {
 
   const nextSteps = [
     {
-      icon: <Calendar className="w-6 h-6" />,
+      icon: <LinkRoundAngle className="w-6 h-6" />,
       title: "Agende sua Primeira Aula",
       description:
         "Escolha um horário conveniente com um dos nossos professores qualificados.",
@@ -122,7 +109,7 @@ export const FinishStep: React.FC<OnboardingStepProps> = ({ data }) => {
       color: "blue" as const,
     },
     {
-      icon: <BookOpen className="w-6 h-6" />,
+      icon: <LinkRoundAngle className="w-6 h-6" />,
       title: "Complete seu Perfil",
       description:
         "Adicione informações sobre seus objetivos e nível atual de conhecimento.",
@@ -130,7 +117,7 @@ export const FinishStep: React.FC<OnboardingStepProps> = ({ data }) => {
       color: "green" as const,
     },
     {
-      icon: <MessageCircle className="w-6 h-6" />,
+      icon: <LinkRoundAngle className="w-6 h-6" />,
       title: "Conheça a Plataforma",
       description:
         "Explore todas as funcionalidades disponíveis no seu dashboard.",
@@ -138,7 +125,7 @@ export const FinishStep: React.FC<OnboardingStepProps> = ({ data }) => {
       color: "purple" as const,
     },
     {
-      icon: <Users className="w-6 h-6" />,
+      icon: <LinkRoundAngle className="w-6 h-6" />,
       title: "Junte-se à Comunidade",
       description:
         "Conecte-se com outros estudantes e participe de eventos especiais.",
@@ -149,23 +136,23 @@ export const FinishStep: React.FC<OnboardingStepProps> = ({ data }) => {
 
   const achievements = [
     {
-      icon: <CheckCircle className="w-5 h-5 text-green-500" />,
+      icon: <LinkRoundAngle className="w-5 h-5 text-green-500" />,
       text: "Conta criada e verificada",
     },
     {
-      icon: <CheckCircle className="w-5 h-5 text-green-500" />,
+      icon: <LinkRoundAngle className="w-5 h-5 text-green-500" />,
       text: "Preferências configuradas",
     },
     {
-      icon: <CheckCircle className="w-5 h-5 text-green-500" />,
+      icon: <LinkRoundAngle className="w-5 h-5 text-green-500" />,
       text: "Contrato assinado digitalmente",
     },
     {
-      icon: <CheckCircle className="w-5 h-5 text-green-500" />,
+      icon: <LinkRoundAngle className="w-5 h-5 text-green-500" />,
       text: "Pagamento configurado",
     },
     {
-      icon: <CheckCircle className="w-5 h-5 text-green-500" />,
+      icon: <LinkRoundAngle className="w-5 h-5 text-green-500" />,
       text: "Pronto para começar!",
     },
   ];
@@ -177,23 +164,24 @@ export const FinishStep: React.FC<OnboardingStepProps> = ({ data }) => {
         <div className="text-center mb-12">
           <div className="relative inline-block">
             <div className="w-24 h-24 bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 rounded-full flex items-center justify-center mb-6 mx-auto relative overflow-hidden">
-              <Trophy className="w-12 h-12 text-white" />
+              <LinkRoundAngle className="w-12 h-12 text-white" />
               <div className="absolute inset-0 bg-gradient-to-r from-green-400/20 via-blue-500/20 to-purple-600/20 animate-pulse rounded-full"></div>
             </div>
 
             {/* Floating celebration icons */}
-            <Sparkles className="w-6 h-6 text-yellow-400 absolute -top-2 -left-4 animate-bounce" />
-            <Star className="w-5 h-5 text-blue-400 absolute -top-4 -right-2 animate-bounce delay-300" />
-            <Heart className="w-4 h-4 text-pink-400 absolute -bottom-2 -left-6 animate-bounce delay-700" />
-            <Zap className="w-5 h-5 text-orange-400 absolute -bottom-4 right-0 animate-bounce delay-500" />
+            <LinkRoundAngle className="w-6 h-6 text-yellow-400 absolute -top-2 -left-4 animate-bounce" />
+            <LinkRoundAngle className="w-5 h-5 text-blue-400 absolute -top-4 -right-2 animate-bounce delay-300" />
+            <LinkRoundAngle className="w-4 h-4 text-pink-400 absolute -bottom-2 -left-6 animate-bounce delay-700" />
+            <LinkRoundAngle className="w-5 h-5 text-orange-400 absolute -bottom-4 right-0 animate-bounce delay-500" />
           </div>
 
-          <Heading
+          <Text
+            variant="title"
             size="3xl"
             className="mb-4 bg-gradient-to-r from-green-600 via-blue-600 to-purple-600 bg-clip-text text-transparent"
           >
             Parabéns, {firstName}! 🎉
-          </Heading>
+          </Text>
 
           <Text
             size="xl"
@@ -220,12 +208,13 @@ export const FinishStep: React.FC<OnboardingStepProps> = ({ data }) => {
         <Card className="p-8 mb-8 bg-gradient-to-r from-green-50 via-blue-50 to-purple-50 dark:from-green-900/30 dark:via-blue-900/30 dark:to-purple-900/30 border border-green-200 dark:border-green-700">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div>
-              <Heading
+              <Text
+                variant="title"
                 size="lg"
                 className="mb-4 text-green-800 dark:text-green-100"
               >
                 Resumo da sua Configuração
-              </Heading>
+              </Text>
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <Text className="text-gray-600 dark:text-gray-300">
@@ -275,12 +264,13 @@ export const FinishStep: React.FC<OnboardingStepProps> = ({ data }) => {
             </div>
 
             <div>
-              <Heading
+              <Text
+                variant="title"
                 size="lg"
                 className="mb-4 text-blue-800 dark:text-blue-100"
               >
                 Progresso da Integração
-              </Heading>
+              </Text>
               <div className="space-y-3">
                 {achievements.map((achievement, index) => (
                   <div key={index} className="flex items-center gap-3">
@@ -297,9 +287,9 @@ export const FinishStep: React.FC<OnboardingStepProps> = ({ data }) => {
 
         {/* Next Steps */}
         <div className="mb-8">
-          <Heading size="xl" className="text-center mb-6">
+          <Text variant="title" size="xl" className="text-center mb-6">
             Próximos Passos
-          </Heading>
+          </Text>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {nextSteps.map((step, index) => (
               <NextStepCard key={index} {...step} />
@@ -310,13 +300,14 @@ export const FinishStep: React.FC<OnboardingStepProps> = ({ data }) => {
         {/* Welcome Benefits */}
         <Card className="p-8 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-200 dark:border-yellow-700 mb-8">
           <div className="text-center mb-6">
-            <Gift className="w-12 h-12 text-yellow-600 dark:text-yellow-300 mx-auto mb-3" />
-            <Heading
+            <LinkRoundAngle className="w-12 h-12 text-yellow-600 dark:text-yellow-300 mx-auto mb-3" />
+            <Text
+              variant="title"
               size="lg"
               className="text-yellow-900 dark:text-yellow-100 mb-2"
             >
               Bônus de Boas-Vindas! 🎁
-            </Heading>
+            </Text>
             <Text className="text-yellow-700 dark:text-yellow-200">
               Como novo estudante, você tem direito a estes benefícios
               especiais:
@@ -325,7 +316,7 @@ export const FinishStep: React.FC<OnboardingStepProps> = ({ data }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="text-center p-4 bg-white dark:bg-yellow-900/20 rounded-lg">
-              <BookOpen className="w-8 h-8 text-yellow-600 dark:text-yellow-300 mx-auto mb-2" />
+              <LinkRoundAngle className="w-8 h-8 text-yellow-600 dark:text-yellow-300 mx-auto mb-2" />
               <Text className="font-semibold mb-1">Material Gratuito</Text>
               <Text size="sm" className="text-gray-600 dark:text-gray-300">
                 Acesso completo a todos os materiais didáticos
@@ -333,7 +324,7 @@ export const FinishStep: React.FC<OnboardingStepProps> = ({ data }) => {
             </div>
 
             <div className="text-center p-4 bg-white dark:bg-yellow-900/20 rounded-lg">
-              <MessageCircle className="w-8 h-8 text-yellow-600 dark:text-yellow-300 mx-auto mb-2" />
+              <LinkRoundAngle className="w-8 h-8 text-yellow-600 dark:text-yellow-300 mx-auto mb-2" />
               <Text className="font-semibold mb-1">Suporte Prioritário</Text>
               <Text size="sm" className="text-gray-600 dark:text-gray-300">
                 Atendimento especial nos primeiros 30 dias
@@ -341,7 +332,7 @@ export const FinishStep: React.FC<OnboardingStepProps> = ({ data }) => {
             </div>
 
             <div className="text-center p-4 bg-white dark:bg-yellow-900/20 rounded-lg">
-              <Trophy className="w-8 h-8 text-yellow-600 dark:text-yellow-300 mx-auto mb-2" />
+              <LinkRoundAngle className="w-8 h-8 text-yellow-600 dark:text-yellow-300 mx-auto mb-2" />
               <Text className="font-semibold mb-1">Avaliação Gratuita</Text>
               <Text size="sm" className="text-gray-600 dark:text-gray-300">
                 Teste de nivelamento sem custo adicional
@@ -352,9 +343,9 @@ export const FinishStep: React.FC<OnboardingStepProps> = ({ data }) => {
 
         {/* Success Message */}
         <Card className="p-6 bg-gradient-to-r from-green-500 to-blue-600 text-white text-center">
-          <Heading size="xl" className="mb-3 text-white">
+          <Text size="xl" className="mb-3 text-white">
             Bem-vindo à família Fluency Lab! 💙
-          </Heading>
+          </Text>
           <Text className="mb-4 text-green-50">
             Estamos muito empolgados em fazer parte da sua jornada de
             aprendizado. Nossa equipe está pronta para ajudá-lo a alcançar a

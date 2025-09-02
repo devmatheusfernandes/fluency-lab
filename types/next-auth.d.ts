@@ -1,35 +1,37 @@
 // types/next-auth.d.ts
+import NextAuth from "next-auth"
 
-import NextAuth, { DefaultSession, DefaultUser } from "next-auth";
-import { JWT, DefaultJWT } from "next-auth/jwt";
-import { UserRoles } from "./userRoles"; // 👈 Importe seus tipos
-import { UserPermission } from "./userPermissions"; // 👈 Importe seus tipos
-
-// Estende o token JWT
-declare module "next-auth/jwt" {
-  interface JWT extends DefaultJWT {
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+      role?: string;
+      permissions?: string[];
+      tutorialCompleted?: boolean;
+      twoFactorEnabled?: boolean;
+    }
+  }
+  
+  interface User {
     id: string;
-    role?: UserRoles;
-    permissions?: UserPermission[];
+    name?: string | null;
+    email?: string | null;
+    role?: string;
+    permissions?: string[];
     tutorialCompleted?: boolean;
+    twoFactorEnabled?: boolean;
   }
 }
 
-// Estende a sessão e o usuário
-declare module "next-auth" {
-  interface User extends DefaultUser {
-    id: string;
-    role?: UserRoles;
-    permissions?: UserPermission[];
+declare module "next-auth/jwt" {
+  interface JWT {
+    id?: string;
+    role?: string;
+    permissions?: string[];
     tutorialCompleted?: boolean;
-  }
-
-  interface Session extends DefaultSession {
-    user: {
-      id: string;
-      role?: UserRoles;
-      permissions?: UserPermission[];
-      tutorialCompleted?: boolean;
-    } & DefaultSession["user"]; // Mantém os campos padrão como name, email, image
+    twoFactorEnabled?: boolean;
   }
 }

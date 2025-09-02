@@ -56,7 +56,10 @@ const Header = React.forwardRef<HTMLDivElement, HeaderProps>(
     return (
       <div
         ref={ref}
-        className={twMerge("flex items-start justify-between gap-4", className)}
+        className={twMerge(
+          "flex items-start justify-between gap-4 mb-3",
+          className
+        )}
         {...props}
       >
         <div className="flex-1 min-w-0">

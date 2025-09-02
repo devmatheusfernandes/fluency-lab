@@ -179,7 +179,14 @@ export class UserAdminRepository {
    */
     async update(userId: string, data: Partial<User>): Promise<void> {
       const userRef = this.usersCollection.doc(userId);
-      await userRef.update(data);
+      
+      // Add updatedAt timestamp for all updates
+      const dataToUpdate = {
+        ...data,
+        updatedAt: new Date(),
+      };
+      
+      await userRef.update(dataToUpdate);
     }
 
     async countNewUsersThisMonth(): Promise<number> {

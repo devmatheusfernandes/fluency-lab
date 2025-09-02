@@ -11,7 +11,15 @@ export async function PUT(request: Request) {
     const user = await requireAuth();
     
     const profileData = await request.json();
-    await userService.updateUserProfile(user.id, profileData);
+    
+    // Check if this is an avatar update
+    if (profileData.avatarUrl !== undefined) {
+      await userService.updateUserAvatar(user.id, profileData.avatarUrl);
+    } else {
+      // Regular profile update
+      await userService.updateUserProfile(user.id, profileData);
+    }
+    
     return NextResponse.json({ message: 'Perfil atualizado com sucesso.' });
   } catch (error: any) {
     if (error.message === "Authentication required") {

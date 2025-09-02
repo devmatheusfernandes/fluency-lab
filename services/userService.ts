@@ -217,4 +217,17 @@ export class UserService {
   
       await userAdminRepo.update(studentId, { teachersIds: teacherIds });
     }
+
+  /**
+   * Updates the user's avatar URL in the database
+   * @param userId - The ID of the user
+   * @param avatarUrl - The new avatar URL
+   */
+  async updateUserAvatar(userId: string, avatarUrl: string): Promise<void> {
+    if (!avatarUrl) {
+      throw new Error("Avatar URL is required");
+    }
+
+    await userAdminRepo.update(userId, { avatarUrl });
+  }
 }

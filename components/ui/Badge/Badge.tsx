@@ -22,7 +22,7 @@ const getBadgeClasses = ({
   style,
 }: Pick<BadgeProps, "variant" | "style">): string => {
   const baseClasses =
-    "inline-flex items-center rounded-2xl px-3 py-1 text-xs font-regular transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1";
+    "inline-flex items-center rounded-lg px-3 py-1 text-xs font-regular transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1";
 
   const styleVariants = {
     solid: {

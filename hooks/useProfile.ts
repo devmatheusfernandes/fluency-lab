@@ -22,8 +22,10 @@ export const useProfile = () => {
       }
       
       toast.success('Perfil atualizado com sucesso!');
+      return true;
     } catch (error: any) {
       toast.error(error.message);
+      return false;
     } finally {
       setIsLoading(false);
     }

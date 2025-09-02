@@ -12,7 +12,7 @@ import {
   StudentClass,
 } from "@/types/classes/class";
 import { AvailabilitySlot, AvailabilityType } from "@/types/time/availability";
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { classTemplateRepository } from "@/repositories/ClassTemplateRepository";
 import { daysOfWeek } from "@/types/time/times";
 import { User } from "@/types/users/users";
@@ -691,7 +691,7 @@ export class SchedulingService {
     const promises = [];
     if (!student)
       promises.push(userAdminRepository.findUserById(classData.studentId));
-    if (!teacher)
+    if (!teacher && classData.teacherId)
       promises.push(userAdminRepository.findUserById(classData.teacherId));
 
     const results = await Promise.all(promises);
@@ -700,7 +700,7 @@ export class SchedulingService {
     if (!student) student = results.shift() || null;
     if (!teacher) teacher = results.shift() || null;
 
-    if (!student || !teacher) {
+    if (!student || (classData.teacherId && !teacher)) {
       throw new Error(
         "Não foi possível encontrar os perfis do aluno ou do professor."
       );
@@ -1211,6 +1211,64 @@ export class SchedulingService {
     return { ...vacationData, createdAt: new Date() } as Vacation;
   }
 
+  /**
+   * Updates the teachersIds field for a student based on their class template
+   * @param studentId The ID of the student
+   * @param oldTemplate The old class template (before changes)
+   * @param newTemplate The new class template (after changes)
+   */
+  async updateStudentTeachersIds(studentId: string, oldTemplate: ClassTemplate | null, newTemplate: ClassTemplate): Promise<void> {
+    try {
+      // Get unique teacher IDs from the old template
+      const oldTeacherIds = oldTemplate?.days?.map(entry => entry.teacherId) || [];
+      const uniqueOldTeacherIds = [...new Set(oldTeacherIds)];
+      
+      // Get unique teacher IDs from the new template
+      const newTeacherIds = newTemplate.days?.map(entry => entry.teacherId) || [];
+      const uniqueNewTeacherIds = [...new Set(newTeacherIds)];
+      
+      // Find teachers that were removed (in old but not in new)
+      const removedTeacherIds = uniqueOldTeacherIds.filter(id => !uniqueNewTeacherIds.includes(id));
+      
+      // Find teachers that were added (in new but not in old)
+      const addedTeacherIds = uniqueNewTeacherIds.filter(id => !uniqueOldTeacherIds.includes(id));
+      
+      // Update the student's teachersIds field
+      const student = await userAdminRepository.findUserById(studentId);
+      if (!student) {
+        throw new Error(`Student with ID ${studentId} not found`);
+      }
+      
+      // Get current teachersIds from student
+      let currentTeachersIds = student.teachersIds || [];
+      
+      // Remove teachers that are no longer in the schedule (only if they don't appear in any remaining entries)
+      for (const removedTeacherId of removedTeacherIds) {
+        // Check if this teacher still appears in the new template
+        const teacherStillInSchedule = newTemplate.days?.some(entry => entry.teacherId === removedTeacherId);
+        if (!teacherStillInSchedule) {
+          // Remove this teacher from teachersIds
+          currentTeachersIds = currentTeachersIds.filter(id => id !== removedTeacherId);
+        }
+      }
+      
+      // Add new teachers to teachersIds
+      for (const addedTeacherId of addedTeacherIds) {
+        // Only add if not already in the list
+        if (!currentTeachersIds.includes(addedTeacherId)) {
+          currentTeachersIds.push(addedTeacherId);
+        }
+      }
+      
+      // Update the student document with the new teachersIds array
+      await userAdminRepository.update(studentId, { teachersIds: currentTeachersIds });
+      
+      console.log(`Successfully updated teachersIds for student ${studentId}`);
+    } catch (error) {
+      console.error(`Error updating teachersIds for student ${studentId}:`, error);
+      throw error;
+    }
+  }
 
   /**
    * Atualiza o template de horário de um aluno e remove as aulas futuras que
@@ -1238,8 +1296,100 @@ export class SchedulingService {
       await classRepository.deleteFutureClassesByTemplate(studentId, removedEntries);
     }
     
-    // 4. Salvar o novo template
+    // 4. Update student's teachersIds field
+    await this.updateStudentTeachersIds(studentId, oldTemplate, newTemplateData);
+    
+    // 5. Update classes in Firestore with new teacher information
+    await this.updateClassesWithNewTeacherInfo(studentId, oldTemplate, newTemplateData);
+    
+    // 6. Salvar o novo template
     await classTemplateRepository.upsert(studentId, newTemplateData);
+  }
+
+  /**
+   * Updates classes in Firestore when teacher information changes in the schedule
+   * @param studentId The ID of the student
+   * @param oldTemplate The old class template
+   * @param newTemplate The new class template
+   */
+  async updateClassesWithNewTeacherInfo(studentId: string, oldTemplate: ClassTemplate | null, newTemplate: ClassTemplate): Promise<void> {
+    try {
+      // Create a map of schedule changes: (day,hour) -> oldTeacherId,newTeacherId
+      const scheduleChanges = new Map<string, { oldTeacherId: string | null, newTeacherId: string | null }>();
+      
+      // Process old template entries
+      oldTemplate?.days?.forEach(entry => {
+        const key = `${entry.day}-${entry.hour}`;
+        if (!scheduleChanges.has(key)) {
+          scheduleChanges.set(key, { oldTeacherId: entry.teacherId, newTeacherId: null });
+        }
+      });
+      
+      // Process new template entries
+      newTemplate.days?.forEach(entry => {
+        const key = `${entry.day}-${entry.hour}`;
+        if (scheduleChanges.has(key)) {
+          const change = scheduleChanges.get(key)!;
+          change.newTeacherId = entry.teacherId;
+        } else {
+          scheduleChanges.set(key, { oldTeacherId: null, newTeacherId: entry.teacherId });
+        }
+      });
+      
+      // Find entries where teacher changed
+      const changedEntries = Array.from(scheduleChanges.entries()).filter(([key, change]) => 
+        change.oldTeacherId !== change.newTeacherId
+      );
+      
+      if (changedEntries.length === 0) {
+        return; // No changes to process
+      }
+      
+      // For each changed entry, update the corresponding classes
+      for (const [key, change] of changedEntries) {
+        const [day, hour] = key.split('-');
+        
+        // Only process if teacher actually changed
+        if (change.oldTeacherId !== change.newTeacherId && change.newTeacherId) {
+          // Find classes that match this schedule entry
+          const now = new Date();
+          const classesQuery = adminDb.collection('classes')
+            .where('studentId', '==', studentId)
+            .where('status', '==', ClassStatus.SCHEDULED)
+            .where('scheduledAt', '>=', now);
+          
+          const snapshot = await classesQuery.get();
+          
+          // Update classes that match the day and hour
+          const batch = adminDb.batch();
+          let updateCount = 0;
+          
+          snapshot.docs.forEach(doc => {
+            const classData = doc.data() as StudentClass;
+            const classDate = (classData.scheduledAt as unknown as Timestamp).toDate();
+            const classDay = daysOfWeek[classDate.getDay()];
+            const classHour = `${String(classDate.getHours()).padStart(2, '0')}:${String(classDate.getMinutes()).padStart(2, '0')}`;
+            
+            // If this class matches the schedule entry that changed
+            if (classDay === day && classHour === hour) {
+              batch.update(doc.ref, {
+                teacherId: change.newTeacherId,
+                updatedAt: Timestamp.now()
+              });
+              updateCount++;
+            }
+          });
+          
+          if (updateCount > 0) {
+            await batch.commit();
+            console.log(`Updated ${updateCount} classes for student ${studentId} with new teacher ${change.newTeacherId} for ${day} at ${hour}`);
+          }
+        }
+      }
+    } catch (error) {
+      console.error(`Error updating classes with new teacher info for student ${studentId}:`, error);
+      throw error;
+    }
   }
 
     /**
@@ -1255,7 +1405,17 @@ export class SchedulingService {
       await classRepository.deleteFutureClassesByTemplate(studentId, entriesToDelete);
     }
     
-    // 2. Deleta o próprio documento do template
+    // 2. Remove all teacher IDs from the student's teachersIds field
+    if (templateToDelete && entriesToDelete.length > 0) {
+      const teacherIdsToRemove = [...new Set(entriesToDelete.map(entry => entry.teacherId))];
+      const student = await userAdminRepository.findUserById(studentId);
+      if (student && student.teachersIds) {
+        const updatedTeachersIds = student.teachersIds.filter(id => !teacherIdsToRemove.includes(id));
+        await userAdminRepository.update(studentId, { teachersIds: updatedTeachersIds });
+      }
+    }
+    
+    // 3. Deleta o próprio documento do template
     await classTemplateRepository.delete(studentId);
   }
 
@@ -1342,11 +1502,21 @@ export class SchedulingService {
     const classes = await classRepository.findAllClassesByStudentId(studentId);
     if (classes.length === 0) return [];
 
-    const teacherIds = [...new Set(classes.map(cls => cls.teacherId))];
+    // Filter out undefined teacherIds before creating the set
+    const teacherIds = [...new Set(classes.map(cls => cls.teacherId).filter(id => id !== undefined))];
     const teachers = await userAdminRepo.findUsersByIds(teacherIds);
     const teacherMap = new Map(teachers.map(t => [t.id, t]));
 
     const populatedClasses: PopulatedStudentClass[] = classes.map(cls => {
+      // Handle case where teacherId might be undefined
+      if (!cls.teacherId) {
+        return {
+          ...cls,
+          teacherName: 'Professor não atribuído',
+          teacherAvatarUrl: undefined,
+        };
+      }
+      
       const teacher = teacherMap.get(cls.teacherId);
       return {
         ...cls,

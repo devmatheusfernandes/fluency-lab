@@ -2,6 +2,7 @@
 import { UserRoles } from "./userRoles";
 import { UserPermission } from "./userPermissions";
 import { RegularClassCredit } from "../credits/regularClassCredits";
+import { StudentAchievement } from "./achievements";
 
 //firebase > db > users > user.id
 export type User = {
@@ -41,6 +42,9 @@ export type User = {
     badges?: string[]; //Maybe put in a differente collection
     coursesIds?: string[]; //Maybe put in a differente collection
     languages?: string[];
+    
+    // ACHIEVEMENTS
+    achievements?: StudentAchievement[];
 
     // CAMPOS ADICIONADOS PARA CONTRATO E REAGENDAMENTO
     contractStartDate?: Date;

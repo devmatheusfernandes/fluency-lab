@@ -1,5 +1,6 @@
 import { StudentClass } from "../classes/class";
 import { User } from "./users";
+import { StudentAchievement } from "./achievements";
 
 
 // Este tipo representa a visão 360º de um utilizador

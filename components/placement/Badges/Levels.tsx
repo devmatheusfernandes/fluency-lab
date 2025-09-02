@@ -2,13 +2,12 @@ import { CloseCircle } from "@solar-icons/react/ssr";
 import Image from "next/image";
 
 // Importando as imagens
-import SabrinaSatoImage from "@/public/images/badges/sabrina-sato.png";
-import NaboteImage from "@/public/images/badges/nabote.png";
-import AlcioneImage from "@/public/images/badges/alcione.png";
-import RicharlissonImage from "@/public/images/badges/richarlisson.png";
-import JoelSantanaImage from "@/public/images/badges/joelsantana.png";
-import NaldoBennyImage from "@/public/images/badges/naldobenny.png";
-
+import SabrinaSatoImage from "../../../public/images/badges/sabrina-sato.png";
+import NaboteImage from "../../../public/images/badges/nabote.png";
+import AlcioneImage from "../../../public/images/badges/alcione.png";
+import RicharlissonImage from "../../../public/images/badges/richarlisson.png";
+import JoelSantanaImage from "../../../public/images/badges/joelsantana.png";
+import NaldoBennyImage from "../../../public/images/badges/naldobenny.png";
 const badgesData = [
   {
     name: "Sabrina Sato",

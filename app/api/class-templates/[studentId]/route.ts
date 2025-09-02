@@ -8,7 +8,7 @@ import { schedulingService } from '@/services/schedulingService';
 // GET: Retorna o template de horário de um aluno
 export async function GET(
   request: NextRequest,
-  { params }: { params: { studentId: string } } // <<< 'params' já vem resolvido
+  { params }: { params: Promise<{ studentId: string }> } // <<< Updated type
 ) {
   const session = await getServerSession(authOptions);
   if (session?.user?.role !== 'admin' && session?.user?.role !== 'manager') {
@@ -16,7 +16,7 @@ export async function GET(
   }
 
   try {
-    const { studentId } = params; // <<< CORREÇÃO DO AVISO
+    const { studentId } = await params; // <<< Await params
     const template = await classTemplateRepository.get(studentId);
 
     // ▼▼▼ LÓGICA MELHORADA ▼▼▼
@@ -37,7 +37,7 @@ export async function GET(
 // PUT: Atualiza o template de horário de um aluno
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { studentId: string } }
+    { params }: { params: Promise<{ studentId: string }> } // <<< Updated type
 ) {
     const session = await getServerSession(authOptions);
     if (session?.user?.role !== 'admin' && session?.user?.role !== 'manager') {
@@ -45,7 +45,7 @@ export async function PUT(
     }
 
     try {
-        const { studentId } = params;
+        const { studentId } = await params; // <<< Await params
         const templateData = (await request.json()) as ClassTemplate;
 
         // Validação básica do corpo da requisição
@@ -68,7 +68,7 @@ export async function PUT(
 // DELETE: Exclui o template de horário de um aluno e todas as suas aulas futuras.
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { studentId: string } }
+  { params }: { params: Promise<{ studentId: string }> } // <<< Updated type
 ) {
   const session = await getServerSession(authOptions);
   if (session?.user?.role !== 'admin' && session?.user?.role !== 'manager') {
@@ -76,9 +76,9 @@ export async function DELETE(
   }
 
   try {
-    const { studentId } = params;
+    const { studentId } = await params; // <<< Await params
     await schedulingService.deleteScheduleAndClasses(studentId);
-    return NextResponse.json({ message: 'Horário e aulas futuras deletados com sucesso.' });
+    return NextResponse.json({ message: 'Template e todas as aulas futuras foram deletados com sucesso. O histórico não foi afetado.' });
   } catch (error: any) {
     console.error("Erro ao deletar template:", error);
     return NextResponse.json({ error: 'Erro interno do servidor.' }, { status: 500 });

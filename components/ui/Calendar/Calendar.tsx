@@ -4,7 +4,6 @@ import * as React from "react";
 import { twMerge } from "tailwind-merge";
 import { Button } from "../Button";
 import { Text } from "../Text";
-import { Heading } from "../Heading";
 import {
   AddCircle,
   ArrowLeft,
@@ -795,13 +794,13 @@ export const Calendar: React.FC<CalendarProps> = ({
               </Button>
             </>
           )}
-          <Heading
+          <Text
             size={isMobile ? "base" : "lg"}
             variant="title"
             className={twMerge(isMobile && "text-center")}
           >
             {getViewTitle()}
-          </Heading>
+          </Text>
         </div>
 
         <div

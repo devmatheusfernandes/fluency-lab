@@ -5,7 +5,8 @@ import { adminDb } from '@/lib/firebase/admin';
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-  if (session?.user?.role !== 'teacher') {
+  // Allow both teachers and admins to access this endpoint
+  if (!session?.user?.id || !session?.user?.role || !['teacher', 'admin'].includes(session.user.role)) {
     return NextResponse.json({ error: 'Não autorizado.' }, { status: 403 });
   }
 

@@ -9,9 +9,15 @@ import ProgressStatusCard from "@/components/student/ProgressStatusCard";
 import UserProfileHeader from "@/components/shared/ProfilePersonal/UserProfileHeader";
 import UserProfileSkeleton from "@/components/shared/ProgressSkeletons/UserProfileSkeleton";
 import { StudentPaymentStatusCard } from "@/components/student/StudentPaymentStatusCard";
+import { useEffect, useState } from "react";
+import Badges from "@/components/placement/Badges/Badges";
+import { determineCEFRLevel } from "@/lib/utils";
+import { usePlacementTests } from "@/hooks/usePlacementTests";
+import AchievementList from "@/components/student/AchievementList";
 
 export default function MeuPerfil() {
   const { user, isLoading } = useCurrentUser();
+  const { tests, isLoading: isTestsLoading } = usePlacementTests();
 
   const handleLogout = () => {
     signOut({ callbackUrl: "/" });
@@ -68,23 +74,16 @@ export default function MeuPerfil() {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4, delay: 0.3 }}
       >
-        8
+        <Badges level={determineCEFRLevel(tests[0]?.totalScore || 0)} />
       </SubContainer>
 
       <SubContainer
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.4 }}
+        className="md:col-span-2"
       >
-        9
-      </SubContainer>
-
-      <SubContainer
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.4, delay: 0.6 }}
-      >
-        6
+        <AchievementList userId={user?.id} limit={3} />
       </SubContainer>
     </Container>
   );

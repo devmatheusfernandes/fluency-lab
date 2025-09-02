@@ -1,6 +1,7 @@
 import admin from 'firebase-admin';
 import { getApps, App } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
+import { getStorage } from 'firebase-admin/storage';
 
 // Validate required environment variables for Firebase Admin
 const requiredEnvVars = [
@@ -29,15 +30,24 @@ const serviceAccount = {
 let app: App;
 
 if (!getApps().length) {
-  app = admin.initializeApp({
+  // Prepare initialization options
+  const appOptions: admin.AppOptions = {
     credential: admin.credential.cert(serviceAccount),
-  });
+  };
+  
+  // Add storage bucket if available
+  if (process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET) {
+    appOptions.storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+  }
+  
+  app = admin.initializeApp(appOptions);
 } else {
   app = getApps()[0];
 }
 
 const adminDb = admin.firestore();
 const adminAuth = getAuth(app);
+const adminStorage = getStorage(app);
 
 // Exporta o banco de dados e a autenticação com privilégios de administrador
-export { adminDb, adminAuth };
+export { adminDb, adminAuth, adminStorage };

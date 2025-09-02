@@ -75,4 +75,28 @@ export class TeacherService {
 
     return populatedClasses;
   }
+
+  async getMyStudents(teacherId: string) {
+    // 1. Busca todas as aulas do professor
+    const classes = await classRepository.findAllClassesByTeacherId(teacherId);
+    if (classes.length === 0) {
+      return [];
+    }
+
+    // 2. Extrai os IDs únicos dos alunos dessas aulas
+    const studentIds = [...new Set(classes.map(c => c.studentId))];
+
+    // 3. Busca os perfis de todos esses alunos de uma só vez
+    const students = await userAdminRepo.findUsersByIds(studentIds);
+    
+    // 4. Mapeia os dados dos alunos para o formato necessário
+    const studentList = students.map(student => ({
+      id: student.id,
+      name: student.name,
+      email: student.email || '',
+      avatarUrl: student.avatarUrl
+    }));
+
+    return studentList;
+  }
 }

@@ -102,7 +102,7 @@ const studentItems: SidebarItemType[] = [
     icon: <Home />,
   },
   {
-    href: "/hub/plataforma/student/schedule",
+    href: "/hub/plataforma/student/caderno",
     label: "Caderno",
     icon: <Notebook weight="BoldDuotone" />,
   },

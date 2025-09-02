@@ -4,8 +4,9 @@ import * as React from "react";
 import { twMerge } from "tailwind-merge";
 import { Login } from "@solar-icons/react/ssr";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
+import { capitalizeFirstLetter, roleLabels } from "@/lib/utils";
+import { UserRoles } from "@/types/users/userRoles";
 
-// --- Type Definitions ---
 export interface UserData {
   name: string;
   role: string;
@@ -27,6 +28,10 @@ const UserCard: React.FC<UserCardProps> = ({
   className,
   onLogout,
 }) => {
+  const userRoleLabel = user?.role
+    ? roleLabels[user.role as UserRoles] || capitalizeFirstLetter(user.role)
+    : "";
+
   if (variant === "mobile") {
     return (
       <div
@@ -35,16 +40,13 @@ const UserCard: React.FC<UserCardProps> = ({
           className
         )}
       >
-        <Avatar>
-          <AvatarImage
-            src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face"
-            alt="Usuário"
-          />
-          <AvatarFallback>JD</AvatarFallback>
+        <Avatar size="xl">
+          <AvatarImage size="xl" src={user.avatar || ""} alt="Usuário" />
+          <AvatarFallback>{user.name}</AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-title truncate">{user.name}</p>
-          <p className="text-xs text-paragraph truncate">{user.role}</p>
+          <p className="text-xs text-paragraph truncate">{userRoleLabel}</p>
         </div>
         {onLogout && (
           <button
@@ -64,22 +66,10 @@ const UserCard: React.FC<UserCardProps> = ({
       <div className={twMerge("relative group", className)}>
         <div className="flex items-center justify-center p-2 bg-surface rounded-lg">
           <Avatar size="sm">
-            <AvatarImage
-              src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face"
-              alt="Usuário"
-            />
-            <AvatarFallback>JD</AvatarFallback>
+            <AvatarImage size="sm" src={user.avatar || ""} alt="Usuário" />
+            <AvatarFallback>{userRoleLabel}</AvatarFallback>
           </Avatar>
         </div>
-        {onLogout && (
-          <button
-            onClick={onLogout}
-            className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 p-2 bg-surface rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-surface-hover text-paragraph hover:text-red-500"
-            title="Sair"
-          >
-            <Login className="w-4 h-4" />
-          </button>
-        )}
       </div>
     );
   }
@@ -92,15 +82,12 @@ const UserCard: React.FC<UserCardProps> = ({
       )}
     >
       <Avatar>
-        <AvatarImage
-          src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face"
-          alt="Usuário"
-        />
-        <AvatarFallback>JD</AvatarFallback>
+        <AvatarImage sizes="md" src={user.avatar || ""} alt="Usuário" />
+        <AvatarFallback>{userRoleLabel}</AvatarFallback>
       </Avatar>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-title truncate">{user.name}</p>
-        <p className="text-xs text-paragraph truncate">{user.role}</p>
+        <p className="text-xs text-paragraph truncate">{userRoleLabel}</p>
       </div>
       {onLogout && (
         <button

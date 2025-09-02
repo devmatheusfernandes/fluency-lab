@@ -1,5 +1,14 @@
 "use client";
 
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalTitle,
+  ModalDescription,
+  ModalFooter,
+  ModalClose,
+} from "@/components/ui/Modal";
 import { useState, useEffect } from "react";
 import { FullUserDetails } from "@/types/users/user-details";
 import { User } from "@/types/users/users";
@@ -52,6 +61,15 @@ export default function UserScheduleManager({
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteOption, setDeleteOption] = useState<
+    "all" | "date-range" | "from-date"
+  >("all");
+  const [deleteFromDate, setDeleteFromDate] = useState("");
+  const [deleteToDate, setDeleteToDate] = useState("");
+  const [selectedTemplateEntries, setSelectedTemplateEntries] = useState<
+    ClassTemplateDay[]
+  >([]);
 
   // Validação de pré-requisito
   if (!user.contractStartDate || !user.contractLengthMonths) {
@@ -94,6 +112,7 @@ export default function UserScheduleManager({
       !newEntry.day ||
       !newEntry.hour ||
       !newEntry.teacherId ||
+      newEntry.teacherId.startsWith("teacher-") ||
       !newEntry.language
     ) {
       toast.warning(
@@ -167,6 +186,7 @@ export default function UserScheduleManager({
       !newEntry.day ||
       !newEntry.hour ||
       !newEntry.teacherId ||
+      newEntry.teacherId.startsWith("teacher-") ||
       !newEntry.language
     ) {
       toast.warning("Por favor, preencha todos os campos.");
@@ -214,21 +234,47 @@ export default function UserScheduleManager({
   };
 
   const handleDeleteSchedule = async () => {
-    if (
-      !confirm(
-        "ATENÇÃO: Esta ação irá deletar o template e TODAS as aulas futuras agendadas. Deseja continuar?"
-      )
-    )
-      return;
+    setIsDeleteModalOpen(true);
+  };
+
+  const executeDeleteSchedule = async () => {
     setIsSaving(true);
+    setIsDeleteModalOpen(false);
+
     try {
-      const response = await fetch(`/api/class-templates/${user.id}`, {
-        method: "DELETE",
-      });
+      let response;
+
+      // Determine which deletion API to call based on selected option
+      if (deleteOption === "all") {
+        response = await fetch(`/api/class-templates/${user.id}`, {
+          method: "DELETE",
+        });
+      } else {
+        // For date-based deletions, we need to call a different API
+        response = await fetch(
+          `/api/class-templates/${user.id}/delete-classes`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              option: deleteOption,
+              fromDate: deleteFromDate,
+              toDate: deleteOption === "date-range" ? deleteToDate : undefined,
+              templateEntries:
+                selectedTemplateEntries.length > 0
+                  ? selectedTemplateEntries
+                  : undefined,
+            }),
+          }
+        );
+      }
+
       const result = await response.json();
       if (response.ok) {
         toast.success(result.message);
-        setSchedule([]); // Limpa o horário na tela
+        if (deleteOption === "all") {
+          setSchedule([]); // Limpa o horário na tela only if deleting everything
+        }
       } else {
         throw new Error(result.error);
       }
@@ -236,11 +282,181 @@ export default function UserScheduleManager({
       toast.error(`Erro ao deletar horário: ${error.message}`);
     } finally {
       setIsSaving(false);
+      // Reset delete options
+      setDeleteOption("all");
+      setDeleteFromDate("");
+      setDeleteToDate("");
+      setSelectedTemplateEntries([]);
     }
+  };
+
+  const handleCancelDelete = () => {
+    setIsDeleteModalOpen(false);
+    // Reset delete options
+    setDeleteOption("all");
+    setDeleteFromDate("");
+    setDeleteToDate("");
+    setSelectedTemplateEntries([]);
   };
 
   return (
     <Card>
+      {/* Delete Confirmation Modal */}
+      <Modal open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+        <ModalContent>
+          <ModalHeader>
+            <ModalTitle>Opções de Exclusão de Aulas</ModalTitle>
+            <ModalDescription>
+              Escolha como deseja excluir as aulas do aluno. O histórico não
+              será afetado.
+            </ModalDescription>
+          </ModalHeader>
+
+          <div className="py-4 space-y-4">
+            <div className="flex items-center">
+              <input
+                type="radio"
+                id="delete-all"
+                name="delete-option"
+                checked={deleteOption === "all"}
+                onChange={() => setDeleteOption("all")}
+                className="mr-2"
+              />
+              <label htmlFor="delete-all">
+                <Text weight="medium">Excluir tudo</Text>
+                <Text variant="subtitle" className="block">
+                  Remove o template e todas as aulas futuras
+                </Text>
+              </label>
+            </div>
+
+            <div className="flex items-center">
+              <input
+                type="radio"
+                id="delete-from-date"
+                name="delete-option"
+                checked={deleteOption === "from-date"}
+                onChange={() => setDeleteOption("from-date")}
+                className="mr-2"
+              />
+              <label htmlFor="delete-from-date">
+                <Text weight="medium">Excluir a partir de uma data</Text>
+                <Text variant="subtitle" className="block">
+                  Remove aulas futuras a partir de uma data específica
+                </Text>
+              </label>
+            </div>
+
+            <div className="flex items-center">
+              <input
+                type="radio"
+                id="delete-date-range"
+                name="delete-option"
+                checked={deleteOption === "date-range"}
+                onChange={() => setDeleteOption("date-range")}
+                className="mr-2"
+              />
+              <label htmlFor="delete-date-range">
+                <Text weight="medium">Excluir em um período</Text>
+                <Text variant="subtitle" className="block">
+                  Remove aulas futuras dentro de um intervalo de datas
+                </Text>
+              </label>
+            </div>
+
+            {(deleteOption === "from-date" ||
+              deleteOption === "date-range") && (
+              <div className="space-y-4 mt-2">
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Data inicial
+                  </label>
+                  <Input
+                    type="date"
+                    value={deleteFromDate}
+                    onChange={(e) => setDeleteFromDate(e.target.value)}
+                  />
+                </div>
+
+                {deleteOption === "date-range" && (
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Data final
+                    </label>
+                    <Input
+                      type="date"
+                      value={deleteToDate}
+                      onChange={(e) => setDeleteToDate(e.target.value)}
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Templates (opcional):
+                  </label>
+                  <Text variant="subtitle" className="text-xs mb-2">
+                    Se nenhum for selecionado, todas as aulas serão excluídas
+                  </Text>
+                  <div className="max-h-40 overflow-y-auto border rounded p-2">
+                    {schedule.map((entry) => (
+                      <div key={entry.id} className="flex items-center py-1">
+                        <input
+                          type="checkbox"
+                          id={`template-${entry.id}`}
+                          checked={selectedTemplateEntries.some(
+                            (e) => e.id === entry.id
+                          )}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedTemplateEntries((prev) => [
+                                ...prev,
+                                entry,
+                              ]);
+                            } else {
+                              setSelectedTemplateEntries((prev) =>
+                                prev.filter((e) => e.id !== entry.id)
+                              );
+                            }
+                          }}
+                          className="mr-2"
+                        />
+                        <label
+                          htmlFor={`template-${entry.id}`}
+                          className="text-sm"
+                        >
+                          {entry.day} {entry.hour} -{" "}
+                          {getTeacherName(entry.teacherId)} ({entry.language})
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <ModalFooter>
+            <ModalClose asChild>
+              <Button variant="secondary" onClick={handleCancelDelete}>
+                Cancelar
+              </Button>
+            </ModalClose>
+            <Button
+              variant="danger"
+              onClick={executeDeleteSchedule}
+              disabled={
+                (deleteOption === "from-date" && !deleteFromDate) ||
+                (deleteOption === "date-range" &&
+                  (!deleteFromDate || !deleteToDate))
+              }
+            >
+              Confirmar Exclusão
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
       <Header
         heading="Gestão de Horário Fixo"
         icon={
@@ -281,7 +497,7 @@ export default function UserScheduleManager({
                   onChange={(e) => handleInputChange("hour", e.target.value)}
                 />
                 <Select
-                  value={newEntry.teacherId}
+                  value={newEntry.teacherId || ""}
                   onValueChange={(value) =>
                     handleInputChange("teacherId", value)
                   }
@@ -290,11 +506,19 @@ export default function UserScheduleManager({
                     <SelectValue placeholder="Professor" />
                   </SelectTrigger>
                   <SelectContent>
-                    {allTeachers.map((teacher) => (
-                      <SelectOption key={teacher.id} value={teacher.id}>
-                        {teacher.name}
-                      </SelectOption>
-                    ))}
+                    {allTeachers.map((teacher, index) => {
+                      // Ensure we have a valid value for the SelectOption
+                      const teacherValue =
+                        teacher.id && teacher.id.trim() !== ""
+                          ? teacher.id
+                          : `teacher-${index}`;
+
+                      return (
+                        <SelectOption key={teacherValue} value={teacherValue}>
+                          {teacher.name}
+                        </SelectOption>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
                 <Select
@@ -387,19 +611,34 @@ export default function UserScheduleManager({
           <Button
             variant="danger"
             onClick={handleDeleteSchedule}
-            disabled={isSaving || isLoading || schedule.length === 0}
-          >
-            {isSaving ? "A Deletar..." : "Deletar Horário Completo"}
-          </Button>
-          <Button onClick={handleSaveSchedule} disabled={isSaving || isLoading}>
-            {isSaving ? "A Salvar..." : "Salvar Alterações"}
-          </Button>
-          <Button
-            onClick={handleGenerateClasses}
             disabled={isSaving || isLoading}
           >
-            {isSaving ? "A Gerar..." : "Gerar Aulas"}
+            <TrashBinMinimalistic className="mr-2" />
+            Excluir Aulas
           </Button>
+
+          <div className="flex gap-4">
+            <Button
+              variant="secondary"
+              onClick={handleGenerateClasses}
+              disabled={isSaving || isLoading}
+            >
+              <Book className="mr-2" />
+              Gerar Aulas
+            </Button>
+
+            <Button
+              onClick={handleSaveSchedule}
+              disabled={isSaving || isLoading}
+            >
+              {isSaving ? (
+                <Loading className="mr-2" />
+              ) : (
+                <Calendar className="mr-2" />
+              )}
+              Salvar Horário
+            </Button>
+          </div>
         </div>
       </div>
     </Card>

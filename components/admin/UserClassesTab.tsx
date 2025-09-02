@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useRouter } from "next/navigation";
 import { Text } from "@/components/ui/Text";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Select,
   SelectContent,
@@ -15,9 +15,26 @@ import {
 } from "@/components/ui/Select";
 import { Card } from "@/components/ui/Card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
+import { toast } from "sonner";
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalTitle,
+  ModalDescription,
+  ModalFooter,
+  ModalClose,
+} from "@/components/ui/Modal";
 
 interface UserClassesTabProps {
   classes: StudentClass[];
+}
+
+interface Teacher {
+  id: string;
+  name: string;
+  email?: string;
+  role: string;
 }
 
 // Helper para gerar uma lista de anos para o filtro
@@ -72,38 +89,35 @@ const groupClassesByMonth = (classes: StudentClass[]) => {
   return grouped;
 };
 
-// Get status badge with appropriate styling
-const getStatusVariant = (status: ClassStatus) => {
-  switch (status) {
-    case ClassStatus.SCHEDULED:
-      return "primary";
-    case ClassStatus.COMPLETED:
-      return "success";
-    case ClassStatus.CANCELED_TEACHER_MAKEUP:
-      return "warning";
-    default:
-      return "danger";
-  }
-};
-
-const getStatusBadge = (cls: StudentClass) => {
-  return (
-    <>
-      <Badge variant={getStatusVariant(cls.status)} className="capitalize">
-        {cls.status}
-      </Badge>
-      {cls.rescheduledFrom && (
-        <Badge variant="info" style="outline" className="text-xs">
-          Reagendada
-        </Badge>
-      )}
-    </>
-  );
-};
-
-export default function UserClassesTab({ classes }: UserClassesTabProps) {
+export default function UserClassesTab({
+  classes: initialClasses,
+}: UserClassesTabProps) {
   const router = useRouter();
   const yearOptions = useMemo(() => generateYearOptions(), []);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [loadingTeachers, setLoadingTeachers] = useState(true);
+  const [classes, setClasses] = useState<StudentClass[]>(initialClasses || []);
+
+  // Fetch available teachers
+  useEffect(() => {
+    const fetchTeachers = async () => {
+      try {
+        const response = await fetch("/api/admin/teachers");
+        if (!response.ok) {
+          throw new Error("Failed to fetch teachers");
+        }
+        const teacherList = await response.json();
+        setTeachers(teacherList);
+      } catch (error) {
+        console.error("Erro ao buscar professores:", error);
+        toast.error("Erro ao carregar professores");
+      } finally {
+        setLoadingTeachers(false);
+      }
+    };
+
+    fetchTeachers();
+  }, []);
 
   // Estados para controlar os filtros selecionados
   const [selectedMonth, setSelectedMonth] = useState<number | "all">("all");
@@ -148,8 +162,182 @@ export default function UserClassesTab({ classes }: UserClassesTabProps) {
     return <Text>Este utilizador não tem nenhuma aula agendada.</Text>;
   }
 
+  // State for confirmation modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [pendingTeacherUpdate, setPendingTeacherUpdate] = useState<{
+    classId: string;
+    teacherId: string;
+    teacherName: string;
+    currentTeacherName: string;
+  } | null>(null);
+
+  // Function to update class teacher
+  const updateClassTeacher = async (classId: string, teacherId: string) => {
+    // Handle the "none" case by setting teacherId to null
+    const actualTeacherId = teacherId === "none" ? null : teacherId;
+
+    try {
+      const response = await fetch(`/api/classes/${classId}/teacher`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ teacherId: actualTeacherId }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Falha ao atualizar professor da aula");
+      }
+
+      toast.success("Professor da aula atualizado com sucesso!");
+
+      // Reload classes to reflect the change
+      window.location.reload();
+    } catch (error: any) {
+      toast.error(`Erro ao atualizar professor: ${error.message}`);
+    }
+  };
+
+  // Function to confirm and update class teacher
+  const confirmUpdateClassTeacher = async () => {
+    if (!pendingTeacherUpdate) return;
+
+    const { classId, teacherId } = pendingTeacherUpdate;
+    // Handle the "none" case by setting teacherId to null
+    const actualTeacherId = teacherId === "none" ? null : teacherId;
+
+    try {
+      const response = await fetch(`/api/classes/${classId}/teacher`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ teacherId: actualTeacherId }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Falha ao atualizar professor da aula");
+      }
+
+      toast.success("Professor da aula atualizado com sucesso!");
+      setIsModalOpen(false);
+      setPendingTeacherUpdate(null);
+
+      // Update the classes state instead of reloading the page
+      setClasses((prevClasses) =>
+        prevClasses.map((cls) => {
+          if (cls.id === classId) {
+            // Create a new object with all properties
+            const updatedClass = { ...cls };
+            // Add or remove teacherId based on whether it's null
+            if (actualTeacherId !== null) {
+              updatedClass.teacherId = actualTeacherId;
+            } else {
+              delete updatedClass.teacherId;
+            }
+            return updatedClass;
+          }
+          return cls;
+        })
+      );
+    } catch (error: any) {
+      toast.error(`Erro ao atualizar professor: ${error.message}`);
+      setIsModalOpen(false);
+      setPendingTeacherUpdate(null);
+    }
+  };
+
+  // Function to handle teacher change (opens confirmation modal)
+  const handleTeacherChange = (
+    classId: string,
+    teacherId: string,
+    currentTeacherName: string
+  ) => {
+    // Find the new teacher name
+    let newTeacherName = "Nenhum professor";
+    if (teacherId !== "none") {
+      const teacher = teachers.find((t) => t.id === teacherId);
+      if (teacher) {
+        newTeacherName = teacher.name;
+      }
+    }
+
+    setPendingTeacherUpdate({
+      classId,
+      teacherId,
+      teacherName: newTeacherName,
+      currentTeacherName,
+    });
+    setIsModalOpen(true);
+  };
+
+  // Get status badge with appropriate styling
+  const getStatusVariant = (status: ClassStatus) => {
+    switch (status) {
+      case ClassStatus.SCHEDULED:
+        return "primary";
+      case ClassStatus.COMPLETED:
+        return "success";
+      case ClassStatus.CANCELED_TEACHER_MAKEUP:
+        return "warning";
+      default:
+        return "danger";
+    }
+  };
+
+  const getStatusBadge = (cls: StudentClass) => {
+    return (
+      <>
+        <Badge variant={getStatusVariant(cls.status)} className="capitalize">
+          {cls.status}
+        </Badge>
+        {cls.rescheduledFrom && (
+          <Badge variant="info" style="outline" className="text-xs">
+            Reagendada
+          </Badge>
+        )}
+      </>
+    );
+  };
+
   return (
     <div className="space-y-6">
+      {/* --- Confirmation Modal --- */}
+      <Modal open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <ModalContent>
+          <ModalHeader>
+            <ModalTitle>Confirmar Alteração de Professor</ModalTitle>
+            <ModalDescription>
+              Tem certeza que deseja alterar o professor desta aula?
+            </ModalDescription>
+          </ModalHeader>
+
+          {pendingTeacherUpdate && (
+            <div className="py-4 space-y-2">
+              <p>
+                <strong>Professor atual:</strong>{" "}
+                {pendingTeacherUpdate.currentTeacherName}
+              </p>
+              <p>
+                <strong>Novo professor:</strong>{" "}
+                {pendingTeacherUpdate.teacherName}
+              </p>
+            </div>
+          )}
+
+          <ModalFooter>
+            <ModalClose asChild>
+              <Button variant="secondary">Cancelar</Button>
+            </ModalClose>
+            <Button onClick={confirmUpdateClassTeacher}>Confirmar</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
       {/* --- Barra de Filtros --- */}
       <div className="flex flex-col md:flex-row gap-4">
         <Select
@@ -241,6 +429,50 @@ export default function UserClassesTab({ classes }: UserClassesTabProps) {
                                   {cls.notes}
                                 </p>
                               )}
+
+                              {/* Teacher Assignment Section */}
+                              <div className="mt-3">
+                                <label className="block text-sm font-medium text-fluency-gray-700 dark:text-fluency-gray-300 mb-1">
+                                  Professor:
+                                </label>
+                                <div className="flex items-center space-x-2">
+                                  <Select
+                                    value={cls.teacherId || ""}
+                                    onValueChange={(value) =>
+                                      handleTeacherChange(
+                                        cls.id,
+                                        value,
+                                        cls.teacherId
+                                          ? teachers.find(
+                                              (t) => t.id === cls.teacherId
+                                            )?.name || "Professor desconhecido"
+                                          : "Nenhum professor"
+                                      )
+                                    }
+                                    disabled={loadingTeachers}
+                                  >
+                                    <SelectTrigger className="w-[200px]">
+                                      <SelectValue placeholder="Selecionar professor" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectOption key="none" value="none">
+                                        Nenhum professor
+                                      </SelectOption>
+                                      {teachers.map((teacher) => (
+                                        <SelectOption
+                                          key={teacher.id}
+                                          value={teacher.id}
+                                        >
+                                          {teacher.name}
+                                        </SelectOption>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  {loadingTeachers && (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-fluency-blue-500"></div>
+                                  )}
+                                </div>
+                              </div>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
@@ -299,6 +531,50 @@ export default function UserClassesTab({ classes }: UserClassesTabProps) {
                             {cls.notes}
                           </p>
                         )}
+
+                        {/* Teacher Assignment Section */}
+                        <div className="mt-3">
+                          <label className="block text-sm font-medium text-fluency-gray-700 dark:text-fluency-gray-300 mb-1">
+                            Professor:
+                          </label>
+                          <div className="flex items-center space-x-2">
+                            <Select
+                              value={cls.teacherId || ""}
+                              onValueChange={(value) =>
+                                handleTeacherChange(
+                                  cls.id,
+                                  value,
+                                  cls.teacherId
+                                    ? teachers.find(
+                                        (t) => t.id === cls.teacherId
+                                      )?.name || "Professor desconhecido"
+                                    : "Nenhum professor"
+                                )
+                              }
+                              disabled={loadingTeachers}
+                            >
+                              <SelectTrigger className="w-[200px]">
+                                <SelectValue placeholder="Selecionar professor" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectOption key="none" value="none">
+                                  Nenhum professor
+                                </SelectOption>
+                                {teachers.map((teacher) => (
+                                  <SelectOption
+                                    key={teacher.id}
+                                    value={teacher.id}
+                                  >
+                                    {teacher.name}
+                                  </SelectOption>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {loadingTeachers && (
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-fluency-blue-500"></div>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">

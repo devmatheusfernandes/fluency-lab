@@ -31,7 +31,7 @@ export type ClassTemplate = {
 export type StudentClass = {
   id: string; // id da aula
   studentId: string;
-  teacherId: string;
+  teacherId?: string;
   language: string; // Campo adicionado conforme checklist
 
   scheduledAt: Date;

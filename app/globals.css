@@ -51,7 +51,7 @@
   --color-ring-offset: oklch(94% 0.01 304.6);
 
   --color-input: oklch(88.3% 0.017 302.2);
-  --color-placeholder: oklch(0.21 0.0336 280.47);
+  --color-placeholder: oklch(0.33 0.0934 277.57);
 
 }
 
@@ -96,7 +96,7 @@
   --color-ring-offset: oklch(12% 0.03 296.6);
 
   --color-input: oklch(16.7% 0.038 296.3);
-  --color-placeholder: oklch(0.46 0.0308 282.74);
+  --color-placeholder: oklch(0.81 0.0266 283.38);
   
 }
 

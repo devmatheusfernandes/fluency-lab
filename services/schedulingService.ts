@@ -413,7 +413,9 @@ export class SchedulingService {
     }
 
     const classData = classDoc.data() as StudentClass;
-    const teacher = await userAdminRepository.findUserById(classData.teacherId);
+    const teacher = classData.teacherId 
+      ? await userAdminRepository.findUserById(classData.teacherId) 
+      : null;
     const settings = teacher?.schedulingSettings || {};
 
     const cancellationHours = settings.cancellationPolicyHours || 24;
@@ -443,10 +445,17 @@ export class SchedulingService {
 
       // --- ENVIAR NOTIFICAÇÕES POR E-MAIL ---
       try {
-        const [student, teacher] = await Promise.all([
-          userAdminRepository.findUserById(studentId),
-          userAdminRepository.findUserById(classData.teacherId)
-        ]);
+        const promises = [
+          userAdminRepository.findUserById(studentId)
+        ];
+        
+        if (classData.teacherId) {
+          promises.push(userAdminRepository.findUserById(classData.teacherId));
+        }
+        
+        const results = await Promise.all(promises);
+        const student = results[0];
+        const teacher = classData.teacherId ? results[1] : null;
 
         if (student && teacher) {
           const formatDate = (date: Date) => date.toLocaleDateString('pt-BR');
@@ -501,10 +510,17 @@ export class SchedulingService {
 
       // --- ENVIAR NOTIFICAÇÕES POR E-MAIL (sem devolução de crédito) ---
       try {
-        const [student, teacher] = await Promise.all([
-          userAdminRepository.findUserById(studentId),
-          userAdminRepository.findUserById(classData.teacherId)
-        ]);
+        const promises = [
+          userAdminRepository.findUserById(studentId)
+        ];
+        
+        if (classData.teacherId) {
+          promises.push(userAdminRepository.findUserById(classData.teacherId));
+        }
+        
+        const results = await Promise.all(promises);
+        const student = results[0];
+        const teacher = classData.teacherId ? results[1] : null;
 
         if (student && teacher) {
           const formatDate = (date: Date) => date.toLocaleDateString('pt-BR');
@@ -706,11 +722,18 @@ export class SchedulingService {
       );
     }
 
-    return {
+    // Create the result object with proper typing
+    const result: FullClassDetails = {
       ...classData,
       student,
-      teacher,
     };
+
+    // Only add teacher if it exists
+    if (teacher) {
+      result.teacher = teacher;
+    }
+
+    return result;
   }
 
 /**
@@ -944,9 +967,9 @@ export class SchedulingService {
         }
       }
 
-      const teacher = await userAdminRepository.findUserById(
-        originalClass.teacherId
-      );
+      const teacher = originalClass.teacherId
+        ? await userAdminRepository.findUserById(originalClass.teacherId)
+        : null;
       const settings = teacher?.schedulingSettings || {};
       const now = new Date();
 
@@ -1036,7 +1059,7 @@ export class SchedulingService {
       }
 
       // 4. (Opcional) Criar uma exceção de disponibilidade se um slot foi usado
-      if (availabilitySlotId) {
+      if (availabilitySlotId && originalClass.teacherId) {
         availabilityRepository.createExceptionWithTransaction(
           transaction,
           availabilitySlotId,
@@ -1050,10 +1073,17 @@ export class SchedulingService {
 
     // --- ENVIAR NOTIFICAÇÕES POR E-MAIL APÓS SUCESSO ---
     try {
-      const [student, teacher] = await Promise.all([
-        userAdminRepository.findUserById(originalClass.studentId),
-        userAdminRepository.findUserById(originalClass.teacherId)
-      ]);
+      const promises = [
+        userAdminRepository.findUserById(originalClass.studentId)
+      ];
+      
+      if (originalClass.teacherId) {
+        promises.push(userAdminRepository.findUserById(originalClass.teacherId));
+      }
+      
+      const results = await Promise.all(promises);
+      const student = results[0];
+      const teacher = originalClass.teacherId ? results[1] : null;
 
       if (student && teacher) {
         const formatDate = (date: Date) => date.toLocaleDateString('pt-BR');

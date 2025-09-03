@@ -13,7 +13,6 @@ import { ProgressTracker } from "@/components/ui/ProgressTracker";
 import { ArrowLeft, ArrowRight } from "@solar-icons/react";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
-import "./onboarding.css";
 
 // Import step components
 import {
@@ -176,8 +175,14 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
         throw new Error("Failed to complete onboarding");
       }
 
-      // Update session
-      await updateSession();
+      // Update session to reflect onboarding completion
+      await updateSession({
+        ...session,
+        user: {
+          ...session?.user,
+          tutorialCompleted: true,
+        },
+      });
 
       toast.success("Bem-vindo ao Fluency Lab!");
       onComplete();
@@ -202,6 +207,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
     }
   };
 
+  // Don't render if not open
   if (!isOpen) return null;
 
   console.log("🎯 OnboardingModal rendering:", {

@@ -3,9 +3,19 @@ import { getServerSession } from 'next-auth';
 import { adminDb } from '@/lib/firebase/admin';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
+interface Task {
+  id: string;
+  text: string;
+  completed: boolean;
+  isDeleted?: boolean;
+  deletedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ studentId: string; notebookId: string }> }
+  { params }: { params: Promise<{ studentId: string }> }
 ) {
   const session = await getServerSession(authOptions);
   
@@ -19,7 +29,7 @@ export async function GET(
   }
 
   try {
-    const { studentId, notebookId } = await params;
+    const { studentId } = await params;
     
     // Verify that this student belongs to the teacher (only for teachers)
     if (session.user.role === 'teacher') {
@@ -38,36 +48,30 @@ export async function GET(
       }
     }
     
-    // Fetch specific notebook from Firestore
-    const notebookDoc = await adminDb.doc(`users/${studentId}/Notebooks/${notebookId}`).get();
-    
-    if (!notebookDoc.exists) {
-      return NextResponse.json({ error: 'Caderno não encontrado.' }, { status: 404 });
-    }
-    
-    const notebookData = notebookDoc.data();
-    
-    // Verify the notebook belongs to the student
-    if (notebookData?.student !== studentId) {
-      return NextResponse.json({ error: 'Acesso não autorizado.' }, { status: 403 });
-    }
+    // Fetch tasks from Firestore (excluding deleted tasks)
+    const tasksSnapshot = await adminDb
+      .collection('users')
+      .doc(studentId)
+      .collection('Tasks')
+      .where('isDeleted', '!=', true)
+      .orderBy('createdAt', 'desc')
+      .get();
 
-    const data = notebookData;
-    return NextResponse.json({
-      id: notebookDoc.id,
-      ...data,
-      createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : data.createdAt,
-      updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : data.updatedAt,
-    });
+    const tasks = tasksSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    return NextResponse.json(tasks);
   } catch (error: any) {
-    console.error('Error fetching notebook:', error);
-    return NextResponse.json({ error: 'Failed to fetch notebook' }, { status: 500 });
+    console.error('Error fetching tasks:', error);
+    return NextResponse.json({ error: 'Failed to fetch tasks' }, { status: 500 });
   }
 }
 
-export async function PUT(
+export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ studentId: string; notebookId: string }> }
+  { params }: { params: Promise<{ studentId: string }> }
 ) {
   const session = await getServerSession(authOptions);
   
@@ -81,7 +85,7 @@ export async function PUT(
   }
 
   try {
-    const { studentId, notebookId } = await params;
+    const { studentId } = await params;
     const body = await request.json();
     
     // Verify that this student belongs to the teacher
@@ -99,36 +103,30 @@ export async function PUT(
       return NextResponse.json({ error: 'Acesso não autorizado.' }, { status: 403 });
     }
     
-    // Update notebook in Firestore
-    const notebookRef = adminDb.doc(`users/${studentId}/Notebooks/${notebookId}`);
-    const docSnap = await notebookRef.get();
-    
-    if (!docSnap.exists) {
-      return NextResponse.json({ error: 'Caderno não encontrado.' }, { status: 404 });
-    }
-    
-    const updateData = {
+    // Create task in Firestore
+    const taskData = {
       ...body,
+      createdAt: new Date(),
       updatedAt: new Date(),
     };
 
-    await notebookRef.update(updateData);
+    const docRef = await adminDb.collection(`users/${studentId}/Tasks`).add(taskData);
     
-    const updatedNotebook = {
-      id: notebookId,
-      ...updateData,
+    const newTask = {
+      id: docRef.id,
+      ...taskData,
     };
 
-    return NextResponse.json(updatedNotebook);
+    return NextResponse.json(newTask, { status: 201 });
   } catch (error: any) {
-    console.error("Erro ao atualizar o caderno do aluno:", error);
+    console.error("Erro ao criar a tarefa do aluno:", error);
     return NextResponse.json({ error: 'Erro interno do servidor.' }, { status: 500 });
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ studentId: string; notebookId: string }> }
+  { params }: { params: Promise<{ studentId: string }> }
 ) {
   const session = await getServerSession(authOptions);
   
@@ -142,7 +140,7 @@ export async function DELETE(
   }
 
   try {
-    const { studentId, notebookId } = await params;
+    const { studentId } = await params;
     
     // Verify that this student belongs to the teacher
     const teacherId = session.user.id;
@@ -159,19 +157,35 @@ export async function DELETE(
       return NextResponse.json({ error: 'Acesso não autorizado.' }, { status: 403 });
     }
     
-    // Delete notebook from Firestore
-    const notebookRef = adminDb.doc(`users/${studentId}/Notebooks/${notebookId}`);
-    const docSnap = await notebookRef.get();
+    // Get all tasks for this student
+    const tasksSnapshot = await adminDb
+      .collection('users')
+      .doc(studentId)
+      .collection('Tasks')
+      .where('isDeleted', '!=', true)
+      .get();
     
-    if (!docSnap.exists) {
-      return NextResponse.json({ error: 'Caderno não encontrado.' }, { status: 404 });
-    }
+    // Soft delete all tasks (set isDeleted flag to true)
+    const batch = adminDb.batch();
+    tasksSnapshot.docs.forEach(doc => {
+      batch.update(doc.ref, {
+        isDeleted: true,
+        deletedAt: new Date(),
+        updatedAt: new Date(),
+      });
+    });
+    
+    await batch.commit();
 
-    await notebookRef.delete();
-
-    return NextResponse.json({ message: 'Caderno excluído com sucesso.' });
+    return NextResponse.json({ message: 'Todas as tarefas foram marcadas como deletadas com sucesso.' });
   } catch (error: any) {
-    console.error("Erro ao excluir o caderno do aluno:", error);
+    console.error("Erro ao deletar todas as tarefas do aluno:", error);
     return NextResponse.json({ error: 'Erro interno do servidor.' }, { status: 500 });
   }
 }
+
+
+
+
+
+

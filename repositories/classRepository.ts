@@ -82,6 +82,29 @@ export class ClassRepository {
     });
   }
 
+  /**
+   * Busca todas as aulas (futuras) de um professor específico, ordenadas por data.
+   * @param teacherId O ID do professor.
+   * @returns Uma lista de aulas agendadas.
+   */
+  async findFutureClassesByTeacherId(teacherId: string): Promise<StudentClass[]> {
+    const now = Timestamp.now();
+    const snapshot = await this.collectionRef
+      .where('teacherId', '==', teacherId)
+      .where('scheduledAt', '>=', now)
+      .orderBy('scheduledAt', 'asc') // Ordena as aulas da mais próxima para a mais distante
+      .get();
+
+    if (snapshot.empty) {
+      return [];
+    }
+
+    return snapshot.docs.map(doc => {
+      const data = doc.data();
+      return this.convertTimestampsToDate(data, doc.id);
+    });
+  }
+
 /**
    * Busca TODAS as aulas de um professor (passadas e futuras), ordenadas por data.
    * ESTA VERSÃO NÃO TEM FILTRO DE DATA e irá buscar todos os registos.

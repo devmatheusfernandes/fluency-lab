@@ -9,7 +9,7 @@ import { UserRoles } from "@/types/users/userRoles";
 export const useOnboarding = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [showOnboarding, setShowOnboarding] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false); // Default to false
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
@@ -29,12 +29,18 @@ export const useOnboarding = () => {
       userId: session?.user?.id
     });
 
-    if ((session?.user?.role === UserRoles.STUDENT || session?.user?.role === UserRoles.OCCASIONAL_STUDENT) && !session?.user?.tutorialCompleted) {
+    // Check if user is a student or occasional student AND hasn't completed onboarding
+    if (
+      (session?.user?.role === UserRoles.STUDENT || 
+       session?.user?.role === UserRoles.OCCASIONAL_STUDENT) && 
+      !session?.user?.tutorialCompleted
+    ) {
       // Show onboarding for new students who haven't completed tutorial
       console.log('✅ Showing onboarding modal for user');
       setShowOnboarding(true);
     } else {
-      console.log('❌ Onboarding conditions not met');
+      console.log('❌ Onboarding conditions not met or already completed');
+      setShowOnboarding(false);
     }
     
     setIsChecking(false);

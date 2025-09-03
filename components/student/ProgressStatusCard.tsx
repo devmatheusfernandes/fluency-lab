@@ -7,6 +7,7 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useContract } from "@/hooks/useContract";
 import ProgressStatusSkeleton from "@/components/shared/ProgressSkeletons/ProgressStatusSkeleton";
 import { Text } from "@/components/ui/Text";
+import { Alert } from "@/components/ui/alert";
 
 interface StatusUIProps {
   condition: boolean;

@@ -19,12 +19,11 @@ const SearchBar = React.forwardRef<HTMLInputElement, SearchBarProps>(
         )}
       >
         <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-          <MinimalisticMagnifer className="h-5 w-5 text-secondary" />
+          <MinimalisticMagnifer className="h-5 w-5 z-50 text-secondary/50 " />
         </div>
         <Input
           type="search"
           ref={ref}
-          // Add padding to the left to make space for the icon
           className={twMerge("pl-10", className)}
           {...props}
         />

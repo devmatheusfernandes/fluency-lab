@@ -42,7 +42,7 @@ const UserCard: React.FC<UserCardProps> = ({
       >
         <Avatar size="xl">
           <AvatarImage size="xl" src={user.avatar || ""} alt="Usuário" />
-          <AvatarFallback>{user.name}</AvatarFallback>
+          <AvatarFallback size="xl" name={user.name} />
         </Avatar>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-title truncate">{user.name}</p>
@@ -51,7 +51,7 @@ const UserCard: React.FC<UserCardProps> = ({
         {onLogout && (
           <button
             onClick={onLogout}
-            className="p-2 rounded-lg hover:bg-surface-hover text-paragraph hover:text-red-500 transition-colors"
+            className="p-2 rounded-lg text-paragraph hover:text-red-500 transition-colors"
             title="Sair"
           >
             <Login className="w-4 h-4" />
@@ -64,10 +64,10 @@ const UserCard: React.FC<UserCardProps> = ({
   if (isCollapsed) {
     return (
       <div className={twMerge("relative group", className)}>
-        <div className="flex items-center justify-center p-2 bg-surface rounded-lg">
+        <div className="flex items-center justify-center p-2">
           <Avatar size="sm">
             <AvatarImage size="sm" src={user.avatar || ""} alt="Usuário" />
-            <AvatarFallback>{userRoleLabel}</AvatarFallback>
+            <AvatarFallback size="sm" name={user.name} />
           </Avatar>
         </div>
       </div>
@@ -75,15 +75,10 @@ const UserCard: React.FC<UserCardProps> = ({
   }
 
   return (
-    <div
-      className={twMerge(
-        "flex items-center gap-3 p-3 bg-surface-1/50 rounded-lg",
-        className
-      )}
-    >
+    <div className={twMerge("flex items-center gap-3 p-3", className)}>
       <Avatar>
-        <AvatarImage sizes="md" src={user.avatar || ""} alt="Usuário" />
-        <AvatarFallback>{userRoleLabel}</AvatarFallback>
+        <AvatarImage sizes="lg" src={user.avatar || ""} alt="Usuário" />
+        <AvatarFallback size="lg" name={user.name} />
       </Avatar>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-title truncate">{user.name}</p>

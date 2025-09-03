@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import { TeacherService } from '@/services/teacherService';
+import TeacherService from '@/services/teacherService';
 
 const teacherService = new TeacherService();
 
@@ -13,9 +13,12 @@ export async function GET(request: Request) {
   }
 
   try {
-    const students = await teacherService.getMyStudents(session.user.id);
+    console.log(`Fetching students with next class for teacher: ${session.user.id}`);
+    const students = await teacherService.getMyStudentsWithNextClass(session.user.id);
+    console.log(`Found ${students.length} students with next class info`);
     return NextResponse.json(students);
   } catch (error: any) {
+    console.error('Error in /api/teacher/my-students:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

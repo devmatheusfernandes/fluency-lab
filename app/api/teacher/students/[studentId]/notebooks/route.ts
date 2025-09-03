@@ -40,15 +40,19 @@ export async function GET(
     
     // Fetch notebooks from Firestore
     const notebooksSnapshot = await adminDb
-      .collection('notebooks')
-      .where('student', '==', studentId)
+      .collection(`users/${studentId}/Notebooks`)
       .orderBy('createdAt', 'desc')
       .get();
 
-    const notebooks = notebooksSnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    const notebooks = notebooksSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : data.createdAt,
+        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : data.updatedAt,
+      };
+    });
 
     return NextResponse.json(notebooks);
   } catch (error: any) {

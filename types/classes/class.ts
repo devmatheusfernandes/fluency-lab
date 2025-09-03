@@ -78,7 +78,7 @@ export type PopulatedStudentClass = StudentClass & {
 
 export type FullClassDetails = StudentClass & {
   student: User;
-  teacher: User;
+  teacher?: User; // Made teacher optional since it can be null in some cases
 };
 
 export type TeacherAvailability = {

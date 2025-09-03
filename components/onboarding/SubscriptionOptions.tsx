@@ -4,6 +4,7 @@ import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 
 const plans = [
   // Garanta que 'credits' existe aqui para cada plano
+  //MODIFICAR CREDITOS PARA OUTRO LUGAR POR QUESTIES DE SEGURANÇA
   {
     name: "Pacote 4 Aulas",
     priceId: "price_1RzpNqR2ryMkitGRmweb0CK2",

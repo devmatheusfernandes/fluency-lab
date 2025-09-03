@@ -97,10 +97,10 @@ export default function NextClassCard({ className = "" }: NextClassCardProps) {
 
   if (isLoading && !nextClass) {
     return (
-      <SkeletonLoader>
+      <SkeletonLoader className="p-2">
         <div className="flex justify-between items-start">
           <div className="h-5 w-24 bg-background dark:bg-container/80 rounded"></div>
-          <div className="w-8 h-8 rounded-full bg-background dark:bg-container/80"></div>
+          <div className="w-10 h-10 rounded-xl bg-background dark:bg-container/80"></div>
         </div>
         <div className="mt-2 space-y-2">
           <div className="h-4 w-32 bg-background dark:bg-container/80 rounded"></div>

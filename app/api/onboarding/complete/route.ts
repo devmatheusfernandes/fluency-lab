@@ -70,7 +70,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ 
       success: true, 
-      message: 'Onboarding completed successfully' 
+      message: 'Onboarding completed successfully',
+      // Include updated user data to help with session refresh
+      user: {
+        tutorialCompleted: true,
+        ...updates
+      }
     });
 
   } catch (error) {

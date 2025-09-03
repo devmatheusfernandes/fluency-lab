@@ -4,6 +4,22 @@ import * as React from "react";
 import * as AvatarPrimitive from "@radix-ui/react-avatar";
 import { twMerge } from "tailwind-merge";
 
+// --- Utility function to extract initials from a name ---
+function getInitials(name: string | undefined | null): string {
+  if (!name) return "?";
+
+  const cleanedName = name.trim();
+  if (!cleanedName) return "?";
+
+  const words = cleanedName.split(/\s+/).filter((word) => word.length > 0);
+
+  if (words.length === 0) return "?";
+  if (words.length === 1) return words[0].charAt(0).toUpperCase();
+
+  // For multiple words, take the first letter of the first and last words
+  return (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
+}
+
 // --- Main Avatar Component (Root) ---
 const Avatar = React.forwardRef<
   React.ComponentRef<typeof AvatarPrimitive.Root>,
@@ -61,7 +77,7 @@ const Avatar = React.forwardRef<
 });
 Avatar.displayName = AvatarPrimitive.Root.displayName;
 
-// --- Styled Image ---
+// --- Styled Image with Loading State ---
 const AvatarImage = React.forwardRef<
   React.ComponentRef<typeof AvatarPrimitive.Image>,
   React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image> & {
@@ -78,16 +94,48 @@ const AvatarImage = React.forwardRef<
     "2xl": "h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 lg:h-32 lg:w-32",
   };
 
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [hasError, setHasError] = React.useState(false);
+
+  const handleLoad = React.useCallback(() => {
+    setIsLoading(false);
+  }, []);
+
+  const handleError = React.useCallback(() => {
+    setIsLoading(false);
+    setHasError(true);
+  }, []);
+
+  // If there's no source or there's an error, don't render the image component
+  if (!props.src || hasError) {
+    return null;
+  }
+
   return (
-    <AvatarPrimitive.Image
-      ref={ref}
-      className={twMerge(
-        "aspect-square object-cover rounded-2xl",
-        imageSizeClasses[size],
-        className
+    <>
+      <AvatarPrimitive.Image
+        ref={ref}
+        className={twMerge(
+          "aspect-square object-cover rounded-2xl",
+          imageSizeClasses[size],
+          className,
+          isLoading && "hidden"
+        )}
+        onLoad={handleLoad}
+        onError={handleError}
+        {...props}
+      />
+      {isLoading && (
+        <div
+          className={twMerge(
+            "absolute inset-0 flex items-center justify-center rounded-2xl bg-container/80",
+            imageSizeClasses[size]
+          )}
+        >
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-subtitle border-t-transparent" />
+        </div>
       )}
-      {...props}
-    />
+    </>
   );
 });
 AvatarImage.displayName = AvatarPrimitive.Image.displayName;
@@ -98,8 +146,10 @@ const AvatarFallback = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Fallback> & {
     /** Size variant to adjust text size */
     size?: "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
+    /** Name to generate initials from */
+    name?: string;
   }
->(({ className, size = "md", ...props }, ref) => {
+>(({ className, size = "md", name, children, ...props }, ref) => {
   const textSizeClasses = {
     xs: "text-xs",
     sm: "text-sm",
@@ -108,6 +158,9 @@ const AvatarFallback = React.forwardRef<
     xl: "text-lg sm:text-xl md:text-2xl",
     "2xl": "text-xl sm:text-2xl md:text-3xl lg:text-4xl",
   };
+
+  // Use provided children or generate initials from name
+  const fallbackContent = children || getInitials(name);
 
   return (
     <AvatarPrimitive.Fallback
@@ -118,9 +171,11 @@ const AvatarFallback = React.forwardRef<
         className
       )}
       {...props}
-    />
+    >
+      {fallbackContent}
+    </AvatarPrimitive.Fallback>
   );
 });
 AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName;
 
-export { Avatar, AvatarImage, AvatarFallback };
+export { Avatar, AvatarImage, AvatarFallback, getInitials };

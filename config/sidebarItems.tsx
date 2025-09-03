@@ -5,6 +5,7 @@ import {
   Gameboy,
   MonitorSmartphone,
   Notebook,
+  PeopleNearby,
   SettingsMinimalistic,
 } from "@solar-icons/react/ssr";
 import {
@@ -55,6 +56,11 @@ const adminItems: SidebarItemType[] = [
 ];
 
 const teacherItems: SidebarItemType[] = [
+  {
+    href: "/hub/plataforma/teacher/meus-alunos",
+    label: "Alunos",
+    icon: <PeopleNearby />,
+  },
   {
     href: "/hub/plataforma/teacher",
     label: "Minha Agenda",

@@ -30,19 +30,19 @@
   --color-subtitle: oklch(0.24 0.0934 272.92);
   --color-paragraph: oklch(0.13 0.0302 276.83);
 
-  --color-success: oklch(0.48 0.0916 167.13);
-  --color-success-light: oklch(0.56 0.0964 154.93);
+  --color-success: oklch(.704 .14 182.503);
+  --color-success-light: oklch(.511 .096 186.391);
 
-  --color-info: oklch(55% 0.15 220);
-  --color-info-light: oklch(75% 0.13 220);
+  --color-info: oklch(.588 .158 241.966);
+  --color-info-light: oklch(.5 .134 242.749);
 
-  --color-warning: oklch(72% 0.15 85);
-  --color-warning-light: oklch(85% 0.13 85);
+  --color-warning: oklch(.666 .179 58.318);
+  --color-warning-light: oklch(.555 .163 48.998);
 
-  --color-danger: oklch(50% 0.2 26);
-  --color-danger-light: oklch(65% 0.18 26);
+  --color-danger: oklch(.586 .253 17.585);
+  --color-danger-light: oklch(.514 .222 16.935);
 
-  --color-error: oklch(42% 0.2 26.8);
+  --color-error: oklch(.455 .188 13.697);
 
   --color-white: oklch(100% 0 0);
   --color-white-light: oklch(97% 0.01 294.6);

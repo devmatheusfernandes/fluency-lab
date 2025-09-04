@@ -7,6 +7,8 @@ import { VisuallyHidden } from "../VisuallyHidden";
 import { Input } from "../Input";
 import { CloseSquare } from "@solar-icons/react/ssr";
 import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
+import { defaultIcons } from "./modalIcons";
 
 // Modal Root Component
 const Modal = Dialog.Root;
@@ -26,7 +28,7 @@ const ModalOverlay = React.forwardRef<
     <Dialog.Overlay
       ref={ref}
       className={twMerge(
-        "fixed inset-0 z-50 bg-black/60 backdrop-blur-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        "fixed inset-0 z-50 bg-black/60 backdrop-blur-md",
         className
       )}
       {...props}
@@ -42,21 +44,40 @@ const ModalContent = React.forwardRef<
 >(({ className, children, ...props }, ref) => {
   return (
     <Dialog.Portal>
-      <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-      <Dialog.Content
-        ref={ref}
-        className={twMerge(
-          "rounded-2xl fixed left-[50%] top-[50%] z-50 grid w-full max-w-sm translate-x-[-50%] translate-y-[-50%] gap-4 border border-ring-offset bg-white-light p-6 shadow-xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
-          className
-        )}
-        {...props}
-      >
-        {/* Hidden title for accessibility - required by Radix UI Dialog */}
-        <VisuallyHidden>
-          <Dialog.Title>Modal</Dialog.Title>
-        </VisuallyHidden>
-        {children}
-      </Dialog.Content>
+      <AnimatePresence>
+        <Dialog.Overlay asChild>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 bg-background/35 backdrop-blur-sm"
+          >
+            <Dialog.Content
+              ref={ref}
+              className={twMerge(
+                "rounded-2xl fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-background/40 bg-background dark:bg-background/50 p-8 shadow-xl",
+                className
+              )}
+              asChild
+              {...props}
+            >
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                {/* Hidden title for accessibility - required by Radix UI Dialog */}
+                <VisuallyHidden>
+                  <Dialog.Title>Modal</Dialog.Title>
+                </VisuallyHidden>
+                {children}
+              </motion.div>
+            </Dialog.Content>
+          </motion.div>
+        </Dialog.Overlay>
+      </AnimatePresence>
     </Dialog.Portal>
   );
 });
@@ -68,11 +89,17 @@ const ModalHeader = React.forwardRef<
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => {
   return (
-    <div
-      ref={ref}
-      className={twMerge("flex flex-col space-y-2 text-center", className)}
-      {...props}
-    />
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.1, duration: 0.2 }}
+    >
+      <div
+        ref={ref}
+        className={twMerge("flex flex-col space-y-2 text-center", className)}
+        {...props}
+      />
+    </motion.div>
   );
 });
 ModalHeader.displayName = "ModalHeader";
@@ -101,11 +128,17 @@ const ModalDescription = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof Dialog.Description>
 >(({ className, ...props }, ref) => {
   return (
-    <Dialog.Description
-      ref={ref}
-      className={twMerge("text-sm text-subtitle leading-relaxed", className)}
-      {...props}
-    />
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 0.15, duration: 0.2 }}
+    >
+      <Dialog.Description
+        ref={ref}
+        className={twMerge("text-sm text-subtitle leading-relaxed", className)}
+        {...props}
+      />
+    </motion.div>
   );
 });
 ModalDescription.displayName = "ModalDescription";
@@ -126,10 +159,16 @@ const ModalClose = React.forwardRef<
     >
       {children || (
         <>
-          <CloseSquare
-            weight="BoldDuotone"
-            className="h-7 w-7 text-primary/50 hover:text-secondary duration-300 ease-in-out transition-all"
-          />
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3, ease: "easeOut", delay: 1 }}
+          >
+            <CloseSquare
+              weight="BoldDuotone"
+              className="h-7 w-7 text-primary hover:text-secondary duration-300 ease-in-out transition-all"
+            />
+          </motion.div>
           <span className="sr-only">Close</span>
         </>
       )}
@@ -144,10 +183,19 @@ const ModalFooter = ({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => {
   return (
-    <div
-      className={twMerge("flex flex-col sm:flex-row gap-2 pt-1", className)}
-      {...props}
-    />
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2, duration: 0.2 }}
+    >
+      <div
+        className={twMerge(
+          "flex flex-col sm:flex-row gap-2 pt-2 px-4",
+          className
+        )}
+        {...props}
+      />
+    </motion.div>
   );
 };
 ModalFooter.displayName = "ModalFooter";
@@ -162,105 +210,31 @@ const ModalIcon = ({
   ...props
 }: {
   className?: string;
-  type?: "info" | "warning" | "error" | "success" | "delete" | "confirm";
+  type?:
+    | "info"
+    | "warning"
+    | "error"
+    | "success"
+    | "delete"
+    | "confirm"
+    | "close"
+    | "settings"
+    | "user"
+    | "edit"
+    | "download"
+    | "upload"
+    | "search"
+    | "notification"
+    | "heart"
+    | "star"
+    | "calendar"
+    | "lock"
+    | "unlock"
+    | "home";
   src?: string;
   alt?: string;
   children?: React.ReactNode;
 } & React.HTMLAttributes<HTMLDivElement>) => {
-  // Ícones padrão baseados no tipo
-  const defaultIcons = {
-    info: (
-      <svg
-        className="w-8 h-8 text-blue-500"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-        />
-      </svg>
-    ),
-    warning: (
-      <svg
-        className="w-8 h-8 text-yellow-500"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-        />
-      </svg>
-    ),
-    error: (
-      <svg
-        className="w-8 h-8 text-red-500"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-        />
-      </svg>
-    ),
-    success: (
-      <svg
-        className="w-8 h-8 text-green-500"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M5 13l4 4L19 7"
-        />
-      </svg>
-    ),
-    delete: (
-      <svg
-        className="w-8 h-8 text-red-500"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-        />
-      </svg>
-    ),
-    confirm: (
-      <svg
-        className="w-8 h-8 text-blue-500"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-        />
-      </svg>
-    ),
-  };
-
   const iconContent =
     children ||
     (src ? (
@@ -304,7 +278,7 @@ const ModalIcon = ({
               }
             }}
           />
-          <div className="fallback-icon hidden justify-center items-center w-12 h-12 bg-gray-100 rounded-full">
+          <div className="fallback-icon hidden justify-center items-center w-12 h-12 bg-background rounded-full">
             {defaultIcons[type]}
           </div>
         </div>
@@ -323,7 +297,15 @@ const ModalBody = ({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => {
-  return <div className={twMerge("space-y-4", className)} {...props} />;
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 0.1, duration: 0.2 }}
+    >
+      <div className={twMerge("space-y-4", className)} {...props} />
+    </motion.div>
+  );
 };
 ModalBody.displayName = "ModalBody";
 
@@ -333,7 +315,13 @@ const ModalForm = React.forwardRef<
   React.FormHTMLAttributes<HTMLFormElement>
 >(({ className, ...props }, ref) => {
   return (
-    <form ref={ref} className={twMerge("space-y-4", className)} {...props} />
+    <motion.form
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 0.15, duration: 0.2 }}
+    >
+      <form ref={ref} className={twMerge("space-y-4", className)} {...props} />
+    </motion.form>
   );
 });
 ModalForm.displayName = "ModalForm";
@@ -352,16 +340,22 @@ const ModalField = ({
   children: React.ReactNode;
 } & React.HTMLAttributes<HTMLDivElement>) => {
   return (
-    <div className="space-y-1" {...props}>
-      {label && (
-        <label className="block text-sm font-medium text-paragraph">
-          {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
-        </label>
-      )}
-      {children}
-      {error && <p className="text-xs text-red-600">{error}</p>}
-    </div>
+    <motion.div
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: 0.1, duration: 0.2 }}
+    >
+      <div className="space-y-1" {...props}>
+        {label && (
+          <label className="block text-sm font-medium text-paragraph">
+            {label}
+            {required && <span className="text-red-500 ml-1">*</span>}
+          </label>
+        )}
+        {children}
+        {error && <p className="text-xs text-red-600">{error}</p>}
+      </div>
+    </motion.div>
   );
 };
 ModalField.displayName = "ModalField";
@@ -373,7 +367,15 @@ const ModalInput = React.forwardRef<
     error?: boolean;
   }
 >(({ ...props }, ref) => {
-  return <Input ref={ref} className="!py-4" {...props} />;
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2, duration: 0.2 }}
+    >
+      <Input ref={ref} className="!py-4" {...props} />
+    </motion.div>
+  );
 });
 
 ModalInput.displayName = "ModalInput";
@@ -386,20 +388,27 @@ const ModalPrimaryButton = React.forwardRef<
   }
 >(({ className, variant = "default", ...props }, ref) => {
   return (
-    <button
-      ref={ref}
-      className={twMerge(
-        `w-full sm:flex-1 rounded-3xl flex flex-row justify-center items-center gap-2 cursor-pointer ${
-          variant === "destructive"
-            ? "bg-danger hover:bg-danger-light"
-            : variant === "secondary"
-              ? "bg-warning hover:bg-warning-light"
-              : "bg-success hover:bg-success-light"
-        } px-6 py-4 text-md font-bold text-white shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50`,
-        className
-      )}
-      {...props}
-    />
+    <motion.div
+      whileHover={{ scale: 1.03 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: "spring", stiffness: 400, damping: 17 }}
+      className="w-full"
+    >
+      <button
+        ref={ref}
+        className={twMerge(
+          `w-full rounded-3xl flex flex-row justify-center items-center gap-2 cursor-pointer ${
+            variant === "destructive"
+              ? "bg-danger hover:bg-danger-light"
+              : variant === "secondary"
+                ? "bg-warning hover:bg-warning-light"
+                : "bg-success hover:bg-success-light"
+          } px-6 py-4 text-md font-bold text-white shadow-md transition-all focus:outline-none disabled:pointer-events-none disabled:opacity-50`,
+          className
+        )}
+        {...props}
+      />
+    </motion.div>
   );
 });
 
@@ -411,14 +420,21 @@ const ModalSecondaryButton = React.forwardRef<
   React.ButtonHTMLAttributes<HTMLButtonElement>
 >(({ className, ...props }, ref) => {
   return (
-    <button
-      ref={ref}
-      className={twMerge(
-        "w-full sm:flex-1 rounded-3xl bg-gray-100 px-6 py-4 text-sm font-bold text-secondary transition-all hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-        className
-      )}
-      {...props}
-    />
+    <motion.div
+      whileHover={{ scale: 1.03 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: "spring", stiffness: 400, damping: 17 }}
+      className="w-full"
+    >
+      <button
+        ref={ref}
+        className={twMerge(
+          "cursor-pointer w-full rounded-3xl bg-secondary px-6 py-4 text-sm font-bold text-white transition-all hover:bg-secondary-hover focus:outline-none disabled:pointer-events-none disabled:opacity-50",
+          className
+        )}
+        {...props}
+      />
+    </motion.div>
   );
 });
 ModalSecondaryButton.displayName = "ModalSecondaryButton";

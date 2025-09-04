@@ -10,7 +10,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { useSettings } from "@/hooks/useSettings";
 
 export default function TwoFactorSetup() {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const { updateSettings, isLoading } = useSettings();
   const [isEnabling, setIsEnabling] = useState(false);
   const [isSetupComplete, setIsSetupComplete] = useState(false);
@@ -20,13 +20,28 @@ export default function TwoFactorSetup() {
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // Check if 2FA is already enabled
   useEffect(() => {
-    if (session?.user) {
-      // In a real implementation, you would check the user's 2FA status from the backend
-      // For now, we'll assume it's not enabled
-    }
+    const checkTwoFactorStatus = async () => {
+      if (session?.user?.id) {
+        try {
+          const response = await fetch(`/api/users/me`);
+          const userData = await response.json();
+
+          if (response.ok && userData.twoFactorEnabled) {
+            setIsSetupComplete(true);
+          }
+        } catch (err) {
+          console.error("Failed to check 2FA status:", err);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    checkTwoFactorStatus();
   }, [session]);
 
   const handleEnableTwoFactor = async () => {
@@ -91,7 +106,13 @@ export default function TwoFactorSetup() {
       setBackupCodes(data.backupCodes);
 
       // Update the session to reflect 2FA status
-      await updateSettings({ twoFactorEnabled: true });
+      await update({
+        ...session,
+        user: {
+          ...session?.user,
+          twoFactorEnabled: true,
+        },
+      });
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -123,11 +144,32 @@ export default function TwoFactorSetup() {
       setBackupCodes([]);
 
       // Update the session to reflect 2FA status
-      await updateSettings({ twoFactorEnabled: false });
+      await update({
+        ...session,
+        user: {
+          ...session?.user,
+          twoFactorEnabled: false,
+        },
+      });
     } catch (err: any) {
       setError(err.message);
     }
   };
+
+  if (loading) {
+    return (
+      <Card className="space-y-6">
+        <section>
+          <Text variant="subtitle" size="lg" weight="semibold">
+            Two-Factor Authentication
+          </Text>
+          <Text size="sm" variant="placeholder" className="mt-1">
+            Loading...
+          </Text>
+        </section>
+      </Card>
+    );
+  }
 
   return (
     <Card className="space-y-6">

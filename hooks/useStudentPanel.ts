@@ -136,6 +136,18 @@ export const useStudentPanel = (studentId: string) => {
           text: taskText,
           completed: false,
           createdAt: new Date(),
+          isDeleted: false,
+          updatedAt: null,
+          // student: studentId,
+          // studentName: student?.name,
+          // createdBy: studentId,
+          // updatedBy: studentId,
+          // isArchived: false,
+          // isPinned: false,
+          // isPrivate: false,
+          // isImportant: false,
+          // isUrgent: false,
+          // isCritical: false,
         }),
       });
 

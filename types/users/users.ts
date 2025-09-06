@@ -4,6 +4,25 @@ import { UserPermission } from "./userPermissions";
 import { RegularClassCredit } from "../credits/regularClassCredits";
 import { StudentAchievement } from "./achievements";
 
+// Google Calendar types
+export interface GoogleCalendarTokens {
+  accessToken: string;
+  refreshToken?: string;
+  expiryDate?: number;
+  scope?: string;
+  tokenType?: string;
+}
+
+export interface GoogleCalendarDefaultTimes {
+  monday?: { startTime: string; endTime: string };
+  tuesday?: { startTime: string; endTime: string };
+  wednesday?: { startTime: string; endTime: string };
+  thursday?: { startTime: string; endTime: string };
+  friday?: { startTime: string; endTime: string };
+  saturday?: { startTime: string; endTime: string };
+  sunday?: { startTime: string; endTime: string };
+}
+
 //firebase > db > users > user.id
 export type User = {
     id: string;
@@ -97,4 +116,8 @@ export type User = {
     twoFactorEnabled?: boolean;
     twoFactorSecret?: string;
     twoFactorBackupCodes?: string[];
+    
+    // GOOGLE CALENDAR INTEGRATION
+    googleCalendarTokens?: GoogleCalendarTokens;
+    googleCalendarDefaultTimes?: GoogleCalendarDefaultTimes;
 };

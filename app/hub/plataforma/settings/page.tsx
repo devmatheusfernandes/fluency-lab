@@ -21,6 +21,11 @@ export default async function SettingsPage() {
     return <Text>Utilizador não encontrado.</Text>;
   }
 
+  // Check for Google Calendar connection status from URL parameters
+  const googleCalendarConnected =
+    session?.user?.role === "student" &&
+    !!user.googleCalendarTokens?.accessToken;
+
   return (
     <div>
       <Text variant="title" size="2xl" weight="bold" className="mb-6">
@@ -29,6 +34,8 @@ export default async function SettingsPage() {
       <SettingsForm
         currentLanguage={user.interfaceLanguage}
         currentTheme={user.theme || "light"}
+        googleCalendarConnected={googleCalendarConnected}
+        googleCalendarDefaultTimes={user.googleCalendarDefaultTimes}
       />
     </div>
   );

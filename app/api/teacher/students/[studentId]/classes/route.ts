@@ -12,6 +12,7 @@ interface Class {
   teacherName: string;
   language: string;
   status: ClassStatus;
+  feedback?: string;
 }
 
 export async function GET(
@@ -69,11 +70,12 @@ export async function GET(
       const data = doc.data();
       return {
         id: doc.id,
-        scheduledAt: data.scheduledAt.toDate(),
+        scheduledAt: data.scheduledAt.toDate().toISOString(), // Convert to ISO string for proper serialization
         teacherId: data.teacherId,
         teacherName: data.teacherId ? (teacherMap.get(data.teacherId) || 'Professor não encontrado') : 'Professor não atribuído',
         language: data.language || 'Não especificado',
         status: data.status || ClassStatus.SCHEDULED,
+        feedback: data.feedback || undefined,
       };
     });
 

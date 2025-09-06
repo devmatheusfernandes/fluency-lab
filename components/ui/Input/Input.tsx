@@ -15,40 +15,173 @@ export interface InputProps
    * @default 'base'
    */
   inputSize?: "sm" | "base" | "lg";
+  /**
+   * Optional icon to display on the left side of the input
+   */
+  leftIcon?: React.ReactNode;
+  /**
+   * Optional icon to display on the right side of the input
+   */
+  rightIcon?: React.ReactNode;
+  /**
+   * Optional label for the input
+   */
+  label?: string;
+  /**
+   * Optional helper text to display below the input
+   */
+  helperText?: string;
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   (
-    { className, type, hasError = false, inputSize = "base", ...props },
+    {
+      className,
+      type,
+      hasError = false,
+      inputSize = "base",
+      leftIcon,
+      rightIcon,
+      label,
+      helperText,
+      id,
+      ...props
+    },
     ref
   ) => {
-    // Base classes for the input element with modern styling
-    const baseClasses =
-      "flex w-full rounded-xl border-2 border-input/80 hover:border-input/80 focus:border-primary/40 focus:bg-input/60 bg-input/30 hover:bg-input/60 backdrop-blur-xl text-base text-placeholder placeholder:text-placeholder focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 ease-in-out";
+    // Generate unique ID if not provided
+    const inputId = id || React.useId();
 
-    // Size classes
+    // Modern base classes with glass morphism and enhanced styling
+    const baseClasses =
+      "flex w-full card-base placeholder:text-gray-500 dark:placeholder:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-white dark:hover:bg-gray-800 focus:border-blue-500 dark:focus:border-blue-400 focus:bg-white dark:focus:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 dark:focus-visible:ring-blue-400/20 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-gray-50 dark:disabled:bg-gray-900 transition-all duration-200 ease-in-out shadow-sm hover:shadow-md";
+
+    // Size classes with improved spacing
     const sizeClasses = {
-      sm: "h-10 px-3 py-2 text-sm",
-      base: "h-12 px-4 py-3 text-base",
-      lg: "h-14 px-5 py-4 text-lg",
+      sm: "h-9 text-sm",
+      base: "h-10 text-sm",
+      lg: "h-12 text-base",
     };
 
-    // Classes to apply when there is an error
+    // Padding classes that account for icons
+    const paddingClasses = {
+      sm: leftIcon
+        ? rightIcon
+          ? "pl-9 pr-9"
+          : "pl-9 pr-3"
+        : rightIcon
+          ? "pl-3 pr-9"
+          : "px-3",
+      base: leftIcon
+        ? rightIcon
+          ? "pl-10 pr-10"
+          : "pl-10 pr-4"
+        : rightIcon
+          ? "pl-4 pr-10"
+          : "px-4",
+      lg: leftIcon
+        ? rightIcon
+          ? "pl-12 pr-12"
+          : "pl-12 pr-5"
+        : rightIcon
+          ? "pl-5 pr-12"
+          : "px-5",
+    };
+
+    // Enhanced error classes with modern error styling
     const errorClasses =
-      "border-error/10 border-1 hover:border-error/20 focus:bg-error/20 bg-error/10 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-error hover:border-error";
+      "border-red-300 dark:border-red-700 bg-red-50/80 dark:bg-red-950/20 hover:border-red-400 dark:hover:border-red-600 focus:border-red-500 dark:focus:border-red-400 focus:bg-red-50 dark:focus:bg-red-950/30 focus-visible:ring-red-500/20 dark:focus-visible:ring-red-400/20";
+
+    // Icon sizing based on input size
+    const iconSizeClasses = {
+      sm: "h-4 w-4",
+      base: "h-4 w-4",
+      lg: "h-5 w-5",
+    };
+
+    // Icon positioning
+    const leftIconClasses = {
+      sm: "left-2.5",
+      base: "left-3",
+      lg: "left-4",
+    };
+
+    const rightIconClasses = {
+      sm: "right-2.5",
+      base: "right-3",
+      lg: "right-4",
+    };
 
     return (
-      <input
-        type={type}
-        className={twMerge(
-          baseClasses,
-          sizeClasses[inputSize],
-          hasError && errorClasses, // Conditionally apply error styles
-          className
+      <div className="w-full">
+        {/* Label */}
+        {label && (
+          <label
+            htmlFor={inputId}
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >
+            {label}
+          </label>
         )}
-        ref={ref}
-        {...props}
-      />
+
+        {/* Input Container */}
+        <div className="relative">
+          {/* Left Icon */}
+          {leftIcon && (
+            <div
+              className={twMerge(
+                "absolute top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none",
+                leftIconClasses[inputSize]
+              )}
+            >
+              <div className={iconSizeClasses[inputSize]}>{leftIcon}</div>
+            </div>
+          )}
+
+          {/* Input Element */}
+          <input
+            id={inputId}
+            type={type}
+            className={twMerge(
+              baseClasses,
+              sizeClasses[inputSize],
+              paddingClasses[inputSize],
+              hasError && errorClasses,
+              className
+            )}
+            ref={ref}
+            {...props}
+          />
+
+          {/* Right Icon */}
+          {rightIcon && (
+            <div
+              className={twMerge(
+                "absolute top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none",
+                rightIconClasses[inputSize]
+              )}
+            >
+              <div className={iconSizeClasses[inputSize]}>{rightIcon}</div>
+            </div>
+          )}
+        </div>
+
+        {/* Helper Text / Error Message */}
+        {(helperText || hasError) && (
+          <div className="mt-2">
+            <p
+              className={twMerge(
+                "text-sm",
+                hasError
+                  ? "text-red-600 dark:text-red-400"
+                  : "text-gray-600 dark:text-gray-400"
+              )}
+            >
+              {helperText}
+            </p>
+          </div>
+        )}
+      </div>
     );
   }
 );

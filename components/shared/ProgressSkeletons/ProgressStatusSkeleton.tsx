@@ -10,10 +10,14 @@ const ProgressStatusSkeleton: React.FC<ProgressStatusSkeletonProps> = ({
 }) => {
   return (
     <SkeletonLoader>
-      <div className="h-6 bg-background dark:bg-container/80 rounded mb-4 w-1/3"></div>
+      <SkeletonLoader
+        variant="text"
+        lines={1}
+        className="h-6 rounded mb-4 w-1/3"
+      />
       <div className="space-y-3">
-        <div className="h-12 bg-background dark:bg-container/80 rounded"></div>
-        <div className="h-12 bg-background dark:bg-container/80 rounded"></div>
+        <SkeletonLoader variant="rect" className="h-12 rounded" />
+        <SkeletonLoader variant="rect" className="h-12 rounded" />
       </div>
     </SkeletonLoader>
   );

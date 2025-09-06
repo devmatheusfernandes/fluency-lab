@@ -16,15 +16,15 @@ interface ToastProps extends React.HTMLAttributes<HTMLDivElement> {
   closable?: boolean;
 }
 
-// --- Modern Icon Components ---
+// --- Minimalist Icons ---
 const CheckIcon = () => (
   <svg
-    width="18"
-    height="18"
+    width="16"
+    height="16"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    strokeWidth="2.5"
+    strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
   >
@@ -32,30 +32,29 @@ const CheckIcon = () => (
   </svg>
 );
 
-const ErrorIcon = () => (
+const XIcon = () => (
   <svg
-    width="18"
-    height="18"
+    width="16"
+    height="16"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    strokeWidth="2.5"
+    strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    <circle cx="12" cy="12" r="10" />
-    <path d="M15 9l-6 6M9 9l6 6" />
+    <path d="M18 6L6 18M6 6l12 12" />
   </svg>
 );
 
-const WarningIcon = () => (
+const AlertTriangleIcon = () => (
   <svg
-    width="18"
-    height="18"
+    width="16"
+    height="16"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    strokeWidth="2.5"
+    strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
   >
@@ -67,12 +66,12 @@ const WarningIcon = () => (
 
 const InfoIcon = () => (
   <svg
-    width="18"
-    height="18"
+    width="16"
+    height="16"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    strokeWidth="2.5"
+    strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
   >
@@ -84,47 +83,22 @@ const InfoIcon = () => (
 // --- Icon Map ---
 const iconMap: Record<NonNullable<ToastProps["variant"]>, React.ReactNode> = {
   success: <CheckIcon />,
-  error: <ErrorIcon />,
-  warning: <WarningIcon />,
+  error: <XIcon />,
+  warning: <AlertTriangleIcon />,
   info: <InfoIcon />,
   default: <InfoIcon />,
 };
 
-// --- Modern Variant Styles ---
+// --- Minimal Color System ---
 const variantStyles = {
-  success: {
-    icon: "text-success",
-    iconBg: "bg-success-light/10",
-    border: "border-success/20",
-    accent: "bg-gradient-to-r from-success/10 to-transparent",
-  },
-  error: {
-    icon: "text-error",
-    iconBg: "bg-error/10",
-    border: "border-error/20",
-    accent: "bg-gradient-to-r from-error/10 to-transparent",
-  },
-  warning: {
-    icon: "text-warning",
-    iconBg: "bg-warning/10",
-    border: "border-warning/20",
-    accent: "bg-gradient-to-r from-warning/10 to-transparent",
-  },
-  info: {
-    icon: "text-info",
-    iconBg: "bg-info/10",
-    border: "border-info/20",
-    accent: "bg-gradient-to-r from-info/10 to-transparent",
-  },
-  default: {
-    icon: "text-paragraph",
-    iconBg: "bg-surface-1",
-    border: "border-surface-2",
-    accent: "bg-gradient-to-r from-surface-1/20 to-transparent",
-  },
+  success: "text-green-600 dark:text-green-400",
+  error: "text-red-600 dark:text-red-400",
+  warning: "text-amber-600 dark:text-amber-400",
+  info: "text-blue-600 dark:text-blue-400",
+  default: "text-gray-600 dark:text-gray-400",
 };
 
-// --- Modern Elegant Toast Component ---
+// --- Minimalist Toast Component ---
 const ToastComponent = React.forwardRef<HTMLDivElement, ToastProps>(
   (
     {
@@ -138,98 +112,59 @@ const ToastComponent = React.forwardRef<HTMLDivElement, ToastProps>(
     },
     ref
   ) => {
-    const variantStyle = variantStyles[variant];
-
     return (
       <div
         ref={ref}
         className={twMerge(
-          // Modern glass morphism container
-          "group relative max-w-sm w-full",
-          "bg-container/90 backdrop-blur-xl",
-          "border border-surface-2/30",
-          variantStyle.border,
-          "rounded-2xl shadow-xl shadow-paragraph/5",
-          "pointer-events-auto overflow-hidden",
-          "transform transition-all duration-500 ease-out",
-          "hover:scale-[1.02] hover:shadow-2xl hover:shadow-paragraph/10",
+          // Clean minimalist container
+          "group relative max-w-md w-full",
+          "bg-white dark:bg-gray-900",
+          "border border-gray-200 dark:border-gray-800",
+          "rounded-lg shadow-sm",
+          "pointer-events-auto",
+          "transform transition-all duration-300 ease-out",
+          "hover:shadow-md",
           className
         )}
         {...props}
       >
-        {/* Subtle accent gradient */}
-        <div
-          className={twMerge(
-            "absolute inset-0 opacity-10 dark:opacity-20",
-            variantStyle.accent
-          )}
-        />
-
-        {/* Content container */}
-        <div className="relative flex items-start gap-4 p-6">
-          {/* Modern icon with elegant background */}
+        <div className="flex items-start gap-3 p-4">
+          {/* Simple icon */}
           <div
-            className={twMerge(
-              "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center",
-              "ring-1 ring-surface-2/20",
-              "shadow-sm",
-              variantStyle.iconBg
-            )}
+            className={twMerge("flex-shrink-0 mt-0.5", variantStyles[variant])}
           >
-            <div className={variantStyle.icon}>{iconMap[variant]}</div>
+            {iconMap[variant]}
           </div>
 
-          {/* Content area */}
-          <div className="flex-1 min-w-0 space-y-2">
+          {/* Content */}
+          <div className="flex-1 min-w-0">
             {title && (
-              <h4 className="text-sm font-semibold text-title leading-tight tracking-tight">
+              <div className="text-sm font-medium text-gray-900 dark:text-white mb-1">
                 {title}
-              </h4>
-            )}
-            {description && (
-              <p className="text-sm text-paragraph leading-relaxed">
-                {description}
-              </p>
-            )}
-
-            {/* Modern action button */}
-            {action && (
-              <div className="pt-3">
-                <button
-                  onClick={action.onClick}
-                  className={twMerge(
-                    "inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium",
-                    "bg-surface-1 hover:bg-surface-hover",
-                    "text-paragraph",
-                    "rounded-xl border border-surface-2",
-                    "transition-all duration-200 ease-out",
-                    "hover:scale-105 hover:shadow-sm",
-                    "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring/50"
-                  )}
-                >
-                  {action.label}
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M5 12h14M12 5l7 7-7 7" />
-                  </svg>
-                </button>
               </div>
             )}
+            {description && (
+              <div className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                {description}
+              </div>
+            )}
+
+            {/* Action */}
+            {action && (
+              <button
+                onClick={action.onClick}
+                className="mt-3 text-sm font-medium text-gray-900 dark:text-white hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200"
+              >
+                {action.label}
+              </button>
+            )}
           </div>
 
-          {/* Optional close button */}
+          {/* Close button */}
           {closable && (
             <button
               onClick={() => toast.dismiss()}
-              className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 rounded-lg hover:bg-surface-1"
+              className="flex-shrink-0 opacity-60 hover:opacity-100 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-all duration-200 p-1 -m-1 rounded"
             >
               <svg
                 width="14"
@@ -246,22 +181,13 @@ const ToastComponent = React.forwardRef<HTMLDivElement, ToastProps>(
             </button>
           )}
         </div>
-
-        {/* Subtle bottom border accent */}
-        <div
-          className={twMerge(
-            "absolute bottom-0 left-6 right-6 h-px",
-            "bg-gradient-to-r from-transparent via-current to-transparent opacity-20",
-            variantStyle.icon
-          )}
-        />
       </div>
     );
   }
 );
 ToastComponent.displayName = "ToastComponent";
 
-// --- Enhanced Toast Hook ---
+// --- Simplified Toast Hook ---
 type ToastOptions = {
   title?: string;
   description?: string;
@@ -288,21 +214,8 @@ const useToast = () => {
     const { title, description, duration, action, closable, position } =
       options;
 
-    const sonnerPosition =
-      position === "top-center"
-        ? "top-center"
-        : position === "bottom-center"
-          ? "bottom-center"
-          : position === "top-left"
-            ? "top-left"
-            : position === "bottom-left"
-              ? "bottom-left"
-              : position === "bottom-right"
-                ? "bottom-right"
-                : "top-right";
-
     return toast.custom(
-      (id) => (
+      () => (
         <ToastComponent
           variant={variant}
           title={title}
@@ -313,7 +226,7 @@ const useToast = () => {
       ),
       {
         duration,
-        position: sonnerPosition,
+        position: position || "top-right",
       }
     );
   };
@@ -339,8 +252,7 @@ const useToast = () => {
       return showToast(variant, rest);
     },
 
-    dismiss: (toastId: string) => toast.dismiss(toastId),
-
+    dismiss: toast.dismiss,
     dismissAll: () => toast.dismiss(),
   };
 };

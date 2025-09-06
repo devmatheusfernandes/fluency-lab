@@ -71,7 +71,7 @@ export default function MeusAlunos() {
   }
 
   return (
-    <Container>
+    <Container className="p-3">
       {/* Search Bar */}
       <SearchBar
         placeholder="Procure seus alunos..."
@@ -81,7 +81,7 @@ export default function MeusAlunos() {
 
       {/* Students List */}
       <div className="flex-1 py-3">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pr-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {loading ? (
             Array.from({ length: 6 }).map((_, index) => (
               <StudentCardSkeleton key={index} />

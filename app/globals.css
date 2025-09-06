@@ -11,6 +11,10 @@
   }
 }
 
+.card-base {
+  @apply duration-150 ease-in-out transition-all rounded-lg border border-gray-200/50 dark:border-gray-700/50 bg-gray-300/80 dark:bg-gray-900/35 hover:border-gray-300 dark:hover:border-gray-600;
+}
+
 @theme {
   /* Light Theme Colors */
   --color-primary: oklch(32.07% 0.1509 270.29);
@@ -106,3 +110,4 @@ body {
   font-family: 'Quicksand', sans-serif;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
+

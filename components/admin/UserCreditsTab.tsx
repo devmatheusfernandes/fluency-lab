@@ -27,7 +27,7 @@ import {
 } from "@/types/credits/regularClassCredits";
 import { TextArea } from "../ui/TextArea";
 import { Calendar, Card2, Gift, ShieldWarning, User } from "@solar-icons/react";
-import { Alert, AlertDescription } from "../ui/alert";
+import { Alert, AlertDescription } from "../ui/Shadcn/alert";
 
 interface UserCreditsTabProps {
   studentId: string;

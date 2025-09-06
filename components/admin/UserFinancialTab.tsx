@@ -11,7 +11,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@/components/ui/Shadcn/table";
 import { Badge } from "@/components/ui/Badge";
 import { toast } from "sonner";
 import { FullUserDetails } from "@/types/users/user-details";

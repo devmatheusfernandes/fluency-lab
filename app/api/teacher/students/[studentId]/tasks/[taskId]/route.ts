@@ -45,10 +45,18 @@ export async function PUT(
       return NextResponse.json({ error: 'Tarefa não encontrada.' }, { status: 404 });
     }
     
-    const updateData = {
+    // Handle dueDate if provided
+    const updateData: any = {
       ...body,
       updatedAt: new Date(),
     };
+    
+    // Convert dueDate string to Date object if provided
+    if (body.dueDate) {
+      updateData.dueDate = new Date(body.dueDate);
+    } else if (body.dueDate === null) {
+      updateData.dueDate = null; // Explicitly set to null if cleared
+    }
 
     await taskRef.update(updateData);
     
@@ -117,5 +125,7 @@ export async function DELETE(
     return NextResponse.json({ error: 'Erro interno do servidor.' }, { status: 500 });
   }
 }
+
+
 
 

@@ -13,14 +13,30 @@ const UserProfileSkeleton: React.FC<UserProfileSkeletonProps> = ({
       className={`flex flex-row justify-between items-center w-full ${className}`}
     >
       <div className="flex flex-row items-center sm:items-start gap-2">
-        <div className="w-16 h-16 rounded-2xl bg-background dark:bg-container/80" />
-        <div className="flex flex-col items-start mt-0 sm:mt-2">
-          <div className="h-5 w-32 bg-background dark:bg-container/80 rounded mb-1"></div>
-          <div className="h-4 w-40 bg-background dark:bg-container/80 rounded mb-1"></div>
-          <div className="h-5 w-16 bg-background dark:bg-container/80 rounded"></div>
+        <SkeletonLoader
+          variant="avatar"
+          size="lg"
+          className="rounded-2xl w-16 h-16"
+        />
+        <div className="flex flex-col items-start mt-0 sm:mt-2 space-y-1">
+          <SkeletonLoader
+            variant="text"
+            lines={1}
+            className="h-5 rounded w-32"
+          />
+          <SkeletonLoader
+            variant="text"
+            lines={1}
+            className="h-4 rounded w-40"
+          />
+          <SkeletonLoader
+            variant="text"
+            lines={1}
+            className="h-5 rounded w-16"
+          />
         </div>
       </div>
-      <div className="w-10 h-10 rounded-lg bg-background dark:bg-container/80"></div>
+      <SkeletonLoader variant="rect" className="w-10 h-10 rounded-lg" />
     </SkeletonLoader>
   );
 };

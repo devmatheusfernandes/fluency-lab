@@ -89,9 +89,11 @@ export function mapAvailabilityToEvents(
               // Include student information if available
               studentInfo: bookedClass.studentId ? {
                 studentId: bookedClass.studentId,
-                studentName: (bookedClass as any).studentName,
-                studentAvatarUrl: (bookedClass as any).studentAvatarUrl,
+                studentName: bookedClass.studentName,
+                studentAvatarUrl: bookedClass.studentAvatarUrl,
               } : undefined,
+              // Add class type information for proper categorization
+              classType: bookedClass.classType,
             });
           } else if (exceptionSet.has(exceptionKey)) {
             // 2. SEGUNDA PRIORIDADE: Se for uma exceção (deletada pelo prof), não mostra nada.
@@ -143,9 +145,11 @@ export function mapAvailabilityToEvents(
             // Include student information if available
             studentInfo: bookedClass.studentId ? {
               studentId: bookedClass.studentId,
-              studentName: (bookedClass as any).studentName,
-              studentAvatarUrl: (bookedClass as any).studentAvatarUrl,
+              studentName: bookedClass.studentName,
+              studentAvatarUrl: bookedClass.studentAvatarUrl,
             } : undefined,
+            // Add class type information for proper categorization
+            classType: bookedClass.classType,
           });
         } else if (!exceptionSet.has(exceptionKey)) {
           events.push({

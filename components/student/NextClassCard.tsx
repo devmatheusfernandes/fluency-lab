@@ -99,12 +99,24 @@ export default function NextClassCard({ className = "" }: NextClassCardProps) {
     return (
       <SkeletonLoader className="p-2">
         <div className="flex justify-between items-start">
-          <div className="h-5 w-24 bg-background dark:bg-container/80 rounded"></div>
-          <div className="w-10 h-10 rounded-xl bg-background dark:bg-container/80"></div>
+          <SkeletonLoader
+            variant="text"
+            lines={1}
+            className="h-5 w-24 rounded"
+          />
+          <SkeletonLoader variant="rect" className="w-10 h-10 rounded-xl" />
         </div>
         <div className="mt-2 space-y-2">
-          <div className="h-4 w-32 bg-background dark:bg-container/80 rounded"></div>
-          <div className="h-4 w-24 bg-background dark:bg-container/80 rounded"></div>
+          <SkeletonLoader
+            variant="text"
+            lines={1}
+            className="h-4 w-32 rounded"
+          />
+          <SkeletonLoader
+            variant="text"
+            lines={1}
+            className="h-4 w-24 rounded"
+          />
         </div>
       </SkeletonLoader>
     );

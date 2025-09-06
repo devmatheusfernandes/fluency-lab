@@ -3,11 +3,13 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useSession } from 'next-auth/react';
+import { GoogleCalendarDefaultTimes } from '@/types/users/users';
 
 interface SettingsData {
   interfaceLanguage?: string;
   theme?: 'light' | 'dark';
   twoFactorEnabled?: boolean;
+  googleCalendarDefaultTimes?: GoogleCalendarDefaultTimes;
 }
 
 export const useSettings = () => {
@@ -52,4 +54,4 @@ export const useSettings = () => {
   };
 
   return { updateSettings, isLoading };
-};
+}

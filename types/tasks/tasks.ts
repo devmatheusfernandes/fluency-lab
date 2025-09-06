@@ -7,4 +7,5 @@ export interface Task {
   createdAt: Date;
   updatedAt?: Date;
   isDeleted: boolean;
+  dueDate?: Date; // Add dueDate field for Google Calendar integration
 }

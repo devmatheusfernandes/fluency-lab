@@ -11,6 +11,7 @@ interface Task {
   deletedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
+  dueDate?: Date; // Add dueDate field
 }
 
 export async function GET(
@@ -59,7 +60,8 @@ export async function GET(
 
     const tasks = tasksSnapshot.docs.map(doc => ({
       id: doc.id,
-      ...doc.data()
+      ...doc.data(),
+      dueDate: doc.data().dueDate ? doc.data().dueDate.toDate() : undefined, // Handle dueDate
     }));
 
     return NextResponse.json(tasks);
@@ -106,6 +108,7 @@ export async function POST(
     // Create task in Firestore
     const taskData = {
       ...body,
+      dueDate: body.dueDate ? new Date(body.dueDate) : null, // Handle dueDate
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -183,6 +186,10 @@ export async function DELETE(
     return NextResponse.json({ error: 'Erro interno do servidor.' }, { status: 500 });
   }
 }
+
+
+
+
 
 
 

@@ -37,6 +37,8 @@ export interface CalendarEvent {
     studentName?: string;
     studentAvatarUrl?: string;
   };
+  // Class type for booked classes
+  classType?: "regular" | "occasional";
 }
 
 export type CalendarView = "month" | "week" | "day";
@@ -252,6 +254,9 @@ export const Calendar: React.FC<CalendarProps> = ({
           title={event.title}
         >
           {event.title}
+          {/* Show indicator for class type */}
+          {event.classType === "occasional" && <span className="ml-1">👤</span>}
+          {event.classType === "regular" && <span className="ml-1">📚</span>}
         </div>
       );
     }
@@ -268,9 +273,16 @@ export const Calendar: React.FC<CalendarProps> = ({
       >
         <div className="flex items-center justify-between">
           <span className="truncate">{event.title}</span>
-          {event.repeating && (
-            <span className="ml-1 text-xs opacity-80">🔄</span>
-          )}
+          <div className="flex items-center">
+            {event.repeating && (
+              <span className="ml-1 text-xs opacity-80">🔄</span>
+            )}
+            {/* Show indicator for class type */}
+            {event.classType === "occasional" && (
+              <span className="ml-1">👤</span>
+            )}
+            {event.classType === "regular" && <span className="ml-1">📚</span>}
+          </div>
         </div>
         {/* Display student information if available, otherwise fallback to person */}
         {event.studentInfo?.studentName && (
@@ -607,6 +619,13 @@ export const Calendar: React.FC<CalendarProps> = ({
                     <div className="flex-1">
                       <Text size="lg" className="font-semibold mb-2">
                         {event.title}
+                        {/* Show indicator for class type */}
+                        {event.classType === "occasional" && (
+                          <span className="ml-2 text-base">👤</span>
+                        )}
+                        {event.classType === "regular" && (
+                          <span className="ml-2 text-base">📚</span>
+                        )}
                       </Text>
                       {event.description && (
                         <Text size="sm" className="opacity-80 mb-2">
@@ -700,6 +719,13 @@ export const Calendar: React.FC<CalendarProps> = ({
                     >
                       <Text size="sm" className="font-semibold">
                         {event.title}
+                        {/* Show indicator for class type */}
+                        {event.classType === "occasional" && (
+                          <span className="ml-2 text-xs">👤</span>
+                        )}
+                        {event.classType === "regular" && (
+                          <span className="ml-2 text-xs">📚</span>
+                        )}
                       </Text>
                       {event.startTime && event.endTime && (
                         <Text size="xs" className="opacity-80">

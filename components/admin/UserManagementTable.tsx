@@ -14,7 +14,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@/components/ui/Shadcn/table";
 import {
   DropdownMenu,
   DropdownMenuContent,

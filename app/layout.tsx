@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/Shadcn/sonner";
 import { ThemeProvider } from "@/context/ThemeContext";
 import AuthProvider from "@/components/auth/AuthProvider";
 import { Quicksand } from "next/font/google";

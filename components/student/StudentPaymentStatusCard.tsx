@@ -158,24 +158,63 @@ export function StudentPaymentStatusCard({
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 bg-background dark:bg-container/80 rounded-full"></div>
-              <div className="h-6 w-48 bg-background dark:bg-container/80 rounded"></div>
+              <SkeletonLoader
+                variant="circle"
+                className="w-5 h-5 rounded-full"
+              />
+              <SkeletonLoader
+                variant="text"
+                lines={1}
+                className="h-6 w-48 rounded"
+              />
             </div>
-            <div className="h-6 w-20 bg-background dark:bg-container/80 rounded-full"></div>
+            <SkeletonLoader
+              variant="text"
+              lines={1}
+              className="h-6 w-20 rounded-full"
+            />
           </div>
-          <div className="h-4 w-32 bg-background dark:bg-container/80 rounded mx-auto"></div>
-          <div className="h-32 bg-background dark:bg-container/80 rounded"></div>
+          <SkeletonLoader
+            variant="text"
+            lines={1}
+            className="h-4 w-32 rounded mx-auto"
+          />
+          <SkeletonLoader variant="rect" className="h-32 rounded" />
           <div className="flex justify-between">
-            <div className="h-4 w-20 bg-background dark:bg-container/80 rounded"></div>
-            <div className="h-4 w-16 bg-background dark:bg-container/80 rounded"></div>
+            <SkeletonLoader
+              variant="text"
+              lines={1}
+              className="h-4 w-20 rounded"
+            />
+            <SkeletonLoader
+              variant="text"
+              lines={1}
+              className="h-4 w-16 rounded"
+            />
           </div>
           <div className="flex justify-between">
-            <div className="h-4 w-32 bg-background dark:bg-container/80 rounded"></div>
-            <div className="h-4 w-24 bg-background dark:bg-container/80 rounded"></div>
+            <SkeletonLoader
+              variant="text"
+              lines={1}
+              className="h-4 w-32 rounded"
+            />
+            <SkeletonLoader
+              variant="text"
+              lines={1}
+              className="h-4 w-24 rounded"
+            />
           </div>
           <div className="flex justify-between">
-            <div className="h-4 w-28 bg-background dark:bg-container/80 rounded"></div>
-            <div className="h-4 w-20 bg-background dark:bg-container/80 rounded"></div>
+            <SkeletonLoader
+              variant="text"
+              lines={1}
+              className="h-4 w-28 rounded"
+            />
+            <SkeletonLoader
+              variant="text"
+              lines={1}
+              className="h-4 w-20 rounded"
+            />
           </div>
         </div>
       </SkeletonLoader>

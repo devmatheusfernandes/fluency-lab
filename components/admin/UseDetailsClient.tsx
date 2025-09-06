@@ -3,7 +3,7 @@
 import { Text } from "@/components/ui/Text";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
 import { FullUserDetails } from "@/types/users/user-details";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/Shadcn/tabs";
 import UserOverviewTab from "./UserOverviewTab";
 import UserClassesTab from "./UserClassesTab";
 import UserFinancialTab from "./UserFinancialTab";

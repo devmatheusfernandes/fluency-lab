@@ -5,13 +5,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SubContainer } from "@/components/ui/SubContainer";
 import { NoResults } from "@/components/ui/NoResults/NoResults";
 import { Input } from "@/components/ui/Input";
-import { Button } from "@/components/ui/Button";
 import {
   AddSquare,
-  TrashBin2,
   TrashBinMinimalistic,
+  Refresh,
+  Calendar,
 } from "@solar-icons/react/ssr";
 import { Checkbox } from "@/components/ui/Checkbox";
+import SkeletonLoader from "@/components/shared/Skeleton/SkeletonLoader";
 import {
   Modal,
   ModalContent,
@@ -23,21 +24,59 @@ import {
   ModalSecondaryButton,
   ModalIcon,
 } from "@/components/ui/Modal";
+import DatePicker from "@/components/ui/DatePicker/DatePicker";
 
+// Update the Task interface to include dueDate
 interface Task {
   id: string;
   text: string;
   completed: boolean;
-  createdAt: Date;
+  createdAt: Date | string;
+  updatedAt?: Date | string;
+  dueDate?: Date | string; // Add dueDate
 }
 
+// Update the TasksCardProps interface
 interface TasksCardProps {
   tasks: Task[];
-  onAddTask: (taskText: string) => Promise<boolean>;
+  onAddTask?: (text: string, dueDate?: Date) => Promise<boolean>; // Update this line
   onUpdateTask: (taskId: string, updates: Partial<Task>) => Promise<boolean>;
-  onDeleteTask: (taskId: string) => Promise<boolean>;
-  onDeleteAllTasks: () => Promise<boolean>;
+  onDeleteTask?: (taskId: string) => Promise<boolean>;
+  onDeleteAllTasks?: () => Promise<boolean>;
+  onSyncWithGoogleCalendar?: () => void;
+  isSyncingWithGoogleCalendar?: boolean;
+  userRole?: string; // Add this line to distinguish between teacher and student
 }
+
+// Helper function to convert string dates to Date objects
+const parseTaskDates = (task: any): Task => {
+  return {
+    ...task,
+    createdAt:
+      typeof task.createdAt === "string"
+        ? new Date(task.createdAt)
+        : task.createdAt,
+    updatedAt: task.updatedAt
+      ? typeof task.updatedAt === "string"
+        ? new Date(task.updatedAt)
+        : task.updatedAt
+      : undefined,
+    dueDate: task.dueDate
+      ? typeof task.dueDate === "string"
+        ? new Date(task.dueDate)
+        : task.dueDate
+      : undefined,
+  };
+};
+
+// Add this helper function to format date for input without timezone issues
+const formatDateForInput = (date: Date): string => {
+  // Use the date components directly to avoid timezone issues
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 export default function TasksCard({
   tasks,
@@ -45,15 +84,21 @@ export default function TasksCard({
   onUpdateTask,
   onDeleteTask,
   onDeleteAllTasks,
+  onSyncWithGoogleCalendar,
+  isSyncingWithGoogleCalendar = false,
+  userRole, // Add this line
 }: TasksCardProps) {
   const [newTask, setNewTask] = useState("");
-  const [localTasks, setLocalTasks] = useState<Task[]>(tasks);
+  const [localTasks, setLocalTasks] = useState<Task[]>(
+    tasks.map(parseTaskDates)
+  );
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [pendingTasks, setPendingTasks] = useState<string[]>([]);
+  const [dueDate, setDueDate] = useState<string>("");
 
   // Update local tasks when prop changes
   React.useEffect(() => {
-    setLocalTasks(tasks);
+    setLocalTasks(tasks.map(parseTaskDates));
   }, [tasks]);
 
   // Calculate completion percentage for progress bar
@@ -63,9 +108,10 @@ export default function TasksCard({
       ? Math.round((completedTasks / localTasks.length) * 100)
       : 0;
 
-  // Handle adding a new task with skeleton feedback
+  // Update handleAddTask to include dueDate
   const handleAddTask = async () => {
-    if (!newTask.trim()) return;
+    if (!newTask.trim() || !onAddTask || typeof onAddTask !== "function")
+      return;
 
     // Create a pending ID for the skeleton
     const pendingId = `pending-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -75,10 +121,19 @@ export default function TasksCard({
 
     // Clear the input immediately
     setNewTask("");
+    setDueDate(""); // Clear the date input
 
     // Add in the background
     try {
-      const success = await onAddTask(newTask);
+      // Convert string date to Date object if provided, handling timezone correctly
+      let dueDateObj: Date | undefined;
+      if (dueDate) {
+        // Create date object from YYYY-MM-DD string without timezone conversion
+        const [year, month, day] = dueDate.split("-").map(Number);
+        dueDateObj = new Date(year, month - 1, day); // month is 0-indexed in Date constructor
+      }
+
+      const success = await onAddTask(newTask, dueDateObj);
       // Remove from pending tasks after completion
       setPendingTasks((prev) => prev.filter((id) => id !== pendingId));
 
@@ -127,8 +182,11 @@ export default function TasksCard({
     }
   };
 
-  // Handle deleting a single task
+  // Handle deleting a single task (only if onDeleteTask is provided)
   const handleDeleteTask = async (taskId: string) => {
+    // If onDeleteTask is not provided or returns false, don't delete
+    if (!onDeleteTask || typeof onDeleteTask !== "function") return;
+
     // Optimistically remove the task from the UI
     setLocalTasks((prevTasks) =>
       prevTasks.filter((task) => task.id !== taskId)
@@ -166,14 +224,26 @@ export default function TasksCard({
     }
   };
 
-  // Handle deleting all tasks - opens confirmation modal
+  // Handle deleting all tasks - opens confirmation modal (only if onDeleteAllTasks is provided)
   const handleDeleteAllTasks = () => {
-    if (localTasks.length === 0) return;
+    // If onDeleteAllTasks is not provided or returns false, don't delete
+    if (
+      !onDeleteAllTasks ||
+      typeof onDeleteAllTasks !== "function" ||
+      localTasks.length === 0
+    )
+      return;
     setIsDeleteModalOpen(true);
   };
 
-  // Confirm deletion of all tasks
+  // Confirm deletion of all tasks (only if onDeleteAllTasks is provided)
   const confirmDeleteAllTasks = async () => {
+    // If onDeleteAllTasks is not provided or returns false, don't delete
+    if (!onDeleteAllTasks || typeof onDeleteAllTasks !== "function") {
+      setIsDeleteModalOpen(false);
+      return;
+    }
+
     // Optimistically clear all tasks from the UI
     setLocalTasks([]);
 
@@ -195,22 +265,25 @@ export default function TasksCard({
 
   // Render a skeleton task
   const renderSkeletonTask = (key: string) => (
-    <motion.div
+    <div
       key={key}
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="flex items-center p-3 bg-container rounded-lg border border-input/50"
+      className="flex items-center p-3 rounded-lg border border-input/50"
     >
-      <div className="mr-3 h-5 w-5 rounded bg-input/40 dark:bg-input/80 animate-pulse" />
-      <div className="flex-1 h-4 bg-input/40 dark:bg-input/80 rounded animate-pulse" />
-      <div className="ml-2 w-5 h-5 rounded bg-input/40 dark:bg-input/80 animate-pulse" />
-    </motion.div>
+      <SkeletonLoader variant="circle" className="mr-3 h-5 w-5" />
+      <div className="flex-1">
+        <SkeletonLoader
+          variant="text"
+          lines={1}
+          className="h-4 rounded w-full"
+        />
+      </div>
+      <SkeletonLoader variant="circle" className="ml-2 h-5 w-5" />
+    </div>
   );
 
   return (
     <>
-      <SubContainer className="h-full flex flex-col relative overflow-hidden">
+      <SubContainer className="h-[50vh] sm:h-full flex flex-col relative overflow-hidden">
         {/* Progress bar at the top */}
         <div className="absolute top-0 left-0 right-0 h-3 bg-input/60 dark:bg-slate-950 overflow-hidden rounded-t-xl">
           <motion.div
@@ -223,43 +296,87 @@ export default function TasksCard({
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pt-2">
           <h2 className="text-xl font-bold text-title">Tarefas</h2>
-          <div className="text-sm text-paragraph/40">
-            {localTasks.length} tarefa(s) • {completionPercentage}% concluído
+          <div className="flex items-center gap-2">
+            {/* Google Calendar Sync Button */}
+            {onSyncWithGoogleCalendar && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onSyncWithGoogleCalendar}
+                disabled={isSyncingWithGoogleCalendar}
+                className="flex items-center gap-1 px-3 py-1 bg-primary text-primary-text rounded-lg text-sm font-medium disabled:opacity-50"
+              >
+                <Refresh
+                  weight="BoldDuotone"
+                  className={`w-4 h-4 ${isSyncingWithGoogleCalendar ? "animate-spin" : ""}`}
+                />
+                {isSyncingWithGoogleCalendar
+                  ? "Sincronizando..."
+                  : "Sincronizar"}
+              </motion.button>
+            )}
+            <div className="text-sm text-paragraph/40">
+              {localTasks.length} tarefa(s) • {completionPercentage}% concluído
+            </div>
           </div>
         </div>
 
-        <div className="flex mb-4 gap-2 items-center">
-          <div className="relative flex-1">
-            <Input
-              type="text"
-              placeholder="Adicionar nova tarefa..."
-              value={newTask}
-              onChange={(e) => setNewTask(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && handleAddTask()}
-              className="pr-12" // Add padding to the right to make space for the button
-            />
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer"
-            >
-              <AddSquare
-                onClick={handleAddTask}
-                weight="BoldDuotone"
-                className="w-6 h-6 text-success-light hover:text-success duration-300 ease-in-out transition-all"
+        {/* Update the task input section to include date picker for teachers */}
+        {onAddTask && typeof onAddTask === "function" && (
+          <div className="flex flex-col sm:flex-row gap-2 mb-4">
+            <div className="relative flex-1">
+              <Input
+                type="text"
+                placeholder="Adicionar nova tarefa..."
+                value={newTask}
+                onChange={(e) => setNewTask(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && handleAddTask()}
+                className="pr-12"
               />
-            </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer"
+              >
+                <AddSquare
+                  onClick={handleAddTask}
+                  weight="BoldDuotone"
+                  className="w-6 h-6 text-success-light hover:text-success duration-300 ease-in-out transition-all"
+                />
+              </motion.div>
+            </div>
+
+            {/* Date picker for teachers */}
+            {userRole === "teacher" && (
+              <div className="relative">
+                <DatePicker
+                  value={dueDate ? new Date(dueDate) : undefined}
+                  onChange={(date) => {
+                    // Format the date to YYYY-MM-DD without timezone conversion
+                    const formattedDate = formatDateForInput(date);
+                    setDueDate(formattedDate);
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Only show delete all button if onDeleteAllTasks is provided and is a function */}
+            {localTasks.length > 0 &&
+              onDeleteAllTasks &&
+              typeof onDeleteAllTasks === "function" && (
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <TrashBinMinimalistic
+                    onClick={handleDeleteAllTasks}
+                    weight="BoldDuotone"
+                    className="w-6 h-6 text-danger hover:text-danger-light duration-300 ease-in-out transition-all cursor-pointer"
+                  />
+                </motion.div>
+              )}
           </div>
-          {localTasks.length > 0 && (
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <TrashBinMinimalistic
-                onClick={handleDeleteAllTasks}
-                weight="BoldDuotone"
-                className="w-6 h-6 text-danger hover:text-danger-light duration-300 ease-in-out transition-all cursor-pointer"
-              />
-            </motion.div>
-          )}
-        </div>
+        )}
 
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           <div className="space-y-2">
@@ -275,7 +392,7 @@ export default function TasksCard({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.3 }}
-                  className="flex items-center p-3 bg-container rounded-lg border border-input/50"
+                  className="flex items-center p-3 card-base"
                 >
                   <Checkbox
                     checked={task.completed}
@@ -286,36 +403,42 @@ export default function TasksCard({
                     }
                     className="mr-3 h-5 w-5 text-primary rounded"
                   />
-                  <motion.span
-                    animate={{
-                      textDecoration: task.completed ? "line-through" : "none",
-                      opacity: task.completed ? 0.7 : 1,
-                    }}
-                    className="flex-1 text-paragraph"
-                  >
-                    {task.text}
-                  </motion.span>
-                  <motion.div
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => handleDeleteTask(task.id)}
-                    className="ml-2 cursor-pointer text-danger hover:text-danger-light"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
+                  <div className="flex-1">
+                    <motion.span
+                      animate={{
+                        textDecoration: task.completed
+                          ? "line-through"
+                          : "none",
+                        opacity: task.completed ? 0.7 : 1,
+                      }}
+                      className="text-paragraph"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      {task.text}
+                    </motion.span>
+                    {/* Display due date if available */}
+                    {task.dueDate && (
+                      <div className="text-xs text-paragraph/60 mt-1">
+                        Due:{" "}
+                        {task.dueDate instanceof Date
+                          ? task.dueDate.toLocaleDateString("pt-BR")
+                          : new Date(task.dueDate).toLocaleDateString("pt-BR")}
+                      </div>
+                    )}
+                  </div>
+                  {/* Only show delete button if onDeleteTask is provided and is a function */}
+                  {onDeleteTask && typeof onDeleteTask === "function" && (
+                    <motion.div
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => handleDeleteTask(task.id)}
+                      className="ml-2 cursor-pointer text-danger hover:text-danger-light"
+                    >
+                      <TrashBinMinimalistic
+                        weight="BoldDuotone"
+                        className="w-5 h-5"
                       />
-                    </svg>
-                  </motion.div>
+                    </motion.div>
+                  )}
                 </motion.div>
               ))}
             </AnimatePresence>
@@ -332,30 +455,32 @@ export default function TasksCard({
         </div>
       </SubContainer>
 
-      {/* Delete All Tasks Confirmation Modal */}
-      <Modal open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-        <ModalContent>
-          <ModalIcon type="delete" />
-          <ModalHeader>
-            <ModalTitle>Deletar todas as tarefas</ModalTitle>
-            <ModalDescription>
-              Tem certeza que deseja deletar todas as {localTasks.length}{" "}
-              tarefas? Esta ação não pode ser desfeita.
-            </ModalDescription>
-          </ModalHeader>
-          <ModalFooter>
-            <ModalSecondaryButton onClick={() => setIsDeleteModalOpen(false)}>
-              Cancelar
-            </ModalSecondaryButton>
-            <ModalPrimaryButton
-              onClick={confirmDeleteAllTasks}
-              className="bg-danger hover:bg-danger-light"
-            >
-              Deletar todas
-            </ModalPrimaryButton>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      {/* Only show delete all tasks modal if onDeleteAllTasks is provided and is a function */}
+      {onDeleteAllTasks && typeof onDeleteAllTasks === "function" && (
+        <Modal open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+          <ModalContent>
+            <ModalIcon type="delete" />
+            <ModalHeader>
+              <ModalTitle>Deletar todas as tarefas</ModalTitle>
+              <ModalDescription>
+                Tem certeza que deseja deletar todas as {localTasks.length}{" "}
+                tarefas? Esta ação não pode ser desfeita.
+              </ModalDescription>
+            </ModalHeader>
+            <ModalFooter>
+              <ModalSecondaryButton onClick={() => setIsDeleteModalOpen(false)}>
+                Cancelar
+              </ModalSecondaryButton>
+              <ModalPrimaryButton
+                onClick={confirmDeleteAllTasks}
+                className="bg-danger hover:bg-danger-light"
+              >
+                Deletar todas
+              </ModalPrimaryButton>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      )}
     </>
   );
 }

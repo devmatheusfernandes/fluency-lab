@@ -1,7 +1,6 @@
 "use client";
 import * as React from "react";
 import { twMerge } from "tailwind-merge";
-import { Siderbar } from "@solar-icons/react/ssr";
 import { ThemeToggle } from "@/components/features/ThemeToggle";
 import { HamburgerMenu } from "@solar-icons/react";
 

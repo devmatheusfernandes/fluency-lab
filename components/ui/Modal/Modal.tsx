@@ -5,9 +5,9 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { twMerge } from "tailwind-merge";
 import { VisuallyHidden } from "../VisuallyHidden";
 import { Input } from "../Input";
-import { CloseSquare } from "@solar-icons/react/ssr";
+import { CloseSquare, CloseCircle } from "@solar-icons/react/ssr";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, HTMLMotionProps } from "framer-motion";
 import { defaultIcons } from "./modalIcons";
 
 // Modal Root Component
@@ -21,14 +21,14 @@ const ModalPortal = Dialog.Portal;
 
 // Modal Overlay Component
 const ModalOverlay = React.forwardRef<
-  React.ComponentRef<typeof Dialog.Overlay>,
+  React.ElementRef<typeof Dialog.Overlay>,
   React.ComponentPropsWithoutRef<typeof Dialog.Overlay>
 >(({ className, ...props }, ref) => {
   return (
     <Dialog.Overlay
       ref={ref}
       className={twMerge(
-        "fixed inset-0 z-50 bg-black/60 backdrop-blur-md",
+        "fixed inset-0 z-50 bg-black/50 backdrop-blur-sm",
         className
       )}
       {...props}
@@ -37,11 +37,21 @@ const ModalOverlay = React.forwardRef<
 });
 ModalOverlay.displayName = "ModalOverlay";
 
-// Modal Content Component
+// Modal Content Component (Bottom Sheet Style)
 const ModalContent = React.forwardRef<
-  React.ComponentRef<typeof Dialog.Content>,
-  React.ComponentPropsWithoutRef<typeof Dialog.Content>
->(({ className, children, ...props }, ref) => {
+  React.ElementRef<typeof motion.div>,
+  React.ComponentPropsWithoutRef<typeof Dialog.Content> & {
+    showHandle?: boolean;
+  } & HTMLMotionProps<"div">
+>(({ className, children, showHandle = true, ...props }, ref) => {
+  // Prevent body scroll when modal is open
+  React.useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, []);
+
   return (
     <Dialog.Portal>
       <AnimatePresence>
@@ -50,29 +60,47 @@ const ModalContent = React.forwardRef<
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 bg-background/35 backdrop-blur-sm"
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-end justify-center"
           >
             <Dialog.Content
-              ref={ref}
               className={twMerge(
-                "rounded-2xl fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-background/40 bg-background dark:bg-background/50 p-8 shadow-xl",
+                `relative w-full max-w-lg mx-4 mb-4 sm:mb-6
+                bg-white/95 dark:bg-gray-900/95 
+                backdrop-blur-xl
+                rounded-2xl shadow-2xl
+                border border-gray-200/50 dark:border-gray-700/50
+                overflow-hidden`,
                 className
               )}
               asChild
               {...props}
             >
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
+                ref={ref}
+                initial={{ y: "100%", opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: "100%", opacity: 0 }}
+                transition={{
+                  type: "spring",
+                  damping: 25,
+                  stiffness: 300,
+                  duration: 0.3,
+                }}
               >
+                {/* Handle Bar */}
+                {showHandle && (
+                  <div className="flex justify-center pt-4 pb-2">
+                    <div className="w-12 h-1 bg-gray-300 dark:bg-gray-600 rounded-full" />
+                  </div>
+                )}
+
                 {/* Hidden title for accessibility - required by Radix UI Dialog */}
                 <VisuallyHidden>
                   <Dialog.Title>Modal</Dialog.Title>
                 </VisuallyHidden>
-                {children}
+
+                <div className="px-6 pb-6">{children}</div>
               </motion.div>
             </Dialog.Content>
           </motion.div>
@@ -85,20 +113,34 @@ ModalContent.displayName = "ModalContent";
 
 // Modal Header Component
 const ModalHeader = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => {
+  React.ElementRef<typeof motion.div>,
+  React.HTMLAttributes<HTMLDivElement> & {
+    showCloseButton?: boolean;
+  } & HTMLMotionProps<"div">
+>(({ className, showCloseButton = true, children, ...props }, ref) => {
   return (
     <motion.div
+      ref={ref}
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1, duration: 0.2 }}
+      className={twMerge(
+        "flex items-center justify-between pb-4",
+        !showCloseButton && "justify-center",
+        className
+      )}
+      {...props}
     >
       <div
-        ref={ref}
-        className={twMerge("flex flex-col space-y-2 text-center", className)}
-        {...props}
-      />
+        className={`flex flex-col space-y-2 ${showCloseButton ? "flex-1" : "text-center"}`}
+      >
+        {children}
+      </div>
+      {showCloseButton && (
+        <Dialog.Close className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150 text-gray-500 dark:text-gray-400 ml-4">
+          <CloseCircle size={20} />
+        </Dialog.Close>
+      )}
     </motion.div>
   );
 });
@@ -113,7 +155,7 @@ const ModalTitle = React.forwardRef<
     <Dialog.Title
       ref={ref}
       className={twMerge(
-        "text-xl font-bold leading-tight tracking-tight text-title",
+        "text-xl font-bold leading-tight tracking-tight text-gray-900 dark:text-gray-100",
         className
       )}
       {...props}
@@ -124,19 +166,23 @@ ModalTitle.displayName = "ModalTitle";
 
 // Modal Description Component
 const ModalDescription = React.forwardRef<
-  React.ComponentRef<typeof Dialog.Description>,
-  React.ComponentPropsWithoutRef<typeof Dialog.Description>
+  React.ElementRef<typeof motion.div>,
+  React.ComponentPropsWithoutRef<typeof Dialog.Description> &
+    HTMLMotionProps<"div">
 >(({ className, ...props }, ref) => {
   return (
     <motion.div
+      ref={ref}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ delay: 0.15, duration: 0.2 }}
+      {...props}
     >
       <Dialog.Description
-        ref={ref}
-        className={twMerge("text-sm text-subtitle leading-relaxed", className)}
-        {...props}
+        className={twMerge(
+          "text-sm text-gray-600 dark:text-gray-400 leading-relaxed",
+          className
+        )}
       />
     </motion.div>
   );
@@ -145,29 +191,20 @@ ModalDescription.displayName = "ModalDescription";
 
 // Modal Close Component
 const ModalClose = React.forwardRef<
-  React.ComponentRef<typeof Dialog.Close>,
-  React.ComponentPropsWithoutRef<typeof Dialog.Close>
+  React.ElementRef<typeof motion.div>,
+  React.ComponentPropsWithoutRef<typeof Dialog.Close> & HTMLMotionProps<"div">
 >(({ className, children, ...props }, ref) => {
   return (
-    <Dialog.Close
-      ref={ref}
-      className={twMerge(
-        "absolute right-4 top-4 opacity-70 transition-all",
-        className
-      )}
-      {...props}
-    >
+    <Dialog.Close {...props}>
       {children || (
         <>
           <motion.div
+            ref={ref}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.3, ease: "easeOut", delay: 1 }}
+            transition={{ duration: 0.3, ease: "easeOut", delay: 0.2 }}
           >
-            <CloseSquare
-              weight="BoldDuotone"
-              className="h-7 w-7 text-primary hover:text-secondary duration-300 ease-in-out transition-all"
-            />
+            <CloseCircle size={20} />
           </motion.div>
           <span className="sr-only">Close</span>
         </>
@@ -177,25 +214,22 @@ const ModalClose = React.forwardRef<
 });
 ModalClose.displayName = "ModalClose";
 
-// Modal Footer Component (novo componente para botões)
+// Modal Footer Component
 const ModalFooter = ({
   className,
   ...props
-}: React.HTMLAttributes<HTMLDivElement>) => {
+}: React.HTMLAttributes<HTMLDivElement> & HTMLMotionProps<"div">) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2, duration: 0.2 }}
-    >
-      <div
-        className={twMerge(
-          "flex flex-col sm:flex-row gap-2 pt-2 px-4",
-          className
-        )}
-        {...props}
-      />
-    </motion.div>
+      className={twMerge(
+        "flex gap-3 pt-4 border-t border-gray-200/50 dark:border-gray-700/50",
+        className
+      )}
+      {...props}
+    />
   );
 };
 ModalFooter.displayName = "ModalFooter";
@@ -230,20 +264,23 @@ const ModalIcon = ({
     | "calendar"
     | "lock"
     | "unlock"
-    | "home";
+    | "home"
+    | "document";
   src?: string;
   alt?: string;
   children?: React.ReactNode;
-} & React.HTMLAttributes<HTMLDivElement>) => {
+} & React.HTMLAttributes<HTMLDivElement> &
+  HTMLMotionProps<"div">) => {
   const iconContent =
     children ||
     (src ? (
       <Image
         src={src}
         alt={alt}
+        width={48}
+        height={48}
         className="w-12 h-12 object-cover rounded-full"
         onError={(e) => {
-          // Fallback para ícone padrão se a imagem não carregar
           const target = e.target as HTMLImageElement;
           target.style.display = "none";
           const fallbackIcon = target.nextElementSibling as HTMLElement;
@@ -257,8 +294,11 @@ const ModalIcon = ({
     ));
 
   return (
-    <div
-      className={twMerge("flex justify-center items-center mb-3", className)}
+    <motion.div
+      initial={{ scale: 0.8, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ delay: 0.1, duration: 0.3, type: "spring" }}
+      className={twMerge("flex justify-center items-center mb-4", className)}
       {...props}
     >
       {src ? (
@@ -266,6 +306,8 @@ const ModalIcon = ({
           <Image
             src={src}
             alt={alt}
+            width={48}
+            height={48}
             className="w-12 h-12 object-cover rounded-full"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
@@ -278,163 +320,179 @@ const ModalIcon = ({
               }
             }}
           />
-          <div className="fallback-icon hidden justify-center items-center w-12 h-12 bg-background rounded-full">
+          <div className="fallback-icon hidden justify-center items-center w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-full">
             {defaultIcons[type]}
           </div>
         </div>
       ) : (
-        <div className="flex justify-center items-center w-12 h-12 bg-background rounded-full">
+        <div className="flex justify-center items-center w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-full">
           {iconContent}
         </div>
       )}
-    </div>
+    </motion.div>
   );
 };
 ModalIcon.displayName = "ModalIcon";
 
-// Modal Body Component (para conteúdo entre header e footer)
+// Modal Body Component
 const ModalBody = ({
   className,
   ...props
-}: React.HTMLAttributes<HTMLDivElement>) => {
+}: React.HTMLAttributes<HTMLDivElement> & HTMLMotionProps<"div">) => {
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ delay: 0.1, duration: 0.2 }}
-    >
-      <div className={twMerge("space-y-4", className)} {...props} />
-    </motion.div>
+      className={twMerge("space-y-4 py-2", className)}
+      {...props}
+    />
   );
 };
 ModalBody.displayName = "ModalBody";
 
 // Modal Form Component
 const ModalForm = React.forwardRef<
-  HTMLFormElement,
-  React.FormHTMLAttributes<HTMLFormElement>
+  React.ElementRef<typeof motion.form>,
+  React.FormHTMLAttributes<HTMLFormElement> & HTMLMotionProps<"form">
 >(({ className, ...props }, ref) => {
   return (
     <motion.form
+      ref={ref}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ delay: 0.15, duration: 0.2 }}
-    >
-      <form ref={ref} className={twMerge("space-y-4", className)} {...props} />
-    </motion.form>
+      className={twMerge("space-y-4", className)}
+      {...props}
+    />
   );
 });
 ModalForm.displayName = "ModalForm";
 
-// Modal Field Component (label + input wrapper)
+// Modal Field Component
 const ModalField = ({
   label,
   required,
   error,
   children,
+  className,
   ...props
 }: {
   label?: string;
   required?: boolean;
   error?: string;
   children: React.ReactNode;
-} & React.HTMLAttributes<HTMLDivElement>) => {
+  className?: string;
+} & React.HTMLAttributes<HTMLDivElement> &
+  HTMLMotionProps<"div">) => {
   return (
     <motion.div
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.1, duration: 0.2 }}
+      className={twMerge("space-y-2", className)}
+      {...props}
     >
-      <div className="space-y-1" {...props}>
-        {label && (
-          <label className="block text-sm font-medium text-paragraph">
-            {label}
-            {required && <span className="text-red-500 ml-1">*</span>}
-          </label>
-        )}
-        {children}
-        {error && <p className="text-xs text-red-600">{error}</p>}
-      </div>
+      {label && (
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
+        </label>
+      )}
+      {children}
+      {error && (
+        <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
+      )}
     </motion.div>
   );
 };
 ModalField.displayName = "ModalField";
 
-// Modal Input Component (wrapper para o Input do UI)
+// Modal Input Component
 const ModalInput = React.forwardRef<
-  React.ComponentRef<typeof Input>,
+  React.ElementRef<typeof motion.div>,
   React.ComponentPropsWithoutRef<typeof Input> & {
     error?: boolean;
-  }
->(({ ...props }, ref) => {
+  } & HTMLMotionProps<"div">
+>(({ className, ...props }, ref) => {
   return (
     <motion.div
+      ref={ref}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2, duration: 0.2 }}
+      {...props}
     >
-      <Input ref={ref} className="!py-4" {...props} />
+      <Input
+        className={twMerge(
+          "h-12 px-4 text-base bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl",
+          className
+        )}
+      />
     </motion.div>
   );
 });
-
 ModalInput.displayName = "ModalInput";
 
 // Primary Button Component
 const ModalPrimaryButton = React.forwardRef<
-  HTMLButtonElement,
+  React.ElementRef<typeof motion.button>,
   React.ButtonHTMLAttributes<HTMLButtonElement> & {
     variant?: "default" | "destructive" | "secondary";
-  }
+  } & HTMLMotionProps<"button">
 >(({ className, variant = "default", ...props }, ref) => {
+  const variantStyles = {
+    default:
+      "bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700",
+    destructive:
+      "bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700",
+    secondary:
+      "bg-orange-600 hover:bg-orange-700 dark:bg-orange-600 dark:hover:bg-orange-700",
+  };
+
   return (
-    <motion.div
-      whileHover={{ scale: 1.03 }}
+    <motion.button
+      ref={ref}
+      whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       transition={{ type: "spring", stiffness: 400, damping: 17 }}
-      className="w-full"
-    >
-      <button
-        ref={ref}
-        className={twMerge(
-          `w-full rounded-3xl flex flex-row justify-center items-center gap-2 cursor-pointer ${
-            variant === "destructive"
-              ? "bg-danger hover:bg-danger-light"
-              : variant === "secondary"
-                ? "bg-warning hover:bg-warning-light"
-                : "bg-success hover:bg-success-light"
-          } px-6 py-4 text-md font-bold text-white shadow-md transition-all focus:outline-none disabled:pointer-events-none disabled:opacity-50`,
-          className
-        )}
-        {...props}
-      />
-    </motion.div>
+      className={twMerge(
+        `flex-1 px-6 py-3 text-base font-semibold text-white rounded-xl 
+        transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2
+        disabled:opacity-50 disabled:cursor-not-allowed shadow-lg
+        ${variantStyles[variant]}`,
+        className
+      )}
+      {...props}
+    />
   );
 });
-
 ModalPrimaryButton.displayName = "ModalPrimaryButton";
 
 // Secondary Button Component
 const ModalSecondaryButton = React.forwardRef<
-  HTMLButtonElement,
-  React.ButtonHTMLAttributes<HTMLButtonElement>
+  React.ElementRef<typeof motion.button>,
+  React.ButtonHTMLAttributes<HTMLButtonElement> & HTMLMotionProps<"button">
 >(({ className, ...props }, ref) => {
   return (
-    <motion.div
-      whileHover={{ scale: 1.03 }}
+    <motion.button
+      ref={ref}
+      whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       transition={{ type: "spring", stiffness: 400, damping: 17 }}
-      className="w-full"
-    >
-      <button
-        ref={ref}
-        className={twMerge(
-          "cursor-pointer w-full rounded-3xl bg-secondary px-6 py-4 text-sm font-bold text-white transition-all hover:bg-secondary-hover focus:outline-none disabled:pointer-events-none disabled:opacity-50",
-          className
-        )}
-        {...props}
-      />
-    </motion.div>
+      className={twMerge(
+        `flex-1 px-6 py-3 text-base font-semibold 
+        text-gray-700 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-200
+        bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700
+        rounded-xl transition-all duration-150
+        border border-gray-200/50 dark:border-gray-600/50 
+        hover:border-gray-300/70 dark:hover:border-gray-500/70
+        focus:outline-none focus:ring-2 focus:ring-gray-500/50 focus:ring-offset-2
+        disabled:opacity-50 disabled:cursor-not-allowed`,
+        className
+      )}
+      {...props}
+    />
   );
 });
 ModalSecondaryButton.displayName = "ModalSecondaryButton";

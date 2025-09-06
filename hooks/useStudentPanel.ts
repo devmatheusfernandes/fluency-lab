@@ -3,8 +3,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { User } from '@/types/users/users';
-import { StudentClass } from '@/types/classes/class';
-import { ClassStatus } from '@/types/classes/class';
+import { StudentClass, ClassStatus } from '@/types/classes/class';
 
 // Define local types for notebook and task since we don't have them in the global types yet
 interface Notebook {
@@ -22,9 +21,27 @@ interface Task {
   id: string;
   text: string;
   completed: boolean;
-  createdAt: Date;
-  updatedAt?: Date;
+  createdAt: Date | string;
+  updatedAt?: Date | string;
 }
+
+// Helper function to convert string dates to Date objects
+const parseTaskDates = (task: any): Task => {
+  return {
+    ...task,
+    createdAt: typeof task.createdAt === 'string' ? new Date(task.createdAt) : task.createdAt,
+    updatedAt: task.updatedAt ? (typeof task.updatedAt === 'string' ? new Date(task.updatedAt) : task.updatedAt) : undefined,
+    dueDate: task.dueDate ? (typeof task.dueDate === 'string' ? new Date(task.dueDate) : task.dueDate) : undefined, // Add dueDate
+  };
+};
+
+// Helper function to convert string dates to Date objects for classes
+const parseClassDates = (cls: any): StudentClass => {
+  return {
+    ...cls,
+    scheduledAt: typeof cls.scheduledAt === 'string' ? new Date(cls.scheduledAt) : cls.scheduledAt,
+  };
+};
 
 export const useStudentPanel = (studentId: string) => {
   const [student, setStudent] = useState<Partial<User> | null>(null);
@@ -38,26 +55,29 @@ export const useStudentPanel = (studentId: string) => {
     if (!studentId) return;
     
     try {
+      // First, try to get student info from teacher endpoint
+      const teacherResponse = await fetch(`/api/teacher/students/${studentId}/notebooks`);
+      if (teacherResponse.ok) {
+        const notebooksData = await teacherResponse.json();
+        if (notebooksData.length > 0 && notebooksData[0].studentName) {
+          setStudent({
+            id: studentId,
+            name: notebooksData[0].studentName,
+            email: "Email não disponível",
+          });
+        } else {
+          setStudent({
+            id: studentId,
+            name: "Aluno",
+            email: "Email não disponível",
+          });
+        }
+        return;
+      }
+      
+      // If teacher endpoint fails, try admin endpoint (for admin users)
       const response = await fetch(`/api/admin/users/${studentId}/details`);
       if (!response.ok) {
-        // If admin endpoint fails, try to get basic info from notebooks endpoint
-        const notebooksResponse = await fetch(`/api/teacher/students/${studentId}/notebooks`);
-        if (notebooksResponse.ok) {
-          const notebooksData = await notebooksResponse.json();
-          if (notebooksData.length > 0 && notebooksData[0].studentName) {
-            setStudent({
-              id: studentId,
-              name: notebooksData[0].studentName,
-              email: "Email não disponível",
-            });
-          } else {
-            setStudent({
-              id: studentId,
-              name: "Aluno",
-              email: "Email não disponível",
-            });
-          }
-        }
         return;
       }
       
@@ -78,6 +98,22 @@ export const useStudentPanel = (studentId: string) => {
     if (!studentId) return;
     
     try {
+      // For students, use their own endpoint
+      if (typeof window !== 'undefined') {
+        const sessionResponse = await fetch('/api/auth/session');
+        const session = await sessionResponse.json();
+        
+        if (session?.user?.id === studentId && session?.user?.role === 'student') {
+          // Student accessing their own data
+          const response = await fetch(`/api/student/notebooks`);
+          if (!response.ok) throw new Error('Failed to fetch notebooks');
+          const data = await response.json();
+          setNotebooks(data);
+          return;
+        }
+      }
+      
+      // For teachers/admins accessing student data
       const response = await fetch(`/api/teacher/students/${studentId}/notebooks`);
       if (!response.ok) throw new Error('Failed to fetch notebooks');
       
@@ -92,11 +128,29 @@ export const useStudentPanel = (studentId: string) => {
     if (!studentId) return;
     
     try {
+      // For students, use their own endpoint
+      if (typeof window !== 'undefined') {
+        const sessionResponse = await fetch('/api/auth/session');
+        const session = await sessionResponse.json();
+        
+        if (session?.user?.id === studentId && session?.user?.role === 'student') {
+          // Student accessing their own data
+          const response = await fetch(`/api/student/tasks`);
+          if (!response.ok) throw new Error('Failed to fetch tasks');
+          
+          const data = await response.json();
+          console.log('Student tasks fetched:', data); // Debug log
+          setTasks(data.map(parseTaskDates));
+          return;
+        }
+      }
+      
+      // For teachers/admins accessing student data
       const response = await fetch(`/api/teacher/students/${studentId}/tasks`);
       if (!response.ok) throw new Error('Failed to fetch tasks');
       
       const data = await response.json();
-      setTasks(data);
+      setTasks(data.map(parseTaskDates));
     } catch (err: any) {
       setError(err.message);
     }
@@ -106,24 +160,34 @@ export const useStudentPanel = (studentId: string) => {
     if (!studentId) return;
     
     try {
+      // For students, use their own endpoint
+      if (typeof window !== 'undefined') {
+        const sessionResponse = await fetch('/api/auth/session');
+        const session = await sessionResponse.json();
+        
+        if (session?.user?.id === studentId && session?.user?.role === 'student') {
+          // Student accessing their own data
+          const response = await fetch(`/api/student/classes/list`);
+          if (!response.ok) throw new Error('Failed to fetch classes');
+          
+          const data = await response.json();
+          setClasses(data.map(parseClassDates));
+          return;
+        }
+      }
+      
+      // For teachers/admins accessing student data
       const response = await fetch(`/api/teacher/students/${studentId}/classes`);
       if (!response.ok) throw new Error('Failed to fetch classes');
       
       const data = await response.json();
-      
-      // Filter classes by month and year
-      const filteredClasses = data.filter((cls: any) => {
-        const classDate = new Date(cls.scheduledAt);
-        return classDate.getMonth() === month && classDate.getFullYear() === year;
-      });
-      
-      setClasses(filteredClasses);
+      setClasses(data.map(parseClassDates));
     } catch (err: any) {
       setError(err.message);
     }
   }, [studentId]);
 
-  const addTask = useCallback(async (taskText: string) => {
+  const addTask = useCallback(async (taskText: string, dueDate?: Date) => {
     if (!studentId || !taskText.trim()) return false;
     
     try {
@@ -135,19 +199,10 @@ export const useStudentPanel = (studentId: string) => {
         body: JSON.stringify({
           text: taskText,
           completed: false,
+          dueDate: dueDate ? dueDate.toISOString() : null, // Add dueDate
           createdAt: new Date(),
           isDeleted: false,
           updatedAt: null,
-          // student: studentId,
-          // studentName: student?.name,
-          // createdBy: studentId,
-          // updatedBy: studentId,
-          // isArchived: false,
-          // isPinned: false,
-          // isPrivate: false,
-          // isImportant: false,
-          // isUrgent: false,
-          // isCritical: false,
         }),
       });
 
@@ -195,6 +250,43 @@ export const useStudentPanel = (studentId: string) => {
 
   const updateClassStatus = useCallback(async (classId: string, newStatus: ClassStatus) => {
     try {
+      // For students, use their own endpoint for canceling classes
+      if (typeof window !== 'undefined') {
+        const sessionResponse = await fetch('/api/auth/session');
+        const session = await sessionResponse.json();
+        
+        if (session?.user?.id && session?.user?.role === 'student') {
+          // Student canceling their own class
+          if (newStatus === ClassStatus.CANCELED_STUDENT) {
+            const response = await fetch(`/api/student/classes/cancel`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ classId }),
+            });
+
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.error || 'Failed to cancel class');
+            }
+
+            // Update the class status in the local state
+            setClasses(prev => 
+              prev.map(cls => 
+                cls.id === classId ? { ...cls, status: newStatus } : cls
+              )
+            );
+            
+            return true;
+          } else {
+            // Students can only cancel classes, not change to other statuses
+            throw new Error('Students can only cancel their own classes');
+          }
+        }
+      }
+      
+      // For teachers/admins, use the general endpoint
       const response = await fetch(`/api/classes/${classId}`, {
         method: 'PATCH',
         headers: {
@@ -222,10 +314,70 @@ export const useStudentPanel = (studentId: string) => {
     }
   }, []);
 
+  const updateClassFeedback = useCallback(async (classId: string, feedback: string) => {
+    try {
+      const response = await fetch(`/api/classes/${classId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ feedback }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update class feedback');
+      }
+
+      // Update the class feedback in the local state
+      setClasses(prev => 
+        prev.map(cls => 
+          cls.id === classId ? { ...cls, feedback } : cls
+        )
+      );
+      
+      return true;
+    } catch (err: any) {
+      setError(err.message);
+      return false;
+    }
+  }, []);
+
   const updateTask = useCallback(async (taskId: string, updates: Partial<Task>) => {
     if (!studentId) return false;
     
     try {
+      // For students, use their own endpoint
+      if (typeof window !== 'undefined') {
+        const sessionResponse = await fetch('/api/auth/session');
+        const session = await sessionResponse.json();
+        
+        if (session?.user?.id === studentId && session?.user?.role === 'student') {
+          // Student updating their own task
+          const response = await fetch(`/api/student/tasks/${taskId}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updates),
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to update task');
+          }
+
+          // Update the task in the local state
+          setTasks(prev => 
+            prev.map(task => 
+              task.id === taskId ? { ...task, ...updates } : task
+            )
+          );
+          
+          return true;
+        }
+      }
+      
+      // For teachers/admins accessing student data
       const response = await fetch(`/api/teacher/students/${studentId}/tasks/${taskId}`, {
         method: 'PUT',
         headers: {
@@ -344,6 +496,7 @@ export const useStudentPanel = (studentId: string) => {
     addTask,
     createNotebook,
     updateClassStatus,
+    updateClassFeedback,
     updateTask,
     deleteTask,
     deleteAllTasks,
@@ -354,3 +507,31 @@ export const useStudentPanel = (studentId: string) => {
     setClasses,
   };
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -12,7 +12,6 @@ import {
   SubscriptionOverview
 } from '@/types/financial/subscription';
 import { UserRoles } from '@/types/users/userRoles';
-import { FieldValue } from 'firebase-admin/firestore';
 
 export class SubscriptionService {
   private payment: Payment;

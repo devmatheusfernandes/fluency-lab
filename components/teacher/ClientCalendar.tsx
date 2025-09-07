@@ -5,6 +5,7 @@ import { Calendar } from "@/components/ui/Calendar";
 import { useState } from "react";
 import ClassDetailsModal from "@/components/teacher/ClassDetailsModal";
 import AvailabilitySlotModal from "@/components/teacher/AvailabilitySlotModal";
+import AvailabilitySlotDetailsModal from "@/components/teacher/AvailabilitySlotDetailsModal";
 import { PopulatedStudentClass } from "@/types/classes/class";
 import { CalendarEvent } from "@/types/calendar/calendar";
 import { Button } from "@/components/ui/Button";
@@ -23,8 +24,12 @@ export default function ClientCalendar({
 }: ClientCalendarProps) {
   const [selectedClass, setSelectedClass] =
     useState<PopulatedStudentClass | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
+    null
+  );
   const [isClassModalOpen, setIsClassModalOpen] = useState(false);
   const [isSlotModalOpen, setIsSlotModalOpen] = useState(false);
+  const [isSlotDetailsModalOpen, setIsSlotDetailsModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   const handleEventClick = (event: CalendarEvent) => {
@@ -39,6 +44,10 @@ export default function ClientCalendar({
         setSelectedClass(fullClassData);
         setIsClassModalOpen(true);
       }
+    } else {
+      // This is an availability slot event
+      setSelectedEvent(event);
+      setIsSlotDetailsModalOpen(true);
     }
   };
 
@@ -72,6 +81,11 @@ export default function ClientCalendar({
         isOpen={isClassModalOpen}
         onClose={() => setIsClassModalOpen(false)}
         classData={selectedClass}
+      />
+      <AvailabilitySlotDetailsModal
+        isOpen={isSlotDetailsModalOpen}
+        onClose={() => setIsSlotDetailsModalOpen(false)}
+        event={selectedEvent}
       />
       <AvailabilitySlotModal
         isOpen={isSlotModalOpen}

@@ -90,12 +90,12 @@ export const useTeacher = () => {
     }
   };
 
-  const deleteAvailability = async (slotId: string, deleteType: 'single' | 'future', occurrenceDate: Date) => {
+    const deleteAvailability = async (slotId: string, deleteType: 'single' | 'future', occurrenceDate: Date) => {
     setIsLoading(true);
     setError(null);
     setSuccessMessage(null);
     try {
-      const response = await fetch(`/api/teacher/availability/delete`, {
+      const response = await fetch(`/api/teacher/availability/${slotId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ slotId, deleteType, occurrenceDate: occurrenceDate.toISOString() }),

@@ -12,8 +12,8 @@ export interface CalendarEvent {
   isAllDay?: boolean;
   person?: string; // Person responsible for the event
   repeating?: {
-    type: "daily" | "weekly" | "monthly" | "yearly";
-    interval: number; // Every X days/weeks/months/years
+    type: "weekly" | "bi-weekly" | "monthly";
+    interval: number; // Every X weeks/bi-weeks/months
     endDate?: Date; // When the repetition ends
   };
   location?: string; // Event location

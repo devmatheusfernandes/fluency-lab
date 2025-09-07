@@ -90,7 +90,14 @@ export const mapTeacherEventsToCalendar = (
               date: new Date(currentDate),
               startTime: slot.startTime,
               endTime: slot.endTime,
-              color: "success"
+              color: "success",
+              // Include the repeating information for the modal
+              repeating: {
+                type: slot.repeating.type,
+                interval: slot.repeating.interval,
+                endDate: slot.repeating.endDate
+              },
+              slotId: slot.id
             });
           }
         }
@@ -145,7 +152,9 @@ export const mapTeacherEventsToCalendar = (
               date: slotDate,
               startTime: slot.startTime,
               endTime: slot.endTime,
-              color: "success"
+              color: "success",
+              // Include slotId for deletion
+              slotId: slot.id
             });
           }
         }

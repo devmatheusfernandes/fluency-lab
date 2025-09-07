@@ -7,6 +7,7 @@ import {
   mapTeacherClassesToCalendar,
 } from "@/lib/calendar/calendarUtils";
 import { serializeForClientComponent } from "@/lib/utils";
+import { useTeacher } from "@/hooks/useTeacher";
 
 // Utility function to convert ISO strings back to Date objects
 function convertStringToDate(obj: any): any {
@@ -56,6 +57,7 @@ export default function TeacherSettingsClient({
   const [classes, setClasses] = useState(initialClasses);
   const [scheduleData, setScheduleData] = useState(initialScheduleData);
   const [isLoading, setIsLoading] = useState(false);
+  const { deleteAvailability, getScheduleData } = useTeacher();
 
   const handleRefresh = useCallback(async () => {
     setIsLoading(true);
@@ -109,6 +111,7 @@ export default function TeacherSettingsClient({
       events={events}
       allClasses={classes}
       onRefresh={handleRefresh}
+      onDeleteAvailability={deleteAvailability}
     />
   );
 }

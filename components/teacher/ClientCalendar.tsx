@@ -15,12 +15,18 @@ interface ClientCalendarProps {
   events: CalendarEvent[];
   allClasses: PopulatedStudentClass[];
   onRefresh?: () => void; // Add refresh callback
+  onDeleteAvailability?: (
+    slotId: string,
+    deleteType: "single" | "future",
+    occurrenceDate: Date
+  ) => Promise<void>;
 }
 
 export default function ClientCalendar({
   events,
   allClasses,
   onRefresh,
+  onDeleteAvailability,
 }: ClientCalendarProps) {
   const [selectedClass, setSelectedClass] =
     useState<PopulatedStudentClass | null>(null);
@@ -86,6 +92,7 @@ export default function ClientCalendar({
         isOpen={isSlotDetailsModalOpen}
         onClose={() => setIsSlotDetailsModalOpen(false)}
         event={selectedEvent}
+        onDelete={onDeleteAvailability}
       />
       <AvailabilitySlotModal
         isOpen={isSlotModalOpen}

@@ -17,30 +17,43 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarEvent } from "@/types/calendar/calendar";
 import { AvailabilityType } from "@/types/time/availability";
+import { useState } from "react";
 
 interface AvailabilitySlotDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   event: CalendarEvent | null;
+  onDelete?: (
+    slotId: string,
+    deleteType: "single" | "future",
+    occurrenceDate: Date
+  ) => Promise<void>;
 }
 
 export default function AvailabilitySlotDetailsModal({
   isOpen,
   onClose,
   event,
+  onDelete,
 }: AvailabilitySlotDetailsModalProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteOptions, setShowDeleteOptions] = useState(false);
+  const [deleteType, setDeleteType] = useState<"single" | "future">("single");
+
   if (!event) return null;
 
-  const getAvailabilityTypeText = (type: string) => {
-    switch (type) {
-      case AvailabilityType.REGULAR:
-        return "Regular";
-      case AvailabilityType.OCCASIONAL:
-        return "Ocasional";
-      case AvailabilityType.MAKEUP:
-        return "Reposição";
-      default:
-        return type;
+  const handleDelete = async () => {
+    if (!event?.slotId || !onDelete) return;
+    console.log("delete");
+    setIsDeleting(true);
+    try {
+      await onDelete(event.slotId, deleteType, new Date(event.date));
+      onClose();
+    } catch (error) {
+      console.error("Error deleting availability:", error);
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteOptions(false);
     }
   };
 
@@ -98,18 +111,14 @@ export default function AvailabilitySlotDetailsModal({
 
                 <div>
                   <Text className="text-subtitle font-medium">Tipo</Text>
-                  <Text>
-                    {event.slotId
-                      ? getAvailabilityTypeText(event.slotId)
-                      : "Não especificado"}
-                  </Text>
+                  <Text>{event.repeating ? "Repetindo" : "Único"}</Text>
                 </div>
 
                 {event.repeating && (
                   <>
                     <div>
                       <Text className="text-subtitle font-medium">
-                        Repetição
+                        Frequência
                       </Text>
                       <Text>
                         {getRepeatingTypeText(event.repeating.type)} a cada{" "}
@@ -132,9 +141,93 @@ export default function AvailabilitySlotDetailsModal({
                 )}
               </div>
             </Card>
+
+            {/* Delete Confirmation Section */}
+            {showDeleteOptions && (
+              <Card className="p-4 border border-red-200 bg-red-50">
+                <Text variant="title" className="mb-3 text-red-800">
+                  Confirmar Exclusão
+                </Text>
+
+                {event?.repeating ? (
+                  <div className="space-y-4">
+                    <Text className="text-red-700">
+                      Este horário se repete. Como deseja excluir?
+                    </Text>
+                    <div className="space-y-2">
+                      <label className="flex items-center p-2 border rounded cursor-pointer hover:bg-red-100">
+                        <input
+                          type="radio"
+                          name="deleteType"
+                          checked={deleteType === "single"}
+                          onChange={() => setDeleteType("single")}
+                          className="mr-2"
+                        />
+                        <div>
+                          <Text className="font-medium">
+                            Excluir apenas esta ocorrência
+                          </Text>
+                          <Text size="sm" className="text-gray-600">
+                            Remove apenas o evento selecionado em{" "}
+                            {format(new Date(event.date), "PPP", {
+                              locale: ptBR,
+                            })}
+                          </Text>
+                        </div>
+                      </label>
+                      <label className="flex items-center p-2 border rounded cursor-pointer hover:bg-red-100">
+                        <input
+                          type="radio"
+                          name="deleteType"
+                          checked={deleteType === "future"}
+                          onChange={() => setDeleteType("future")}
+                          className="mr-2"
+                        />
+                        <div>
+                          <Text className="font-medium">
+                            Excluir esta e todas as ocorrências futuras
+                          </Text>
+                          <Text size="sm" className="text-gray-600">
+                            Remove este evento e todos os eventos futuros desta
+                            série
+                          </Text>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                ) : (
+                  <Text className="text-red-700">
+                    Tem certeza que deseja excluir este horário? Esta ação não
+                    pode ser desfeita.
+                  </Text>
+                )}
+
+                <div className="flex justify-end space-x-2 mt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowDeleteOptions(false)}
+                    disabled={isDeleting}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    variant="danger"
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? "Excluindo..." : "Excluir"}
+                  </Button>
+                </div>
+              </Card>
+            )}
           </div>
         </ModalBody>
-        <ModalFooter>
+        <ModalFooter className="flex justify-between">
+          {onDelete && (
+            <Button variant="danger" onClick={() => setShowDeleteOptions(true)}>
+              Excluir
+            </Button>
+          )}
           <Button onClick={onClose}>Fechar</Button>
         </ModalFooter>
       </ModalContent>

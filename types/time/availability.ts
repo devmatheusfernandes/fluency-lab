@@ -9,6 +9,7 @@ export type AvailabilityColor = "primary" | "success" | "info";
 
 export type RepeatingType = "weekly" | "bi-weekly" | "monthly";
 
+
 export interface AvailabilityException {
   id: string;
   originalSlotId: string;

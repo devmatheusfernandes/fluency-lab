@@ -90,7 +90,7 @@ const ModalContent = React.forwardRef<
               >
                 {/* Handle Bar */}
                 {showHandle && (
-                  <div className="flex justify-center pt-4 pb-2">
+                  <div className="flex justify-center pt-4 pb-6">
                     <div className="w-12 h-1 bg-gray-300 dark:bg-gray-600 rounded-full" />
                   </div>
                 )}

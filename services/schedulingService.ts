@@ -1268,6 +1268,122 @@ export class SchedulingService {
     return { ...vacationData, createdAt: new Date() } as Vacation;
   }
 
+
+   /**
+   * Cancela um período de férias de um professor, restaurando o status das aulas afetadas
+   * e reembolsando os dias de férias ao saldo do professor.
+   */
+  async deleteTeacherVacation(vacationId: string, teacherId: string): Promise<void> {
+    // Buscar o período de férias
+    const vacation = await vacationRepository.findAllByTeacherId(teacherId);
+    const vacationData = vacation.find(v => v.id === vacationId);
+    
+    if (!vacationData) {
+      throw new Error("Período de férias não encontrado.");
+    }
+
+    // Verificar regras de cancelamento (40 dias de antecedência)
+    const now = new Date();
+    const earliestCancelDate = new Date(vacationData.startDate);
+    earliestCancelDate.setDate(earliestCancelDate.getDate() - 40);
+    
+    if (now > earliestCancelDate) {
+      throw new Error("Período de férias não pode ser cancelado com menos de 40 dias de antecedência.");
+    }
+
+    const teacher = await userRepository.findById(teacherId);
+    if (!teacher) {
+      throw new Error("Professor não encontrado.");
+    }
+
+    // Buscar aulas afetadas pelo período de férias
+    const affectedClasses = await classRepository.findClassesByTeacherInRange(
+      teacherId, 
+      vacationData.startDate, 
+      vacationData.endDate
+    );
+
+    // Calcular dias de férias a serem reembolsados
+    const oneDay = 1000 * 60 * 60 * 24;
+    const durationInDays = Math.round(
+      (vacationData.endDate.getTime() - vacationData.startDate.getTime()) / oneDay
+    ) + 1;
+
+    const currentRemainingDays = teacher.vacationDaysRemaining ?? 30;
+    const newRemainingDays = currentRemainingDays + durationInDays;
+
+    await adminDb.runTransaction(async (transaction) => {
+      // 1. Restaurar o status das aulas afetadas para SCHEDULED
+      await classRepository.updateClassesStatusInRange(
+        transaction, 
+        teacherId, 
+        vacationData.startDate, 
+        vacationData.endDate, 
+        ClassStatus.SCHEDULED
+      );
+      
+      // 2. Excluir o registro de férias
+      await vacationRepository.delete(vacationId);
+      
+      // 3. Atualizar o saldo de férias do professor
+      const teacherRef = adminDb.collection('users').doc(teacherId);
+      transaction.update(teacherRef, { vacationDaysRemaining: newRemainingDays });
+    });
+
+    // --- ENVIAR NOTIFICAÇÕES POR E-MAIL APÓS SUCESSO ---
+    const affectedStudentIds = [...new Set(affectedClasses.map(cls => cls.studentId))];
+    const affectedStudents = affectedStudentIds.length > 0 
+      ? await userAdminRepository.findUsersByIds(affectedStudentIds)
+      : [];
+
+    if (affectedStudents.length > 0) {
+      try {
+        const formatDate = (date: Date) => date.toLocaleDateString('pt-BR');
+        const formatTime = (date: Date) => date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        const platformLink = process.env.NEXT_PUBLIC_APP_URL || 'https://app.fluencylab.com';
+
+        // Agrupar aulas por estudante
+        const classesByStudent = new Map<string, StudentClass[]>();
+        affectedClasses.forEach(cls => {
+          const existing = classesByStudent.get(cls.studentId) || [];
+          existing.push(cls);
+          classesByStudent.set(cls.studentId, existing);
+        });
+
+        // Enviar e-mail para cada estudante afetado
+        for (const student of affectedStudents) {
+          const studentClasses = classesByStudent.get(student.id) || [];
+          const affectedClassesForEmail = studentClasses.map(cls => ({
+            date: formatDate(new Date(cls.scheduledAt)),
+            time: formatTime(new Date(cls.scheduledAt)),
+            language: cls.language
+          }));
+
+          // Enviar e-mail de cancelamento de férias
+          await emailService.sendTeacherVacationCancellationEmail({
+            email: student.email,
+            studentName: student.name,
+            teacherName: teacher.name,
+            vacationStartDate: formatDate(vacationData.startDate),
+            vacationEndDate: formatDate(vacationData.endDate),
+            affectedClasses: affectedClassesForEmail,
+            platformLink: `${platformLink}/hub/plataforma/student/my-class`
+          });
+
+          console.log(`E-mail de cancelamento de férias do professor enviado para estudante ${student.name} (${student.email})`);
+        }
+
+        console.log(`Total de ${affectedStudents.length} estudantes notificados sobre o cancelamento das férias do professor ${teacher.name}`);
+      } catch (emailError) {
+        console.error('Erro ao enviar e-mails de cancelamento de férias do professor:', emailError);
+        // Não falha a operação se o e-mail falhar, apenas loga o erro
+      }
+    }
+
+    console.log(`Período de férias cancelado com sucesso. ${durationInDays} dias reembolsados ao professor ${teacher.name}.`);
+  }
+
+  
   /**
    * Updates the teachersIds field for a student based on their class template
    * @param studentId The ID of the student

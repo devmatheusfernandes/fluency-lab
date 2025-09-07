@@ -5,6 +5,7 @@ import { WelcomeEmail } from '@/emails/templates/WelcomeEmail';
 import { ClassRescheduledEmail } from '@/emails/templates/ClassRescheduledEmail';
 import { ClassCanceledEmail } from '@/emails/templates/ClassCanceledEmail';
 import { TeacherVacationEmail } from '@/emails/templates/TeacherVacationEmail';
+import TeacherVacationCancellationEmail from '@/emails/templates/TeacherVacationCancellationEmail';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -176,4 +177,45 @@ export class EmailService {
       throw new Error("Falha ao enviar o e-mail de férias do professor.");
     }
   }
+
+  async sendTeacherVacationCancellationEmail({
+    email,
+    studentName,
+    teacherName,
+    vacationStartDate,
+    vacationEndDate,
+    affectedClasses,
+    platformLink
+  }: {
+    email: string;
+    studentName: string;
+    teacherName: string;
+    vacationStartDate: string;
+    vacationEndDate: string;
+    affectedClasses: AffectedClass[];
+    platformLink: string;
+  }) {
+    try {
+      await resend.emails.send({
+        from: 'Férias Canceladas <contato@matheusfernandes.me>',
+        to: [email],
+        subject: 'Férias do professor canceladas - Suas aulas foram reagendadas - Fluency Lab',
+        react: await TeacherVacationCancellationEmail({
+          studentName,
+          teacherName,
+          vacationStartDate,
+          vacationEndDate,
+          affectedClasses,
+          platformLink
+        }),
+      });
+
+      console.log(`E-mail de cancelamento de férias do professor enviado para ${email}`);
+    } catch (error) {
+      console.error("Falha ao enviar e-mail de cancelamento de férias do professor:", error);
+      throw new Error("Falha ao enviar o e-mail de cancelamento de férias do professor.");
+    }
+  }
 }
+
+

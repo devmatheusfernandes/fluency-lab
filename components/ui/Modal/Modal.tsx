@@ -21,7 +21,7 @@ const ModalPortal = Dialog.Portal;
 
 // Modal Overlay Component
 const ModalOverlay = React.forwardRef<
-  React.ElementRef<typeof Dialog.Overlay>,
+  React.ComponentRef<typeof Dialog.Overlay>,
   React.ComponentPropsWithoutRef<typeof Dialog.Overlay>
 >(({ className, ...props }, ref) => {
   return (
@@ -39,7 +39,7 @@ ModalOverlay.displayName = "ModalOverlay";
 
 // Modal Content Component (Bottom Sheet Style)
 const ModalContent = React.forwardRef<
-  React.ElementRef<typeof motion.div>,
+  React.ComponentRef<typeof motion.div>,
   React.ComponentPropsWithoutRef<typeof Dialog.Content> & {
     showHandle?: boolean;
   } & HTMLMotionProps<"div">
@@ -113,7 +113,7 @@ ModalContent.displayName = "ModalContent";
 
 // Modal Header Component
 const ModalHeader = React.forwardRef<
-  React.ElementRef<typeof motion.div>,
+  React.ComponentRef<typeof motion.div>,
   React.HTMLAttributes<HTMLDivElement> & {
     showCloseButton?: boolean;
   } & HTMLMotionProps<"div">
@@ -161,7 +161,7 @@ ModalTitle.displayName = "ModalTitle";
 
 // Modal Description Component
 const ModalDescription = React.forwardRef<
-  React.ElementRef<typeof motion.div>,
+  React.ComponentRef<typeof motion.div>,
   React.ComponentPropsWithoutRef<typeof Dialog.Description> &
     HTMLMotionProps<"div">
 >(({ className, ...props }, ref) => {
@@ -207,7 +207,6 @@ const ModalClose = React.forwardRef<
           >
             <CloseCircle size={24} />
           </motion.div>
-          <span className="sr-only">Close</span>
         </>
       )}
     </Dialog.Close>
@@ -355,7 +354,7 @@ ModalBody.displayName = "ModalBody";
 
 // Modal Form Component
 const ModalForm = React.forwardRef<
-  React.ElementRef<typeof motion.form>,
+  React.ComponentRef<typeof motion.form>,
   React.FormHTMLAttributes<HTMLFormElement> & HTMLMotionProps<"form">
 >(({ className, ...props }, ref) => {
   return (
@@ -412,7 +411,7 @@ ModalField.displayName = "ModalField";
 
 // Modal Input Component
 const ModalInput = React.forwardRef<
-  React.ElementRef<typeof motion.div>,
+  React.ComponentRef<typeof motion.div>,
   React.ComponentPropsWithoutRef<typeof Input> & {
     error?: boolean;
   } & HTMLMotionProps<"div">
@@ -438,7 +437,7 @@ ModalInput.displayName = "ModalInput";
 
 // Primary Button Component
 const ModalPrimaryButton = React.forwardRef<
-  React.ElementRef<typeof motion.button>,
+  React.ComponentRef<typeof motion.button>,
   React.ButtonHTMLAttributes<HTMLButtonElement> & {
     variant?: "default" | "destructive" | "secondary";
   } & HTMLMotionProps<"button">
@@ -473,7 +472,7 @@ ModalPrimaryButton.displayName = "ModalPrimaryButton";
 
 // Secondary Button Component
 const ModalSecondaryButton = React.forwardRef<
-  React.ElementRef<typeof motion.button>,
+  React.ComponentRef<typeof motion.button>,
   React.ButtonHTMLAttributes<HTMLButtonElement> & HTMLMotionProps<"button">
 >(({ className, ...props }, ref) => {
   return (

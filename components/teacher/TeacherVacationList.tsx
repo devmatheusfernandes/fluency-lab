@@ -24,9 +24,24 @@ export default function TeacherVacationList({
     )
       return;
 
-    // A lógica de exclusão seria implementada aqui, chamando uma API DELETE
-    // Por enquanto, vamos simular a ação.
-    toast.info("Funcionalidade de exclusão de férias a ser implementada.");
+    try {
+      const response = await fetch(`/api/vacations?id=${vacationId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Erro ao cancelar período de férias");
+      }
+
+      toast.success("Período de férias cancelado com sucesso!");
+      onDelete(); // Recarrega a lista
+    } catch (error: any) {
+      console.error("Erro ao cancelar período de férias:", error);
+      toast.error(`Falha ao cancelar período de férias: ${error.message}`);
+    }
   };
 
   if (vacations.length === 0) {

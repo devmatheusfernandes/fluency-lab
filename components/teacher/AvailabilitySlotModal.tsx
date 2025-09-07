@@ -128,12 +128,12 @@ export default function AvailabilitySlotModal({
   return (
     <Modal open={isOpen} onOpenChange={onClose}>
       <ModalContent>
+        <ModalClose />
         <ModalHeader>
           <ModalTitle>Adicionar Novo Horário</ModalTitle>
           <ModalDescription>
             Defina um novo horário disponível para agendamento de aulas.
           </ModalDescription>
-          <ModalClose />
         </ModalHeader>
         <form onSubmit={handleSubmit}>
           <ModalBody className="space-y-4">

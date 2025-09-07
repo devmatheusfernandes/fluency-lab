@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { schedulingService } from '@/services/schedulingService';
 import { vacationRepository } from '@/repositories/VacationRepository';
-import { authOptions } from '../auth/[...nextauth]/route';
+import { authOptions } from '../../auth/[...nextauth]/route';
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);

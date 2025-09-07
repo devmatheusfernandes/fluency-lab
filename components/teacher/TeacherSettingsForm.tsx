@@ -3,11 +3,42 @@
 import { useTeacher } from "@/hooks/useTeacher";
 import { User } from "@/types/users/users";
 import { useState } from "react";
+import { Card } from "@/components/ui/Card";
+import { Text } from "@/components/ui/Text";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import {
+  Settings,
+  Calendar,
+  RefreshCircle,
+  CheckCircle,
+  CloseCircle,
+} from "@solar-icons/react/ssr";
+import { ClockCircle, User as UserIcon } from "@solar-icons/react/ssr";
 
-type SettingsData = User["schedulingSettings"];
+interface SchedulingSettings {
+  bookingLeadTimeHours: number;
+  cancellationPolicyHours: number;
+  bookingHorizonDays: number;
+  maxOccasionalClassesPerDay: number;
+}
+
+type SettingsData = SchedulingSettings;
 
 interface TeacherSettingsFormProps {
   currentSettings: SettingsData;
+}
+
+interface SettingField {
+  key: keyof SettingsData;
+  label: string;
+  description: string;
+  placeholder: string;
+  defaultValue: number;
+  icon: React.ReactNode;
+  unit: string;
+  min?: number;
+  max?: number;
 }
 
 export default function TeacherSettingsForm({
@@ -16,11 +47,57 @@ export default function TeacherSettingsForm({
   const [settings, setSettings] = useState(currentSettings);
   const { updateSettings, isLoading, error, successMessage } = useTeacher();
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+  const settingFields: SettingField[] = [
+    {
+      key: "bookingLeadTimeHours",
+      label: "Antecedência Mínima",
+      description: "Tempo mínimo necessário para agendamento de aulas",
+      placeholder: "24",
+      defaultValue: 24,
+      icon: <ClockCircle className="w-5 h-5" />,
+      unit: "horas",
+      min: 1,
+      max: 168, // 1 week
+    },
+    {
+      key: "cancellationPolicyHours",
+      label: "Política de Cancelamento",
+      description: "Prazo limite para cancelamento com reembolso integral",
+      placeholder: "24",
+      defaultValue: 24,
+      icon: <RefreshCircle className="w-5 h-5" />,
+      unit: "horas",
+      min: 1,
+      max: 72,
+    },
+    {
+      key: "bookingHorizonDays",
+      label: "Horizonte de Agendamento",
+      description: "Quantos dias no futuro os alunos podem agendar",
+      placeholder: "30",
+      defaultValue: 30,
+      icon: <Calendar className="w-5 h-5" />,
+      unit: "dias",
+      min: 1,
+      max: 365,
+    },
+    {
+      key: "maxOccasionalClassesPerDay",
+      label: "Limite de Aulas Avulsas",
+      description: "Máximo de aulas avulsas por dia (0 = ilimitado)",
+      placeholder: "0",
+      defaultValue: 0,
+      icon: <UserIcon className="w-5 h-5" />,
+      unit: "aulas/dia",
+      min: 0,
+      max: 20,
+    },
+  ];
+
+  const handleInputChange = (field: keyof SettingsData, value: string) => {
     setSettings((prev) => ({
       ...prev,
-      [name]: value ? Number(value) : undefined,
+      [field]: value ? Number(value) : undefined,
     }));
   };
 
@@ -29,66 +106,278 @@ export default function TeacherSettingsForm({
     await updateSettings(settings);
   };
 
+  const resetToDefaults = () => {
+    const defaultSettings = settingFields.reduce(
+      (acc, field) => ({
+        ...acc,
+        [field.key]: field.defaultValue,
+      }),
+      {} as SettingsData
+    );
+
+    setSettings(defaultSettings);
+  };
+
+  const hasChanges =
+    JSON.stringify(settings) !== JSON.stringify(currentSettings);
+
   return (
-    <form
-      onSubmit={handleSubmit}
-      style={{
-        marginTop: "20px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "15px",
-        maxWidth: "400px",
-      }}
-    >
-      <div>
-        <label>Antecedência mínima para agendamento (em horas):</label>
-        <input
-          type="number"
-          name="bookingLeadTimeHours"
-          value={settings?.bookingLeadTimeHours || ""}
-          onChange={handleInputChange}
-          placeholder="Padrão: 24"
-          className="w-full p-2 border rounded"
-        />
-      </div>
-      <div>
-        <label>Limite para cancelamento com reembolso (em horas):</label>
-        <input
-          type="number"
-          name="cancellationPolicyHours"
-          value={settings?.cancellationPolicyHours || ""}
-          onChange={handleInputChange}
-          placeholder="Padrão: 24"
-          className="w-full p-2 border rounded"
-        />
-      </div>
-      <div>
-        <label>Horizonte de agendamento (em dias):</label>
-        <input
-          type="number"
-          name="bookingHorizonDays"
-          value={settings?.bookingHorizonDays || ""}
-          onChange={handleInputChange}
-          placeholder="Padrão: 30"
-          className="w-full p-2 border rounded"
-        />
-      </div>
-      <div>
-        <label>Limite de aulas avulsas por dia (0 para ilimitado):</label>
-        <input
-          type="number"
-          name="maxOccasionalClassesPerDay"
-          value={settings?.maxOccasionalClassesPerDay || ""}
-          onChange={handleInputChange}
-          placeholder="Padrão: Ilimitado"
-          className="w-full p-2 border rounded"
-        />
-      </div>
-      <button type="submit" disabled={isLoading}>
-        {isLoading ? "Salvando..." : "Salvar Configurações"}
-      </button>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      {successMessage && <p style={{ color: "green" }}>{successMessage}</p>}
-    </form>
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Header Card */}
+      <Card className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border-indigo-200 dark:border-indigo-800">
+        <div className="p-6">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-indigo-100 dark:bg-indigo-900/40 rounded-xl">
+              <Settings className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+            </div>
+            <div>
+              <Text
+                size="xl"
+                className="font-bold text-indigo-900 dark:text-indigo-100"
+              >
+                Configurações de Agendamento
+              </Text>
+              <Text size="sm" className="text-indigo-600 dark:text-indigo-300">
+                Personalize as regras para agendamento das suas aulas
+              </Text>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Settings Form */}
+      <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm">
+        <form onSubmit={handleSubmit} className="p-6">
+          <div className="space-y-8">
+            {/* Success/Error Messages */}
+            {successMessage && (
+              <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-4 border border-emerald-200 dark:border-emerald-800">
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                  <Text
+                    size="sm"
+                    className="font-medium text-emerald-700 dark:text-emerald-300"
+                  >
+                    {successMessage}
+                  </Text>
+                </div>
+              </div>
+            )}
+
+            {error && (
+              <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-4 border border-red-200 dark:border-red-800">
+                <div className="flex items-center gap-3">
+                  <CloseCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                  <Text
+                    size="sm"
+                    className="font-medium text-red-700 dark:text-red-300"
+                  >
+                    {error}
+                  </Text>
+                </div>
+              </div>
+            )}
+
+            {/* Settings Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {settingFields.map((field) => {
+                const currentValue = settings?.[field.key];
+                const isDefault =
+                  currentValue === field.defaultValue ||
+                  (!currentValue && field.defaultValue === 0);
+
+                return (
+                  <div
+                    key={field.key}
+                    className="space-y-4 p-6 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700"
+                  >
+                    {/* Field Header */}
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-white dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600">
+                        <div className="text-slate-600 dark:text-slate-400">
+                          {field.icon}
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <Text
+                            size="base"
+                            className="font-semibold text-slate-900 dark:text-slate-100"
+                          >
+                            {field.label}
+                          </Text>
+                          {isDefault && (
+                            <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium rounded-md">
+                              Padrão
+                            </span>
+                          )}
+                        </div>
+                        <Text
+                          size="sm"
+                          className="text-slate-600 dark:text-slate-400 mt-1 leading-relaxed"
+                        >
+                          {field.description}
+                        </Text>
+                      </div>
+                    </div>
+
+                    {/* Input Field */}
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <Input
+                          type="number"
+                          value={currentValue?.toString() || ""}
+                          onChange={(e) =>
+                            handleInputChange(field.key, e.target.value)
+                          }
+                          placeholder={field.placeholder}
+                          min={field.min}
+                          max={field.max}
+                          className="pr-16 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600"
+                          disabled={isLoading}
+                        />
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                          <Text
+                            size="sm"
+                            className="text-slate-500 dark:text-slate-400 font-medium"
+                          >
+                            {field.unit}
+                          </Text>
+                        </div>
+                      </div>
+
+                      {/* Range indicator */}
+                      {field.min !== undefined && field.max !== undefined && (
+                        <div className="flex justify-between">
+                          <Text
+                            size="xs"
+                            className="text-slate-400 dark:text-slate-500"
+                          >
+                            Mín: {field.min}
+                          </Text>
+                          <Text
+                            size="xs"
+                            className="text-slate-400 dark:text-slate-500"
+                          >
+                            Máx: {field.max}
+                          </Text>
+                        </div>
+                      )}
+
+                      {/* Default value hint */}
+                      <Text
+                        size="xs"
+                        className="text-slate-500 dark:text-slate-400"
+                      >
+                        Valor padrão: {field.defaultValue} {field.unit}
+                        {field.key === "maxOccasionalClassesPerDay" &&
+                          field.defaultValue === 0 &&
+                          " (ilimitado)"}
+                      </Text>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-between items-center pt-6 border-t border-slate-200 dark:border-slate-700">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={resetToDefaults}
+                disabled={isLoading}
+                className="text-slate-600 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                <RefreshCircle className="w-4 h-4 mr-2" />
+                Restaurar Padrões
+              </Button>
+
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  disabled={!hasChanges}
+                  className="min-w-[120px] bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 border-slate-300 dark:border-slate-600"
+                >
+                  Cancelar
+                </Button>
+
+                <Button
+                  type="submit"
+                  disabled={isLoading || !hasChanges}
+                  className="min-w-[160px] bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-700 shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50"
+                >
+                  {isLoading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      Salvando...
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Settings className="w-4 h-4" />
+                      Salvar Configurações
+                    </div>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* Changes indicator */}
+            {hasChanges && (
+              <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 border border-amber-200 dark:border-amber-800">
+                <div className="flex items-center gap-3">
+                  <ClockCircle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                  <Text
+                    size="sm"
+                    className="text-amber-700 dark:text-amber-300"
+                  >
+                    Você tem alterações não salvas. Clique em "Salvar
+                    Configurações" para aplicar.
+                  </Text>
+                </div>
+              </div>
+            )}
+          </div>
+        </form>
+      </Card>
+
+      {/* Help Card */}
+      <Card className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+        <div className="p-6">
+          <div className="flex items-start gap-4">
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+              <Settings className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <Text
+                size="base"
+                className="font-semibold text-slate-900 dark:text-slate-100 mb-2"
+              >
+                Dicas de Configuração
+              </Text>
+              <div className="space-y-2">
+                <Text size="sm" className="text-slate-600 dark:text-slate-400">
+                  • <strong>Antecedência mínima:</strong> Tempo que os alunos
+                  devem respeitar antes de agendar
+                </Text>
+                <Text size="sm" className="text-slate-600 dark:text-slate-400">
+                  • <strong>Política de cancelamento:</strong> Prazo para
+                  cancelar sem penalidades
+                </Text>
+                <Text size="sm" className="text-slate-600 dark:text-slate-400">
+                  • <strong>Horizonte de agendamento:</strong> Até quando no
+                  futuro podem agendar
+                </Text>
+                <Text size="sm" className="text-slate-600 dark:text-slate-400">
+                  • <strong>Limite de aulas avulsas:</strong> Controle sua
+                  disponibilidade diária
+                </Text>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
+    </div>
   );
 }

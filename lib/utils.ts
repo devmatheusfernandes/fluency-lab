@@ -7,6 +7,49 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
+ * Utility function to serialize data for Client Components while preserving Date objects
+ * This is needed because React Server Components can only pass serializable data to Client Components
+ * but some components (like calendars) need actual Date objects
+ */
+export function serializeForClientComponent(obj: any): any {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+  
+  if (typeof obj === 'string' || typeof obj === 'number' || typeof obj === 'boolean') {
+    return obj;
+  }
+  
+  if (obj instanceof Date) {
+    // Keep Date objects as they are for components that need them
+    return obj;
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(item => serializeForClientComponent(item));
+  }
+  
+  if (typeof obj === 'object') {
+    // Handle special objects like Firestore Timestamps
+    if (obj && typeof obj === 'object' && '_seconds' in obj && '_nanoseconds' in obj) {
+      // Convert Firestore Timestamp to Date object
+      const timestamp = new Date(obj._seconds * 1000 + obj._nanoseconds / 1000000);
+      return timestamp;
+    }
+    
+    const serialized: any = {};
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        serialized[key] = serializeForClientComponent(obj[key]);
+      }
+    }
+    return serialized;
+  }
+  
+  return obj;
+}
+
+/**
  * Safely converts a date value to ISO string, handling invalid dates
  * @param dateValue - Date, string, number, or any date-like value
  * @returns ISO string if valid, undefined if invalid

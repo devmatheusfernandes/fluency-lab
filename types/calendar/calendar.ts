@@ -1,3 +1,5 @@
+import { ClassStatus } from "../classes/class";
+
 // Types for calendar functionality
 export interface CalendarEvent {
   id: string;
@@ -25,6 +27,7 @@ export interface CalendarEvent {
   };
   // Class type for booked classes
   classType?: "regular" | "occasional";
+  status?: ClassStatus;
 }
 
 export type CalendarView = "month" | "week" | "day";

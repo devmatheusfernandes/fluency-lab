@@ -40,17 +40,17 @@ export default function ClassDetailsView({
           <div className="flex items-center space-x-4">
             <Avatar>
               <AvatarImage
-                src={classDetails.teacher.avatarUrl}
-                alt={classDetails.teacher.name}
+                src={classDetails?.teacher?.avatarUrl}
+                alt={classDetails?.teacher?.name}
               />
               <AvatarFallback>
-                {classDetails.teacher.name.charAt(0)}
+                {classDetails?.teacher?.name?.charAt(0)}
               </AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-semibold">{classDetails.teacher.name}</p>
+              <p className="font-semibold">{classDetails?.teacher?.name}</p>
               <p className="text-sm text-gray-500">
-                {classDetails.teacher.email}
+                {classDetails?.teacher?.email}
               </p>
             </div>
           </div>

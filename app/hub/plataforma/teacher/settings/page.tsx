@@ -4,7 +4,16 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import TeacherVacationManager from "@/components/teacher/TeacherVacationManager";
 import { Calendar } from "@/components/ui/Calendar";
+import { SchedulingService } from "@/services/schedulingService";
+import {
+  mapTeacherEventsToCalendar,
+  mapTeacherClassesToCalendar,
+} from "@/lib/calendar/calendarUtils";
+import ClientCalendar from "@/components/teacher/ClientCalendar";
+import { serializeForClientComponent } from "@/lib/utils";
+
 const userAdminRepo = new UserAdminRepository();
+const schedulingService = new SchedulingService();
 
 export default async function TeacherSettingsPage() {
   const session = await getServerSession(authOptions);
@@ -13,13 +22,40 @@ export default async function TeacherSettingsPage() {
   const teacher = await userAdminRepo.findUserById(session!.user.id);
   const currentSettings = teacher?.schedulingSettings || {};
 
+  // Fetch teacher's schedule data
+  const scheduleData = await schedulingService.getTeacherAvailability(
+    session!.user.id
+  );
+
+  // Fetch all teacher's classes
+  const allClasses = await schedulingService.getPopulatedClassesForTeacher(
+    session!.user.id
+  );
+
+  // Combine availability slots with all classes
+  const calendarEvents = [
+    ...mapTeacherEventsToCalendar(
+      scheduleData.slots,
+      scheduleData.exceptions,
+      scheduleData.bookedClasses
+    ),
+    ...mapTeacherClassesToCalendar(allClasses),
+  ];
+
+  // Serialize data before passing to Client Component
+  const serializedEvents = serializeForClientComponent(calendarEvents);
+  const serializedClasses = serializeForClientComponent(allClasses);
+
   return (
     <div style={{ padding: "20px" }}>
       <h1>Configurações da Agenda</h1>
       <p>Defina suas regras para o agendamento de aulas.</p>
       <TeacherSettingsForm currentSettings={currentSettings} />
       <TeacherVacationManager />
-      <Calendar />
+      <ClientCalendar
+        events={serializedEvents}
+        allClasses={serializedClasses}
+      />
     </div>
   );
 }

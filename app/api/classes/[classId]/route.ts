@@ -3,6 +3,9 @@ import { getServerSession } from 'next-auth';
 import { ClassStatus } from '@/types/classes/class';
 import { schedulingService } from '@/services/schedulingService';
 import { authOptions } from '../../auth/[...nextauth]/route';
+import { ClassRepository } from '@/repositories/classRepository';
+
+const classRepository = new ClassRepository();
 
 // Manipulador para o método PATCH para atualizar status da aula
 export async function PATCH(
@@ -28,9 +31,21 @@ export async function PATCH(
       return NextResponse.json({ error: 'Status inválido fornecido.' }, { status: 400 });
     }
 
+    // If no status is provided, get the current status from the class
+    let currentClassStatus: ClassStatus;
+    if (status) {
+      currentClassStatus = status;
+    } else {
+      const currentClass = await classRepository.findClassById(classId);
+      if (!currentClass) {
+        return NextResponse.json({ error: 'Aula não encontrada.' }, { status: 404 });
+      }
+      currentClassStatus = currentClass.status;
+    }
+
     const updatedClass = await schedulingService.updateClassStatus(
       classId,
-      status || undefined, // Pass undefined if no status provided
+      currentClassStatus, // Pass the validated status
       feedback,
       session.user.id
     );

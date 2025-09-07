@@ -775,7 +775,7 @@ export class SchedulingService {
 
     // 4. Gerar as instâncias de aula
     const classesToCreate: Omit<StudentClass, 'id'>[] = [];
-    let currentDate = new Date(startDate);
+    const currentDate = new Date(startDate);
 
     while (currentDate <= endDate) {
       const dayIndex = currentDate.getDay();

@@ -65,7 +65,7 @@ export function mapAvailabilityToEvents(
     if (slot.repeating) {
       const repeatEndDate = slot.repeating.endDate ? new Date(slot.repeating.endDate) : null;
       if (repeatEndDate) repeatEndDate.setHours(23, 59, 59, 999);
-      let currentDate = new Date(slotStartDate);
+      const currentDate = new Date(slotStartDate);
 
       while (currentDate <= generationEndDate) {
         if (repeatEndDate && currentDate > repeatEndDate) break;

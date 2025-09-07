@@ -106,7 +106,7 @@ export default function AvailabilityModal({
 
     // 1. Começamos com a base do objeto, os campos que sempre existem.
     // Usamos 'let' para poder modificar o objeto.
-    let dataToSend: Partial<Omit<AvailabilitySlot, "id" | "teacherId">> = {
+    const dataToSend: Partial<Omit<AvailabilitySlot, "id" | "teacherId">> = {
       title,
       startDate: finalDate,
       startTime,

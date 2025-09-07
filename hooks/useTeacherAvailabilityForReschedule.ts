@@ -84,7 +84,7 @@ export const useTeacherAvailabilityForReschedule = (
 
         slots.forEach((slot: AvailabilitySlot) => {
           const [hour, minute] = slot.startTime.split(":").map(Number);
-          let currentDate = new Date(slot.startDate);
+          const currentDate = new Date(slot.startDate);
 
           // Generate concrete dates based on recurrence
           let iterations = 0;
@@ -94,7 +94,7 @@ export const useTeacherAvailabilityForReschedule = (
 
             // Check if the slot's day of week matches the current loop day
             if (dayOfWeek === new Date(slot.startDate).getDay()) {
-              let potentialSlotDate = new Date(currentDate);
+              const potentialSlotDate = new Date(currentDate);
               potentialSlotDate.setHours(hour, minute, 0, 0);
 
               // 1. Validation: Within booking horizon?

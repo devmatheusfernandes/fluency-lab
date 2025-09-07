@@ -52,7 +52,7 @@ export const useRescheduleAvailability = (
 
         slots.forEach((slot: AvailabilitySlot) => {
           const [hour, minute] = slot.startTime.split(":").map(Number);
-          let currentDate = new Date(slot.startDate);
+          const currentDate = new Date(slot.startDate);
 
           // Loop para gerar datas concretas com base na recorrência
           while (currentDate <= maxBookingDate) {
@@ -60,7 +60,7 @@ export const useRescheduleAvailability = (
 
             // Verifica se o dia da semana do slot corresponde ao dia atual no loop
             if (dayOfWeek === new Date(slot.startDate).getDay()) {
-              let potentialSlotDate = new Date(currentDate);
+              const potentialSlotDate = new Date(currentDate);
               potentialSlotDate.setHours(hour, minute, 0, 0);
 
               // 1. Validação: Está dentro do horizonte de agendamento?

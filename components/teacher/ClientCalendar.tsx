@@ -93,6 +93,7 @@ export default function ClientCalendar({
         onClose={() => setIsSlotDetailsModalOpen(false)}
         event={selectedEvent}
         onDelete={onDeleteAvailability}
+        onRefresh={onRefresh}
       />
       <AvailabilitySlotModal
         isOpen={isSlotModalOpen}

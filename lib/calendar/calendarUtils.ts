@@ -33,7 +33,9 @@ export const mapTeacherEventsToCalendar = (
   // Populate exceptions lookup
   exceptions.forEach(ex => {
     const date = new Date(ex.date);
-    const key = createDateTimeKey(date, date.toTimeString().substring(0, 5));
+    // Use the same time format as slot.startTime for consistency
+    const time = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+    const key = createDateTimeKey(date, time);
     exceptionSet.add(key);
   });
   

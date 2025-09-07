@@ -28,6 +28,7 @@ interface AvailabilitySlotDetailsModalProps {
     deleteType: "single" | "future",
     occurrenceDate: Date
   ) => Promise<void>;
+  onRefresh?: () => void;
 }
 
 export default function AvailabilitySlotDetailsModal({
@@ -35,6 +36,7 @@ export default function AvailabilitySlotDetailsModal({
   onClose,
   event,
   onDelete,
+  onRefresh,
 }: AvailabilitySlotDetailsModalProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteOptions, setShowDeleteOptions] = useState(false);
@@ -44,11 +46,15 @@ export default function AvailabilitySlotDetailsModal({
 
   const handleDelete = async () => {
     if (!event?.slotId || !onDelete) return;
-    console.log("delete");
     setIsDeleting(true);
     try {
-      await onDelete(event.slotId, deleteType, new Date(event.date));
+      // Use event.date directly since it's already a Date object
+      await onDelete(event.slotId, deleteType, event.date);
       onClose();
+      // Trigger refresh after successful deletion
+      if (onRefresh) {
+        onRefresh();
+      }
     } catch (error) {
       console.error("Error deleting availability:", error);
     } finally {

@@ -41,7 +41,6 @@ export class SchedulingService {
       );
     }
 
-    // 👇 LÓGICA DE PREVENÇÃO DE CONFLITOS - MELHORADA
     const existingSlots = await availabilityRepository.findByTeacherId(
       slot.teacherId
     );
@@ -119,7 +118,7 @@ export class SchedulingService {
           ...cls,
           studentName: student?.name,
           studentAvatarUrl: student?.avatarUrl,
-        } as any; // Using 'any' to extend StudentClass with student info
+        } as any; 
       });
     }
 
@@ -162,10 +161,15 @@ export class SchedulingService {
         });
       }
     } else if (deleteType === "single") {
+      // Combine the occurrence date with the slot's start time for proper exception creation
+      const [hours, minutes] = slot.startTime.split(':').map(Number);
+      const exceptionDate = new Date(occurrenceDate);
+      exceptionDate.setHours(hours, minutes, 0, 0);
+      
       await availabilityRepository.createException(
         slotId,
         teacherId,
-        occurrenceDate
+        exceptionDate
       );
     }
   }

@@ -76,21 +76,28 @@ export default function AvailabilitySlotDetailsModal({
     }
   };
 
+  const getAvailabilityTypeText = (type: string) => {
+    switch (type) {
+      case "regular":
+        return "Regular";
+      case "occasional":
+        return "Ocasional";
+      case "makeup":
+        return "Reposição";
+      default:
+        return type;
+    }
+  };
+
   return (
     <Modal open={isOpen} onOpenChange={onClose}>
       <ModalContent>
+        <ModalClose />
         <ModalHeader>
           <ModalTitle>Detalhes do Horário</ModalTitle>
-          <ModalClose />
         </ModalHeader>
         <ModalBody>
           <div className="space-y-4">
-            <Card className="p-4">
-              <Text variant="title" size="lg">
-                {event.title}
-              </Text>
-            </Card>
-
             <Card className="p-4">
               <Text variant="title" className="mb-3">
                 Informações do Horário
@@ -119,6 +126,15 @@ export default function AvailabilitySlotDetailsModal({
                   <Text className="text-subtitle font-medium">Tipo</Text>
                   <Text>{event.repeating ? "Repetindo" : "Único"}</Text>
                 </div>
+
+                {event.availabilityType && (
+                  <div>
+                    <Text className="text-subtitle font-medium">Categoria</Text>
+                    <Text>
+                      {getAvailabilityTypeText(event.availabilityType)}
+                    </Text>
+                  </div>
+                )}
 
                 {event.repeating && (
                   <>

@@ -136,11 +136,6 @@ const ModalHeader = React.forwardRef<
       >
         {children}
       </div>
-      {showCloseButton && (
-        <Dialog.Close className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150 text-gray-500 dark:text-gray-400 ml-4">
-          <CloseCircle size={20} />
-        </Dialog.Close>
-      )}
     </motion.div>
   );
 });
@@ -191,11 +186,17 @@ ModalDescription.displayName = "ModalDescription";
 
 // Modal Close Component
 const ModalClose = React.forwardRef<
-  React.ElementRef<typeof motion.div>,
+  React.ComponentRef<typeof motion.div>,
   React.ComponentPropsWithoutRef<typeof Dialog.Close> & HTMLMotionProps<"div">
 >(({ className, children, ...props }, ref) => {
   return (
-    <Dialog.Close {...props}>
+    <Dialog.Close
+      className={twMerge(
+        "absolute top-3 right-3 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800",
+        className
+      )}
+      {...props}
+    >
       {children || (
         <>
           <motion.div
@@ -204,7 +205,7 @@ const ModalClose = React.forwardRef<
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3, ease: "easeOut", delay: 0.2 }}
           >
-            <CloseCircle size={20} />
+            <CloseCircle size={24} />
           </motion.div>
           <span className="sr-only">Close</span>
         </>
@@ -212,6 +213,7 @@ const ModalClose = React.forwardRef<
     </Dialog.Close>
   );
 });
+
 ModalClose.displayName = "ModalClose";
 
 // Modal Footer Component

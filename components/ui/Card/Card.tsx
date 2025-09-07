@@ -6,11 +6,7 @@ const Card = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={twMerge("rounded-2xl p-4 bg-card text-paragraph", className)}
-    {...props}
-  />
+  <div ref={ref} className={twMerge("card-base p-4", className)} {...props} />
 ));
 Card.displayName = "Card";
 

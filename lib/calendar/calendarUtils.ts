@@ -93,6 +93,7 @@ export const mapTeacherEventsToCalendar = (
               startTime: slot.startTime,
               endTime: slot.endTime,
               color: "success",
+              availabilityType: slot.type,
               // Include the repeating information for the modal
               repeating: {
                 type: slot.repeating.type,

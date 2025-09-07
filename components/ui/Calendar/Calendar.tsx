@@ -59,20 +59,18 @@ const formatDate = (date: Date, locale: string = "pt-BR") => {
 
 const getEventsForDate = (events: CalendarEvent[], date: Date) => {
   return events.filter((event) => {
-    // Since your mapping function already generates individual events for each occurrence,
-    // we only need to check for exact date matches - NO repetition logic here
     return isSameDay(event.date, date);
   });
 };
 
 const getEventColorClasses = (color: CalendarEvent["color"]) => {
   const colorMap = {
-    primary: "bg-primary text-primary-text",
-    secondary: "bg-secondary text-secondary-text",
-    success: "bg-success text-white",
-    warning: "bg-warning text-white",
-    danger: "bg-danger text-white",
-    info: "bg-info text-white",
+    primary: "bg-blue-600 text-white border-blue-700 shadow-sm",
+    secondary: "bg-purple-600 text-white border-purple-700 shadow-sm",
+    success: "bg-emerald-600 text-white border-emerald-700 shadow-sm",
+    warning: "bg-amber-600 text-white border-amber-700 shadow-sm",
+    danger: "bg-red-600 text-white border-red-700 shadow-sm",
+    info: "bg-cyan-600 text-white border-cyan-700 shadow-sm",
   };
   return colorMap[color || "primary"];
 };
@@ -208,7 +206,8 @@ export const Calendar: React.FC<CalendarProps> = ({
     isCompact: boolean = false
   ) => {
     const baseClasses = twMerge(
-      "px-2 py-1 rounded text-xs truncate cursor-pointer hover:opacity-80 transition-opacity",
+      "group relative px-2.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all duration-200 border",
+      "hover:scale-105 hover:shadow-md active:scale-95",
       getEventColorClasses(event.color)
     );
 
@@ -216,17 +215,22 @@ export const Calendar: React.FC<CalendarProps> = ({
       return (
         <div
           key={event.id}
-          className={baseClasses}
+          className={twMerge(baseClasses, "truncate")}
           onClick={(e) => {
             e.stopPropagation();
             onEventClick?.(event);
           }}
           title={event.title}
         >
-          {event.title}
-          {/* Show indicator for class type */}
-          {event.classType === "occasional" && <span className="ml-1">👤</span>}
-          {event.classType === "regular" && <span className="ml-1">📚</span>}
+          <div className="flex items-center gap-1">
+            <span className="truncate">{event.title}</span>
+            {event.classType === "occasional" && (
+              <span className="text-xs">👤</span>
+            )}
+            {event.classType === "regular" && (
+              <span className="text-xs">📚</span>
+            )}
+          </div>
         </div>
       );
     }
@@ -234,48 +238,59 @@ export const Calendar: React.FC<CalendarProps> = ({
     return (
       <div
         key={event.id}
-        className={twMerge(baseClasses, "mb-1")}
+        className={twMerge(baseClasses, "mb-2 w-full")}
         onClick={(e) => {
           e.stopPropagation();
           onEventClick?.(event);
         }}
         title={event.title}
       >
-        <div className="flex items-center justify-between">
-          <span className="truncate">{event.title}</span>
-          <div className="flex items-center">
-            {event.repeating && (
-              <span className="ml-1 text-xs opacity-80">🔄</span>
-            )}
-            {/* Show indicator for class type */}
+        <div className="flex items-start justify-between">
+          <span className="truncate text-sm font-semibold">{event.title}</span>
+          <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+            {event.repeating && <span className="text-xs opacity-90">🔄</span>}
             {event.classType === "occasional" && (
-              <span className="ml-1">👤</span>
+              <span className="text-xs">👤</span>
             )}
-            {event.classType === "regular" && <span className="ml-1">📚</span>}
+            {event.classType === "regular" && (
+              <span className="text-xs">📚</span>
+            )}
           </div>
         </div>
-        {/* Display student information if available, otherwise fallback to person */}
-        {event.studentInfo?.studentName && (
-          <div className="text-xs opacity-80 mt-1">
-            👤 {event.studentInfo.studentName}
-          </div>
-        )}
-        {!event.studentInfo?.studentName && event.person && (
-          <div className="text-xs opacity-80 mt-1">👤 {event.person}</div>
-        )}
-        {event.location && (
-          <div className="text-xs opacity-80">📍 {event.location}</div>
-        )}
-        {event.priority && (
-          <div className="text-xs opacity-80">
-            {event.priority === "high"
-              ? "🔴"
-              : event.priority === "medium"
-                ? "🟡"
-                : "🟢"}{" "}
-            {event.priority}
-          </div>
-        )}
+
+        {/* Additional event info */}
+        <div className="mt-1 space-y-1">
+          {event.studentInfo?.studentName && (
+            <div className="text-xs opacity-90 flex items-center gap-1">
+              <span>👤</span>
+              <span className="truncate">{event.studentInfo.studentName}</span>
+            </div>
+          )}
+          {!event.studentInfo?.studentName && event.person && (
+            <div className="text-xs opacity-90 flex items-center gap-1">
+              <span>👤</span>
+              <span className="truncate">{event.person}</span>
+            </div>
+          )}
+          {event.location && (
+            <div className="text-xs opacity-90 flex items-center gap-1">
+              <span>📍</span>
+              <span className="truncate">{event.location}</span>
+            </div>
+          )}
+          {event.priority && (
+            <div className="text-xs opacity-90 flex items-center gap-1">
+              <span>
+                {event.priority === "high"
+                  ? "🔴"
+                  : event.priority === "medium"
+                    ? "🟡"
+                    : "🟢"}
+              </span>
+              <span className="capitalize">{event.priority}</span>
+            </div>
+          )}
+        </div>
       </div>
     );
   };
@@ -306,26 +321,34 @@ export const Calendar: React.FC<CalendarProps> = ({
           <div
             key={dayIndex}
             className={twMerge(
-              isMobile
-                ? "min-h-[80px] p-1 border border-surface-2 relative transition-colors duration-200"
-                : "min-h-[120px] p-2 border border-surface-2 relative transition-colors duration-200",
+              // Base styles
+              "group relative border border-slate-200 dark:border-slate-700 transition-all duration-200",
+              // Responsive height
+              isMobile ? "min-h-[100px] p-2" : "min-h-[140px] p-3",
+              // Interactive states
               isValidDate
-                ? "cursor-pointer hover:bg-surface-hover"
-                : "bg-surface-1 opacity-50",
-              isSelected && "bg-primary/20 border-primary",
-              isCurrentDay && "bg-secondary/20"
+                ? "cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600"
+                : "bg-slate-50 dark:bg-slate-900 opacity-60",
+              // Selection states
+              isSelected &&
+                "bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-600 ring-2 ring-blue-200 dark:ring-blue-800",
+              isCurrentDay &&
+                "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-600"
             )}
             onClick={() => date && handleDateClick(date)}
           >
             {isValidDate && (
               <>
-                <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center justify-between mb-2">
                   <Text
-                    size={isMobile ? "xs" : "sm"}
+                    size={isMobile ? "sm" : "base"}
                     className={twMerge(
-                      "font-semibold",
-                      isCurrentDay && "text-secondary",
-                      isSelected && "text-primary"
+                      "font-bold transition-colors",
+                      isCurrentDay && "text-emerald-700 dark:text-emerald-400",
+                      isSelected && "text-blue-700 dark:text-blue-400",
+                      !isCurrentDay &&
+                        !isSelected &&
+                        "text-slate-900 dark:text-slate-100"
                     )}
                   >
                     {dateNumber}
@@ -335,8 +358,9 @@ export const Calendar: React.FC<CalendarProps> = ({
                       size="icon"
                       variant="ghost"
                       className={twMerge(
-                        "opacity-0 hover:opacity-100 transition-opacity",
-                        isMobile ? "h-5 w-5 p-0.5" : "h-6 w-6 p-1"
+                        "opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110",
+                        isMobile ? "h-6 w-6 p-1" : "h-7 w-7 p-1.5",
+                        "text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/30"
                       )}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -344,24 +368,21 @@ export const Calendar: React.FC<CalendarProps> = ({
                       }}
                     >
                       <AddCircle
-                        className={twMerge(
-                          isMobile ? "h-2.5 w-2.5" : "h-3 w-3",
-                          "text-primary"
-                        )}
+                        className={twMerge(isMobile ? "h-4 w-4" : "h-4 w-4")}
                       />
                     </Button>
                   )}
                 </div>
 
                 {/* Events for this date */}
-                <div className="space-y-0.5">
+                <div className="space-y-1">
                   {dayEvents
-                    .slice(0, isMobile ? 2 : 3)
+                    .slice(0, isMobile ? 2 : 4)
                     .map((event) => renderEventBadge(event, isMobile))}
-                  {dayEvents.length > (isMobile ? 2 : 3) && (
-                    <Text size="xs" className="text-paragraph opacity-70">
-                      +{dayEvents.length - (isMobile ? 2 : 3)} mais
-                    </Text>
+                  {dayEvents.length > (isMobile ? 2 : 4) && (
+                    <div className="px-2 py-1 text-xs text-slate-600 dark:text-slate-400 font-medium bg-slate-100 dark:bg-slate-800 rounded-md">
+                      +{dayEvents.length - (isMobile ? 2 : 4)} mais
+                    </div>
                   )}
                 </div>
               </>
@@ -370,27 +391,27 @@ export const Calendar: React.FC<CalendarProps> = ({
         );
       }
       calendarDays.push(
-        <div key={week} className="grid grid-cols-7 gap-0">
+        <div key={week} className="grid grid-cols-7">
           {weekDays}
         </div>
       );
     }
 
     return (
-      <div className="border border-surface-2 rounded-lg overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm">
         {/* Day headers */}
-        <div className="grid grid-cols-7 bg-surface-1">
+        <div className="grid grid-cols-7 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
           {daysOfWeek.map((day) => (
             <div
               key={day}
               className={twMerge(
-                "p-3 text-center border-r border-surface-2 last:border-r-0",
-                isMobile && "p-2"
+                "text-center border-r border-slate-200 dark:border-slate-700 last:border-r-0",
+                isMobile ? "py-3 px-1" : "py-4 px-3"
               )}
             >
               <Text
-                size={isMobile ? "xs" : "sm"}
-                className="font-semibold text-subtitle"
+                size={isMobile ? "sm" : "base"}
+                className="font-bold text-slate-700 dark:text-slate-300"
               >
                 {isMobile ? day.slice(0, 3) : day}
               </Text>
@@ -399,18 +420,18 @@ export const Calendar: React.FC<CalendarProps> = ({
         </div>
 
         {/* Calendar days */}
-        <div className="group">{calendarDays}</div>
+        <div>{calendarDays}</div>
       </div>
     );
   };
 
   const renderWeekView = () => {
     if (isMobile) {
-      // Mobile week view - simplified
+      // Mobile week view - card layout
       const weekDates = getWeekDates(currentDate);
 
       return (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {weekDates.map((date) => {
             const dayEvents = getEventsForDate(events, date);
             const isSelected = selectedDate && isSameDay(date, selectedDate);
@@ -420,18 +441,26 @@ export const Calendar: React.FC<CalendarProps> = ({
               <div
                 key={date.toISOString()}
                 className={twMerge(
-                  "p-4 border border-surface-2 rounded-lg",
-                  isSelected && "bg-primary/20 border-primary",
-                  isCurrentDay && "bg-secondary/20"
+                  "p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm cursor-pointer transition-all duration-200 hover:shadow-md",
+                  isSelected &&
+                    "bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-600 ring-2 ring-blue-200 dark:ring-blue-800",
+                  isCurrentDay &&
+                    "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-600"
                 )}
                 onClick={() => handleDateClick(date)}
               >
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <Text size="lg" className="font-semibold text-subtitle">
+                    <Text
+                      size="lg"
+                      className="font-bold text-slate-900 dark:text-slate-100"
+                    >
                       {daysOfWeek[date.getDay()]}
                     </Text>
-                    <Text size="sm" className="text-paragraph">
+                    <Text
+                      size="sm"
+                      className="text-slate-600 dark:text-slate-400 font-medium"
+                    >
                       {date.getDate()} {months[date.getMonth()]}
                     </Text>
                   </div>
@@ -439,12 +468,13 @@ export const Calendar: React.FC<CalendarProps> = ({
                     <Button
                       size="sm"
                       variant="ghost"
+                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/30"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleAddEvent(date);
                       }}
                     >
-                      <AddCircle className="h-4 w-4 mr-1" />
+                      <AddCircle className="h-4 w-4 mr-2" />
                       Adicionar
                     </Button>
                   )}
@@ -452,7 +482,10 @@ export const Calendar: React.FC<CalendarProps> = ({
 
                 <div className="space-y-2">
                   {dayEvents.length === 0 ? (
-                    <Text size="sm" className="text-paragraph opacity-70">
+                    <Text
+                      size="sm"
+                      className="text-slate-500 dark:text-slate-400 italic"
+                    >
                       Nenhum evento
                     </Text>
                   ) : (
@@ -466,27 +499,36 @@ export const Calendar: React.FC<CalendarProps> = ({
       );
     }
 
-    // Desktop week view
+    // Desktop week view - timeline
     const weekDates = getWeekDates(currentDate);
 
     return (
-      <div className="border border-surface-2 rounded-lg overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm">
         {/* Time column and day headers */}
-        <div className="grid grid-cols-8 bg-surface-1">
-          <div className="p-3 border-r border-surface-2">
-            <Text size="sm" className="font-semibold text-subtitle">
+        <div className="grid grid-cols-8 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+          <div className="p-4 border-r border-slate-200 dark:border-slate-700">
+            <Text
+              size="sm"
+              className="font-bold text-slate-700 dark:text-slate-300"
+            >
               Hora
             </Text>
           </div>
           {weekDates.map((date) => (
             <div
               key={date.toISOString()}
-              className="p-3 text-center border-r border-surface-2 last:border-r-0"
+              className="p-4 text-center border-r border-slate-200 dark:border-slate-700 last:border-r-0"
             >
-              <Text size="sm" className="font-semibold text-subtitle">
+              <Text
+                size="sm"
+                className="font-bold text-slate-900 dark:text-slate-100"
+              >
                 {daysOfWeek[date.getDay()]}
               </Text>
-              <Text size="xs" className="text-paragraph">
+              <Text
+                size="xs"
+                className="text-slate-600 dark:text-slate-400 font-medium"
+              >
                 {date.getDate()}
               </Text>
             </div>
@@ -498,10 +540,13 @@ export const Calendar: React.FC<CalendarProps> = ({
           {getDayHours().map((hour) => (
             <div
               key={hour}
-              className="grid grid-cols-8 border-b border-surface-2"
+              className="grid grid-cols-8 border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
             >
-              <div className="p-2 border-r border-surface-2 bg-surface-1">
-                <Text size="xs" className="text-paragraph">
+              <div className="p-3 border-r border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+                <Text
+                  size="xs"
+                  className="text-slate-600 dark:text-slate-400 font-medium"
+                >
                   {hour.toString().padStart(2, "0")}:00
                 </Text>
               </div>
@@ -515,7 +560,7 @@ export const Calendar: React.FC<CalendarProps> = ({
                 return (
                   <div
                     key={date.toISOString()}
-                    className="p-1 border-r border-surface-2 last:border-r-0 min-h-[60px] relative"
+                    className="p-2 border-r border-slate-200 dark:border-slate-700 last:border-r-0 min-h-[60px] relative group"
                     onClick={() => handleDateClick(date)}
                   >
                     {dayEvents.map((event) => renderEventBadge(event, true))}
@@ -523,7 +568,7 @@ export const Calendar: React.FC<CalendarProps> = ({
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-5 w-5 p-1 opacity-0 hover:opacity-100 transition-opacity absolute bottom-1 right-1"
+                        className="h-5 w-5 p-1 opacity-0 group-hover:opacity-100 transition-all duration-200 absolute bottom-1 right-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/30"
                         onClick={(e) => {
                           e.stopPropagation();
                           const newDate = new Date(date);
@@ -531,7 +576,7 @@ export const Calendar: React.FC<CalendarProps> = ({
                           handleAddEvent(newDate);
                         }}
                       >
-                        <AddCircle className="h-3 w-3 text-primary" />
+                        <AddCircle className="h-3 w-3" />
                       </Button>
                     )}
                   </div>
@@ -546,13 +591,16 @@ export const Calendar: React.FC<CalendarProps> = ({
 
   const renderDayView = () => {
     if (isMobile) {
-      // Mobile day view - simplified
+      // Mobile day view - card layout
       const dayEvents = getEventsForDate(events, currentDate);
 
       return (
         <div className="space-y-4">
-          <div className="bg-surface-1 p-4 rounded-lg border border-surface-2">
-            <Text size="lg" className="font-semibold text-subtitle">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+            <Text
+              size="xl"
+              className="font-bold text-slate-900 dark:text-slate-100"
+            >
               {daysOfWeek[currentDate.getDay()]}, {currentDate.getDate()}{" "}
               {months[currentDate.getMonth()]} {currentYear}
             </Text>
@@ -560,17 +608,21 @@ export const Calendar: React.FC<CalendarProps> = ({
 
           <div className="space-y-3">
             {dayEvents.length === 0 ? (
-              <div className="text-center py-8">
-                <Text size="lg" className="text-paragraph opacity-70">
+              <div className="text-center py-12 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                <div className="text-6xl mb-4">📅</div>
+                <Text
+                  size="lg"
+                  className="text-slate-500 dark:text-slate-400 mb-4 font-medium"
+                >
                   Nenhum evento para hoje
                 </Text>
                 {onAddEvent && (
                   <Button
                     variant="primary"
                     onClick={() => handleAddEvent(currentDate)}
-                    className="mt-4"
+                    className="bg-blue-600 hover:bg-blue-700 text-white border-blue-700 shadow-sm hover:shadow-md transition-all duration-200"
                   >
-                    <AddCircle className="h-4 w-4 mr-2" />
+                    <AddCircle className="h-5 w-5 mr-2" />
                     Adicionar Evento
                   </Button>
                 )}
@@ -580,62 +632,87 @@ export const Calendar: React.FC<CalendarProps> = ({
                 <div
                   key={event.id}
                   className={twMerge(
-                    "p-4 rounded-lg border border-surface-2 cursor-pointer hover:opacity-80 transition-opacity",
+                    "p-5 rounded-xl border cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-[1.02] active:scale-[0.98]",
                     getEventColorClasses(event.color)
                   )}
                   onClick={() => onEventClick?.(event)}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <Text size="lg" className="font-semibold mb-2">
-                        {event.title}
-                        {/* Show indicator for class type */}
+                      <div className="flex items-center gap-2 mb-3">
+                        <Text size="lg" className="font-bold">
+                          {event.title}
+                        </Text>
                         {event.classType === "occasional" && (
-                          <span className="ml-2 text-base">👤</span>
+                          <span className="text-lg">👤</span>
                         )}
                         {event.classType === "regular" && (
-                          <span className="ml-2 text-base">📚</span>
+                          <span className="text-lg">📚</span>
                         )}
-                      </Text>
+                      </div>
+
                       {event.description && (
-                        <Text size="sm" className="opacity-80 mb-2">
+                        <Text
+                          size="sm"
+                          className="opacity-90 mb-3 leading-relaxed"
+                        >
                           {event.description}
                         </Text>
                       )}
-                      {event.startTime && event.endTime && (
-                        <Text size="sm" className="opacity-80 mb-2">
-                          ⏰ {event.startTime} - {event.endTime}
-                        </Text>
-                      )}
-                      {/* Display student information if available, otherwise fallback to person */}
-                      {event.studentInfo?.studentName && (
-                        <Text size="sm" className="opacity-80 mb-1">
-                          👤 {event.studentInfo.studentName}
-                        </Text>
-                      )}
-                      {!event.studentInfo?.studentName && event.person && (
-                        <Text size="sm" className="opacity-80 mb-1">
-                          👤 {event.person}
-                        </Text>
-                      )}
-                      {event.location && (
-                        <Text size="sm" className="opacity-80 mb-1">
-                          📍 {event.location}
-                        </Text>
-                      )}
-                      {event.priority && (
-                        <Text size="sm" className="opacity-80">
-                          {event.priority === "high"
-                            ? "🔴"
-                            : event.priority === "medium"
-                              ? "🟡"
-                              : "🟢"}{" "}
-                          {event.priority}
-                        </Text>
-                      )}
+
+                      <div className="space-y-2">
+                        {event.startTime && event.endTime && (
+                          <div className="flex items-center gap-2 text-sm opacity-90">
+                            <span className="text-base">⏰</span>
+                            <span className="font-medium">
+                              {event.startTime} - {event.endTime}
+                            </span>
+                          </div>
+                        )}
+
+                        {event.studentInfo?.studentName && (
+                          <div className="flex items-center gap-2 text-sm opacity-90">
+                            <span className="text-base">👤</span>
+                            <span className="font-medium">
+                              {event.studentInfo.studentName}
+                            </span>
+                          </div>
+                        )}
+
+                        {!event.studentInfo?.studentName && event.person && (
+                          <div className="flex items-center gap-2 text-sm opacity-90">
+                            <span className="text-base">👤</span>
+                            <span className="font-medium">{event.person}</span>
+                          </div>
+                        )}
+
+                        {event.location && (
+                          <div className="flex items-center gap-2 text-sm opacity-90">
+                            <span className="text-base">📍</span>
+                            <span className="font-medium">
+                              {event.location}
+                            </span>
+                          </div>
+                        )}
+
+                        {event.priority && (
+                          <div className="flex items-center gap-2 text-sm opacity-90">
+                            <span className="text-base">
+                              {event.priority === "high"
+                                ? "🔴"
+                                : event.priority === "medium"
+                                  ? "🟡"
+                                  : "🟢"}
+                            </span>
+                            <span className="font-medium capitalize">
+                              {event.priority}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     {event.repeating && (
-                      <span className="text-2xl opacity-80">🔄</span>
+                      <span className="text-2xl opacity-80 ml-3">🔄</span>
                     )}
                   </div>
                 </div>
@@ -646,15 +723,18 @@ export const Calendar: React.FC<CalendarProps> = ({
       );
     }
 
-    // Desktop day view
+    // Desktop day view - timeline
     const dayEvents = getEventsForDate(events, currentDate);
     const hours = getDayHours();
 
     return (
-      <div className="border border-surface-2 rounded-lg overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm">
         {/* Day header */}
-        <div className="bg-surface-1 p-4 border-b border-surface-2">
-          <Text size="lg" className="font-semibold text-subtitle">
+        <div className="bg-slate-100 dark:bg-slate-800 p-6 border-b border-slate-200 dark:border-slate-700">
+          <Text
+            size="xl"
+            className="font-bold text-slate-900 dark:text-slate-100"
+          >
             {daysOfWeek[currentDate.getDay()]}, {currentDate.getDate()}{" "}
             {months[currentDate.getMonth()]} {currentYear}
           </Text>
@@ -670,63 +750,78 @@ export const Calendar: React.FC<CalendarProps> = ({
             );
 
             return (
-              <div key={hour} className="flex border-b border-surface-2">
-                <div className="w-20 p-3 bg-surface-1 border-r border-surface-2">
-                  <Text size="sm" className="font-semibold text-subtitle">
+              <div
+                key={hour}
+                className="flex border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+              >
+                <div className="w-24 p-4 bg-slate-50 dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700">
+                  <Text
+                    size="sm"
+                    className="font-bold text-slate-700 dark:text-slate-300"
+                  >
                     {hour.toString().padStart(2, "0")}:00
                   </Text>
                 </div>
-                <div className="flex-1 p-3 relative min-h-[80px]">
+                <div className="flex-1 p-4 relative min-h-[80px] group">
                   {hourEvents.map((event) => (
                     <div
                       key={event.id}
                       className={twMerge(
-                        "px-3 py-2 rounded mb-2 cursor-pointer hover:opacity-80 transition-opacity",
+                        "px-4 py-3 rounded-lg mb-2 cursor-pointer transition-all duration-200 border hover:shadow-md hover:scale-[1.02] active:scale-[0.98]",
                         getEventColorClasses(event.color)
                       )}
                       onClick={() => onEventClick?.(event)}
                       title={event.title}
                     >
-                      <Text size="sm" className="font-semibold">
-                        {event.title}
-                        {/* Show indicator for class type */}
+                      <div className="flex items-center gap-2 mb-1">
+                        <Text size="sm" className="font-bold">
+                          {event.title}
+                        </Text>
                         {event.classType === "occasional" && (
-                          <span className="ml-2 text-xs">👤</span>
+                          <span className="text-sm">👤</span>
                         )}
                         {event.classType === "regular" && (
-                          <span className="ml-2 text-xs">📚</span>
+                          <span className="text-sm">📚</span>
                         )}
-                      </Text>
-                      {event.startTime && event.endTime && (
-                        <Text size="xs" className="opacity-80">
-                          {event.startTime} - {event.endTime}
-                        </Text>
-                      )}
-                      {/* Display student information if available, otherwise fallback to person */}
-                      {event.studentInfo?.studentName && (
-                        <Text size="xs" className="opacity-80">
-                          👤 {event.studentInfo.studentName}
-                        </Text>
-                      )}
-                      {!event.studentInfo?.studentName && event.person && (
-                        <Text size="xs" className="opacity-80">
-                          👤 {event.person}
-                        </Text>
-                      )}
+                      </div>
+
+                      <div className="space-y-1">
+                        {event.startTime && event.endTime && (
+                          <Text size="xs" className="opacity-90 font-medium">
+                            {event.startTime} - {event.endTime}
+                          </Text>
+                        )}
+
+                        {event.studentInfo?.studentName && (
+                          <div className="flex items-center gap-1 text-xs opacity-90">
+                            <span>👤</span>
+                            <span className="font-medium">
+                              {event.studentInfo.studentName}
+                            </span>
+                          </div>
+                        )}
+
+                        {!event.studentInfo?.studentName && event.person && (
+                          <div className="flex items-center gap-1 text-xs opacity-90">
+                            <span>👤</span>
+                            <span className="font-medium">{event.person}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))}
                   {onAddEvent && (
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="h-6 w-6 p-1 opacity-0 hover:opacity-100 transition-opacity absolute bottom-2 right-2"
+                      className="h-6 w-6 p-1 opacity-0 group-hover:opacity-100 transition-all duration-200 absolute bottom-2 right-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/30"
                       onClick={() => {
                         const newDate = new Date(currentDate);
                         newDate.setHours(hour);
                         handleAddEvent(newDate);
                       }}
                     >
-                      <AddCircle className="h-4 w-4 text-primary" />
+                      <AddCircle className="h-4 w-4" />
                     </Button>
                   )}
                 </div>
@@ -752,75 +847,102 @@ export const Calendar: React.FC<CalendarProps> = ({
   };
 
   return (
-    <div className={twMerge("w-full", className)}>
-      {/* Calendar Header */}
+    <div className={twMerge("w-full max-w-7xl mx-auto", className)}>
+      {/* Modern Calendar Header */}
       <div
         className={twMerge(
-          "flex items-center justify-between mb-6",
-          isMobile && "flex-col space-y-4 items-stretch"
+          "flex items-center justify-between mb-8",
+          isMobile && "flex-col space-y-6 items-stretch"
         )}
       >
+        {/* Navigation and Title */}
         <div
           className={twMerge(
-            "flex items-center space-x-4",
+            "flex items-center gap-6",
             isMobile && "justify-center"
           )}
         >
           {showNavigation && (
-            <>
+            <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={goToPreviousPeriod}
-                className={twMerge("h-10 w-10", isMobile && "h-8 w-8")}
+                className={twMerge(
+                  "rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-200",
+                  isMobile ? "h-10 w-10" : "h-11 w-11"
+                )}
               >
                 <ArrowLeft
-                  className={twMerge("h-5 w-5", isMobile && "h-4 w-4")}
+                  className={twMerge(
+                    "text-slate-700 dark:text-slate-300",
+                    isMobile ? "h-5 w-5" : "h-5 w-5"
+                  )}
                 />
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={goToNextPeriod}
-                className={twMerge("h-10 w-10", isMobile && "h-8 w-8")}
+                className={twMerge(
+                  "rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-200",
+                  isMobile ? "h-10 w-10" : "h-11 w-11"
+                )}
               >
                 <ArrowRight
-                  className={twMerge("h-5 w-5", isMobile && "h-4 w-4")}
+                  className={twMerge(
+                    "text-slate-700 dark:text-slate-300",
+                    isMobile ? "h-5 w-5" : "h-5 w-5"
+                  )}
                 />
               </Button>
-            </>
+            </div>
           )}
+
           <Text
-            size={isMobile ? "base" : "lg"}
-            variant="title"
-            className={twMerge(isMobile && "text-center")}
+            size={isMobile ? "xl" : "2xl"}
+            className={twMerge(
+              "font-bold text-slate-900 dark:text-slate-100",
+              isMobile && "text-center"
+            )}
           >
             {getViewTitle()}
           </Text>
         </div>
 
+        {/* Controls */}
         <div
           className={twMerge(
-            "flex items-center space-x-3",
-            isMobile && "flex-col space-y-3 space-x-0"
+            "flex items-center gap-4",
+            isMobile && "flex-col space-y-4 space-x-0 w-full"
           )}
         >
           {showViewToggle && !isMobile && (
-            <div className="flex items-center space-x-1 bg-surface-1 rounded-lg p-1">
+            <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-xl p-1 border border-slate-200 dark:border-slate-700 shadow-sm">
               <Button
                 variant={currentView === "month" ? "primary" : "ghost"}
                 size="sm"
                 onClick={() => setCurrentView("month")}
-                className="h-8 px-3"
+                className={twMerge(
+                  "h-9 px-4 rounded-lg font-medium transition-all duration-200",
+                  currentView === "month"
+                    ? "bg-blue-600 text-white shadow-sm hover:bg-blue-700"
+                    : "text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700"
+                )}
               >
-                <CalendarIcon className="h-4 w-4 mr-1" />
+                <CalendarIcon className="h-4 w-4 mr-2" />
                 Mês
               </Button>
               <Button
                 variant={currentView === "week" ? "primary" : "ghost"}
                 size="sm"
                 onClick={() => setCurrentView("week")}
-                className="h-8 px-3"
+                className={twMerge(
+                  "h-9 px-4 rounded-lg font-medium transition-all duration-200",
+                  currentView === "week"
+                    ? "bg-blue-600 text-white shadow-sm hover:bg-blue-700"
+                    : "text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700"
+                )}
               >
                 Semana
               </Button>
@@ -828,7 +950,12 @@ export const Calendar: React.FC<CalendarProps> = ({
                 variant={currentView === "day" ? "primary" : "ghost"}
                 size="sm"
                 onClick={() => setCurrentView("day")}
-                className="h-8 px-3"
+                className={twMerge(
+                  "h-9 px-4 rounded-lg font-medium transition-all duration-200",
+                  currentView === "day"
+                    ? "bg-blue-600 text-white shadow-sm hover:bg-blue-700"
+                    : "text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700"
+                )}
               >
                 Dia
               </Button>
@@ -840,7 +967,10 @@ export const Calendar: React.FC<CalendarProps> = ({
               variant="secondary"
               size={isMobile ? "base" : "sm"}
               onClick={goToToday}
-              className={twMerge(isMobile && "w-full")}
+              className={twMerge(
+                "font-medium bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800 dark:hover:bg-emerald-900/30 shadow-sm hover:shadow-md transition-all duration-200",
+                isMobile && "w-full h-11"
+              )}
             >
               Hoje
             </Button>
@@ -849,7 +979,7 @@ export const Calendar: React.FC<CalendarProps> = ({
       </div>
 
       {/* Calendar Content */}
-      {renderCurrentView()}
+      <div className="relative">{renderCurrentView()}</div>
     </div>
   );
 };

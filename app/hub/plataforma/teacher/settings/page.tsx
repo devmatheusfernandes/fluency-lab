@@ -3,7 +3,6 @@ import { UserAdminRepository } from "@/repositories/user.admin.repository";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import TeacherVacationManager from "@/components/teacher/TeacherVacationManager";
-import { Calendar } from "@/components/ui/Calendar";
 import { SchedulingService } from "@/services/schedulingService";
 import {
   mapTeacherEventsToCalendar,
@@ -11,6 +10,7 @@ import {
 } from "@/lib/calendar/calendarUtils";
 import ClientCalendar from "@/components/teacher/ClientCalendar";
 import { serializeForClientComponent } from "@/lib/utils";
+import TeacherSettingsClient from "@/components/teacher/TeacherSettingsClient";
 
 const userAdminRepo = new UserAdminRepository();
 const schedulingService = new SchedulingService();
@@ -45,6 +45,7 @@ export default async function TeacherSettingsPage() {
   // Serialize data before passing to Client Component
   const serializedEvents = serializeForClientComponent(calendarEvents);
   const serializedClasses = serializeForClientComponent(allClasses);
+  const serializedScheduleData = serializeForClientComponent(scheduleData);
 
   return (
     <div style={{ padding: "20px" }}>
@@ -52,9 +53,11 @@ export default async function TeacherSettingsPage() {
       <p>Defina suas regras para o agendamento de aulas.</p>
       <TeacherSettingsForm currentSettings={currentSettings} />
       <TeacherVacationManager />
-      <ClientCalendar
-        events={serializedEvents}
-        allClasses={serializedClasses}
+      <TeacherSettingsClient
+        initialEvents={serializedEvents}
+        initialClasses={serializedClasses}
+        initialScheduleData={serializedScheduleData}
+        teacherId={session!.user.id}
       />
     </div>
   );

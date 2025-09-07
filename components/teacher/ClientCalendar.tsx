@@ -4,21 +4,28 @@
 import { Calendar } from "@/components/ui/Calendar";
 import { useState } from "react";
 import ClassDetailsModal from "@/components/teacher/ClassDetailsModal";
+import AvailabilitySlotModal from "@/components/teacher/AvailabilitySlotModal";
 import { PopulatedStudentClass } from "@/types/classes/class";
 import { CalendarEvent } from "@/types/calendar/calendar";
+import { Button } from "@/components/ui/Button";
+import { AddCircle } from "@solar-icons/react";
 
 interface ClientCalendarProps {
   events: CalendarEvent[];
   allClasses: PopulatedStudentClass[];
+  onRefresh?: () => void; // Add refresh callback
 }
 
 export default function ClientCalendar({
   events,
   allClasses,
+  onRefresh,
 }: ClientCalendarProps) {
   const [selectedClass, setSelectedClass] =
     useState<PopulatedStudentClass | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isClassModalOpen, setIsClassModalOpen] = useState(false);
+  const [isSlotModalOpen, setIsSlotModalOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   const handleEventClick = (event: CalendarEvent) => {
     // If this is a class event, show the details modal
@@ -30,18 +37,47 @@ export default function ClientCalendar({
 
       if (fullClassData) {
         setSelectedClass(fullClassData);
-        setIsModalOpen(true);
+        setIsClassModalOpen(true);
       }
+    }
+  };
+
+  const handleAddEvent = (date: Date) => {
+    setSelectedDate(date);
+    setIsSlotModalOpen(true);
+  };
+
+  const handleSlotCreated = () => {
+    // Close the modal and trigger refresh if provided
+    setIsSlotModalOpen(false);
+    if (onRefresh) {
+      onRefresh();
     }
   };
 
   return (
     <>
-      <Calendar events={events} onEventClick={handleEventClick} />
+      <div className="mb-4 flex justify-end">
+        <Button onClick={() => setIsSlotModalOpen(true)}>
+          <AddCircle className="mr-2 h-4 w-4" />
+          Adicionar Horário
+        </Button>
+      </div>
+      <Calendar
+        events={events}
+        onEventClick={handleEventClick}
+        onAddEvent={handleAddEvent}
+      />
       <ClassDetailsModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isClassModalOpen}
+        onClose={() => setIsClassModalOpen(false)}
         classData={selectedClass}
+      />
+      <AvailabilitySlotModal
+        isOpen={isSlotModalOpen}
+        onClose={() => setIsSlotModalOpen(false)}
+        selectedDate={selectedDate || undefined}
+        onSlotCreated={handleSlotCreated}
       />
     </>
   );

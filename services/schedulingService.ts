@@ -41,24 +41,47 @@ export class SchedulingService {
       );
     }
 
-    // 👇 LÓGICA DE PREVENÇÃO DE CONFLITOS
+    // 👇 LÓGICA DE PREVENÇÃO DE CONFLITOS - MELHORADA
     const existingSlots = await availabilityRepository.findByTeacherId(
       slot.teacherId
     );
 
     // Filtra para encontrar conflitos no mesmo dia da semana
     const hasConflict = existingSlots.some((existing) => {
-      if (existing.repeating?.type !== slot.repeating?.type) return false;
-      if (
-        new Date(existing.startDate).getDay() !==
-        new Date(slot.startDate).getDay()
-      )
-        return false;
+      // Only check for conflicts if both slots are repeating with the same type
+      if (slot.repeating && existing.repeating) {
+        if (existing.repeating.type !== slot.repeating.type) return false;
+        if (
+          new Date(existing.startDate).getDay() !==
+          new Date(slot.startDate).getDay()
+        )
+          return false;
 
-      // Verifica se há sobreposição de horários (newStart < oldEnd AND newEnd > oldStart)
-      return (
-        slot.startTime < existing.endTime && slot.endTime > existing.startTime
-      );
+        // Verifica se há sobreposição de horários (newStart < oldEnd AND newEnd > oldStart)
+        return (
+          slot.startTime < existing.endTime && slot.endTime > existing.startTime
+        );
+      } 
+      // If one or both slots are not repeating, check for exact date conflicts
+      else if (!slot.repeating && !existing.repeating) {
+        // Check if they're on the same date
+        const existingDate = new Date(existing.startDate);
+        const newDate = new Date(slot.startDate);
+        
+        // Compare year, month, and day
+        if (existingDate.getFullYear() !== newDate.getFullYear() ||
+            existingDate.getMonth() !== newDate.getMonth() ||
+            existingDate.getDate() !== newDate.getDate()) {
+          return false;
+        }
+        
+        // Verifica se há sobreposição de horários (newStart < oldEnd AND newEnd > oldStart)
+        return (
+          slot.startTime < existing.endTime && slot.endTime > existing.startTime
+        );
+      }
+      // If one is repeating and the other is not, no conflict
+      return false;
     });
 
     if (hasConflict) {

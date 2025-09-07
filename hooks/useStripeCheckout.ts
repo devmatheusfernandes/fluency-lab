@@ -8,14 +8,12 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 export const useStripeCheckout = () => {
   const [isLoading, setIsLoading] = useState(false);
 
-  // VERIFIQUE: A função aceita o segundo argumento 'credits' do tipo number?
   const redirectToCheckout = async (priceId: string, credits: number) => {
     setIsLoading(true);
     try {
       const response = await fetch('/api/payment/checkout-sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // VERIFIQUE: O 'body' inclui a propriedade 'credits'?
         body: JSON.stringify({ priceId, credits }),
       });
 

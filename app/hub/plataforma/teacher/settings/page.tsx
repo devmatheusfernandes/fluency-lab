@@ -3,11 +3,12 @@ import { UserAdminRepository } from "@/repositories/user.admin.repository";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import TeacherVacationManager from "@/components/teacher/TeacherVacationManager";
-
+import { Calendar } from "@/components/ui/Calendar";
 const userAdminRepo = new UserAdminRepository();
 
 export default async function TeacherSettingsPage() {
   const session = await getServerSession(authOptions);
+
   // Busca as configurações atuais do professor para preencher o formulário
   const teacher = await userAdminRepo.findUserById(session!.user.id);
   const currentSettings = teacher?.schedulingSettings || {};
@@ -18,6 +19,7 @@ export default async function TeacherSettingsPage() {
       <p>Defina suas regras para o agendamento de aulas.</p>
       <TeacherSettingsForm currentSettings={currentSettings} />
       <TeacherVacationManager />
+      <Calendar />
     </div>
   );
 }

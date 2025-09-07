@@ -5,7 +5,6 @@ import { useState, useMemo } from "react";
 import { User } from "@/types/users/users";
 import { Calendar, CalendarEvent } from "@/components/ui/Calendar";
 import { useStudent } from "@/hooks/useStudent";
-import { mapAvailabilityToEvents } from "@/lib/calendar";
 import BookingConfirmationModal from "./BookingConfirmationModal";
 import TeacherCard from "./TeacherCard";
 import { useAvailableTeachers } from "@/hooks/useAvailableTeachers";
@@ -61,16 +60,16 @@ export default function ClassScheduler() {
     fetchAvailability(teacherId);
   };
 
-  const calendarEvents = useMemo(() => {
-    if (!availability) return [];
-    // Passa também as aulas já agendadas para o mapeamento
-    const events = mapAvailabilityToEvents(
-      availability.slots,
-      availability.exceptions,
-      availability.bookedClasses || [] // Garante que bookedClasses seja um array
-    );
-    return events;
-  }, [availability]);
+  // const calendarEvents = useMemo(() => {
+  //   if (!availability) return [];
+  //   // Passa também as aulas já agendadas para o mapeamento
+  //   const events = mapAvailabilityToEvents(
+  //     availability.slots,
+  //     availability.exceptions,
+  //     availability.bookedClasses || [] // Garante que bookedClasses seja um array
+  //   );
+  //   return events;
+  // }, [availability]);
 
   const handleEventClick = (event: CalendarEvent) => {
     if (event.title === "Reservado") return;
@@ -96,7 +95,7 @@ export default function ClassScheduler() {
         </div>
       )}
 
-      {/* O Calendário só aparece depois que um professor é selecionado */}
+      {/* O Calendário só aparece depois que um professor é selecionado
       {selectedTeacherId && (
         <>
           <hr />
@@ -107,7 +106,7 @@ export default function ClassScheduler() {
             <Calendar events={calendarEvents} onEventClick={handleEventClick} />
           )}
         </>
-      )}
+      )} */}
 
       {isLoadingSchedule && <p>Buscando horários...</p>}
       {error && <p style={{ color: "red" }}>{error}</p>}

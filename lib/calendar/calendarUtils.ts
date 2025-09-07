@@ -148,13 +148,26 @@ export const mapTeacherEventsToCalendar = (
             });
           } else {
             // Priority 3: Available slot
+            let slotColor: CalendarEvent["color"] = "success";
+            switch (slot.type) {
+              case "regular":
+                slotColor = "success"; // Green for regular slots
+                break;
+              case "occasional":
+                slotColor = "primary"; // Blue for occasional slots
+                break;
+              case "makeup":
+                slotColor = "info"; // Light blue for makeup slots
+                break;
+            }
+            
             events.push({
               id: `slot-${slot.id}`,
               title: "Horário Vago",
               date: slotDate,
               startTime: slot.startTime,
               endTime: slot.endTime,
-              color: "success",
+              color: slotColor,
               // Include slotId for deletion
               slotId: slot.id
             });

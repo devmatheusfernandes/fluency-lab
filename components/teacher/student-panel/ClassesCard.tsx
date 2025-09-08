@@ -94,6 +94,17 @@ export default function ClassesCard({
     classId: string | null;
   }>({ open: false, classId: null });
 
+  // New confirmation modals for teacher actions
+  const [teacherCancelModal, setTeacherCancelModal] = useState<{
+    open: boolean;
+    classId: string | null;
+  }>({ open: false, classId: null });
+
+  const [noShowModal, setNoShowModal] = useState<{
+    open: boolean;
+    classId: string | null;
+  }>({ open: false, classId: null });
+
   // Enhanced month names for better UX
   const monthNames = [
     "Janeiro",
@@ -183,7 +194,7 @@ export default function ClassesCard({
           "bg-green-50 text-green-700 border-green-200 dark:bg-green-950/50 dark:text-green-300 dark:border-green-800",
       },
       [ClassStatus.CANCELED_STUDENT]: {
-        label: "Cancelada (Aluno)",
+        label: "Aluno cancelou",
         className:
           "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800",
         icon: "❌",
@@ -231,7 +242,7 @@ export default function ClassesCard({
           "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/50 dark:text-violet-300 dark:border-violet-800",
       },
       [ClassStatus.TEACHER_VACATION]: {
-        label: "Férias Professor",
+        label: "Minhas férias",
         className:
           "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/50 dark:text-indigo-300 dark:border-indigo-800",
         icon: "🏖️",
@@ -260,28 +271,56 @@ export default function ClassesCard({
     );
   };
 
-  // Status options for the select dropdown
-  const statusOptions: { value: ClassStatus; label: string }[] = [
-    { value: ClassStatus.SCHEDULED, label: "Agendada" },
-    { value: ClassStatus.COMPLETED, label: "Concluída" },
-    { value: ClassStatus.CANCELED_STUDENT, label: "Cancelada (Aluno)" },
-    { value: ClassStatus.CANCELED_TEACHER, label: "Cancelada (Professor)" },
-    {
-      value: ClassStatus.CANCELED_TEACHER_MAKEUP,
-      label: "Cancelada (Prof. + Reposição)",
-    },
-    { value: ClassStatus.CANCELED_CREDIT, label: "Cancelada (Crédito)" },
-    { value: ClassStatus.NO_SHOW, label: "Falta" },
-    { value: ClassStatus.RESCHEDULED, label: "Reagendada" },
-    { value: ClassStatus.TEACHER_VACATION, label: "Férias Professor" },
-    { value: ClassStatus.OVERDUE, label: "Atrasada" },
-  ];
+  // Teacher-specific status options (only the 3 main ones + current status if different)
+  const getTeacherStatusOptions = (
+    currentStatus: ClassStatus
+  ): { value: ClassStatus; label: string }[] => {
+    const mainOptions = [
+      { value: ClassStatus.COMPLETED, label: "Concluída" },
+      {
+        value: ClassStatus.CANCELED_TEACHER_MAKEUP,
+        label: "Eu cancelei",
+      },
+      { value: ClassStatus.NO_SHOW, label: "Aluno faltou" },
+    ];
+
+    // If current status is not one of the main options, add it to the list
+    const isMainOption = mainOptions.some(
+      (option) => option.value === currentStatus
+    );
+    if (!isMainOption) {
+      const currentStatusConfig = getStatusConfig(currentStatus);
+      return [
+        { value: currentStatus, label: currentStatusConfig.label },
+        ...mainOptions,
+      ];
+    }
+
+    return mainOptions;
+  };
 
   // Student-specific status options (only allow canceling by student)
   const studentStatusOptions: { value: ClassStatus; label: string }[] = [
     { value: ClassStatus.SCHEDULED, label: "Agendada" },
     { value: ClassStatus.CANCELED_STUDENT, label: "Cancelada (Aluno)" },
   ];
+
+  // Handle status change with confirmation modals for teacher
+  const handleStatusChange = (classId: string, newStatus: ClassStatus) => {
+    if (userRole === "teacher") {
+      if (newStatus === ClassStatus.CANCELED_TEACHER_MAKEUP) {
+        setTeacherCancelModal({ open: true, classId });
+        return;
+      }
+      if (newStatus === ClassStatus.NO_SHOW) {
+        setNoShowModal({ open: true, classId });
+        return;
+      }
+    }
+
+    // For completed status or student actions, update directly
+    handleUpdateClassStatus(classId, newStatus);
+  };
 
   return (
     <SubContainer className="min-h-[60vh] lg:h-full">
@@ -346,6 +385,105 @@ export default function ClassesCard({
                 }}
               >
                 Salvar Relatório
+              </ModalPrimaryButton>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      )}
+
+      {/* Teacher Cancel Confirmation Modal */}
+      {userRole === "teacher" && (
+        <Modal
+          open={teacherCancelModal.open}
+          onOpenChange={(open) => {
+            setTeacherCancelModal({ ...teacherCancelModal, open });
+            if (!open) {
+              setTeacherCancelModal({ open: false, classId: null });
+            }
+          }}
+        >
+          <ModalContent className="max-w-md">
+            <ModalHeader>
+              <ModalTitle className="flex items-center gap-2">
+                🔄 Cancelar com Reposição
+              </ModalTitle>
+            </ModalHeader>
+            <ModalBody>
+              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                Tem certeza que deseja cancelar esta aula? Esta ação irá marcar
+                a aula como "Cancelada (Professor + Reposição)" e uma nova aula
+                deverá ser agendada para repor esta.
+              </p>
+            </ModalBody>
+            <ModalFooter className="flex gap-3">
+              <ModalSecondaryButton
+                onClick={() =>
+                  setTeacherCancelModal({ ...teacherCancelModal, open: false })
+                }
+              >
+                Voltar
+              </ModalSecondaryButton>
+              <ModalPrimaryButton
+                onClick={async () => {
+                  if (teacherCancelModal.classId) {
+                    await handleUpdateClassStatus(
+                      teacherCancelModal.classId,
+                      ClassStatus.CANCELED_TEACHER_MAKEUP
+                    );
+                    setTeacherCancelModal({ open: false, classId: null });
+                  }
+                }}
+                className="bg-orange-600 hover:bg-orange-700"
+              >
+                Confirmar Cancelamento
+              </ModalPrimaryButton>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      )}
+
+      {/* Teacher No Show Confirmation Modal */}
+      {userRole === "teacher" && (
+        <Modal
+          open={noShowModal.open}
+          onOpenChange={(open) => {
+            setNoShowModal({ ...noShowModal, open });
+            if (!open) {
+              setNoShowModal({ open: false, classId: null });
+            }
+          }}
+        >
+          <ModalContent className="max-w-md">
+            <ModalHeader>
+              <ModalTitle className="flex items-center gap-2">
+                👤 Marcar como Falta
+              </ModalTitle>
+            </ModalHeader>
+            <ModalBody>
+              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                Tem certeza que deseja marcar esta aula como "Falta"? Esta ação
+                indica que o aluno não compareceu à aula agendada.
+              </p>
+            </ModalBody>
+            <ModalFooter className="flex gap-3">
+              <ModalSecondaryButton
+                onClick={() => setNoShowModal({ ...noShowModal, open: false })}
+              >
+                Voltar
+              </ModalSecondaryButton>
+              <ModalPrimaryButton
+                onClick={async () => {
+                  if (noShowModal.classId) {
+                    await handleUpdateClassStatus(
+                      noShowModal.classId,
+                      ClassStatus.NO_SHOW
+                    );
+                    setNoShowModal({ open: false, classId: null });
+                  }
+                }}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Confirmar Falta
               </ModalPrimaryButton>
             </ModalFooter>
           </ModalContent>
@@ -501,7 +639,7 @@ export default function ClassesCard({
                             day: "2-digit",
                           })}
                           {isToday && (
-                            <span className="text-sm text-indigo-500 dark:text-indigo-400">
+                            <span className="text-sm text-indigo-500 dark:text-indigo-400 ml-1">
                               • Hoje
                             </span>
                           )}
@@ -524,10 +662,7 @@ export default function ClassesCard({
                           <Select
                             value={cls.status}
                             onValueChange={(value) =>
-                              handleUpdateClassStatus(
-                                cls.id,
-                                value as ClassStatus
-                              )
+                              handleStatusChange(cls.id, value as ClassStatus)
                             }
                             disabled={isPast}
                           >
@@ -535,27 +670,27 @@ export default function ClassesCard({
                               className={`w-full lg:w-48 h-10 text-sm bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors ${isPast ? "opacity-50 cursor-not-allowed" : ""} ${getStatusConfig(cls.status).selectClassName}`}
                             >
                               <div className="flex items-center gap-2">
+                                <span>{statusConfig.icon}</span>
                                 <SelectValue />
                               </div>
                             </SelectTrigger>
                             <SelectContent>
-                              {statusOptions.map((option) => (
-                                <SelectOption
-                                  key={option.value}
-                                  value={option.value}
-                                  className={
-                                    getStatusConfig(option.value)
-                                      .selectClassName
-                                  }
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <span>
-                                      {getStatusConfig(option.value).icon}
-                                    </span>
-                                    <span>{option.label}</span>
-                                  </div>
-                                </SelectOption>
-                              ))}
+                              {getTeacherStatusOptions(cls.status).map(
+                                (option) => (
+                                  <SelectOption
+                                    key={option.value}
+                                    value={option.value}
+                                    className={
+                                      getStatusConfig(option.value)
+                                        .selectClassName
+                                    }
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <span>{option.label}</span>
+                                    </div>
+                                  </SelectOption>
+                                )
+                              )}
                             </SelectContent>
                           </Select>
 

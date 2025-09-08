@@ -5,7 +5,8 @@
  */
 export enum RegularCreditType {
   BONUS = "bonus",                    // Bonus credits awarded by admin/manager
-  LATE_STUDENTS = "late-students"     // Credits for students who started late in the month
+  LATE_STUDENTS = "late-students",     // Credits for students who started late in the month
+  TEACHER_CANCELLATION = "teacher-cancellation"  // Credits for students who were cancelled by teacher
 }
 
 /**

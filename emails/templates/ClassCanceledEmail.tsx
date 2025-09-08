@@ -19,6 +19,7 @@ interface ClassCanceledEmailProps {
   canceledBy: string;
   reason?: string;
   creditRefunded?: boolean;
+  makeupCreditGranted?: boolean; // New property for makeup credit
   platformLink: string;
 }
 
@@ -31,6 +32,7 @@ export const ClassCanceledEmail: React.FC<ClassCanceledEmailProps> = ({
   canceledBy,
   reason,
   creditRefunded,
+  makeupCreditGranted, // New property
   platformLink,
 }) => {
   const isStudent = recipientType === "student";
@@ -71,6 +73,12 @@ export const ClassCanceledEmail: React.FC<ClassCanceledEmailProps> = ({
                   {creditRefunded ? "Sim" : "Não"}
                 </Text>
               )}
+              {isStudent && makeupCreditGranted && (
+                <Text style={classInfoText}>
+                  <strong>Crédito de reposição:</strong> Concedido (válido por
+                  45 dias)
+                </Text>
+              )}
             </Section>
 
             <Text style={paragraph}>
@@ -80,6 +88,15 @@ export const ClassCanceledEmail: React.FC<ClassCanceledEmailProps> = ({
                   : "Como o cancelamento foi feito fora do prazo permitido, o crédito não foi devolvido. Entre em contato conosco se tiver dúvidas."
                 : "O aluno foi notificado sobre o cancelamento. O horário ficou disponível novamente em sua agenda."}
             </Text>
+
+            {isStudent && makeupCreditGranted && (
+              <Text style={paragraph}>
+                <strong>Crédito de reposição concedido:</strong> Você recebeu um
+                crédito especial para reposição desta aula. Este crédito é
+                válido por 45 dias e pode ser usado para agendar uma nova aula
+                de reposição.
+              </Text>
+            )}
 
             {isStudent && (
               <Text style={paragraph}>

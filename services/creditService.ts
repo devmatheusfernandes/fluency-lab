@@ -68,7 +68,7 @@ export class CreditService {
     return credit;
   }
 
-  /**
+    /**
    * Get available credits balance for a student
    */
   async getStudentCreditsBalance(studentId: string): Promise<RegularCreditsBalance> {
@@ -100,8 +100,12 @@ export class CreditService {
       .filter((c: RegularClassCredit) => c.type === RegularCreditType.LATE_STUDENTS)
       .reduce((sum: number, c: RegularClassCredit) => sum + c.amount, 0);
 
+    const teacherCancellationCredits = availableCredits
+      .filter((c: RegularClassCredit) => c.type === RegularCreditType.TEACHER_CANCELLATION)
+      .reduce((sum: number, c: RegularClassCredit) => sum + c.amount, 0);
+
     return {
-      totalCredits: bonusCredits + lateStudentCredits,
+      totalCredits: bonusCredits + lateStudentCredits + teacherCancellationCredits,
       bonusCredits,
       lateStudentCredits,
       expiredCredits: expiredCredits.reduce((sum: number, c: RegularClassCredit) => sum + c.amount, 0),

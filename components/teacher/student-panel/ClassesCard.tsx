@@ -25,6 +25,7 @@ import {
 import { TextArea } from "@/components/ui/TextArea";
 import { Document } from "@solar-icons/react/ssr";
 import SkeletonLoader from "@/components/shared/Skeleton/SkeletonLoader";
+import { toast } from "sonner";
 
 // Enhanced skeleton with modern shimmer effect
 const ClassSkeleton = () => (
@@ -143,6 +144,8 @@ export default function ClassesCard({
     try {
       await onUpdateClassStatus(classId, newStatus);
       onFetchClasses(selectedMonth, selectedYear);
+      console.log("Class status updated successfully.");
+      toast.success("Aula atualizada");
     } catch (error) {
       console.error("Failed to update class status:", error);
       // Could add toast notification here

@@ -22,6 +22,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'ID da aula é obrigatório.' }, { status: 400 });
     }
 
+    console.log(`[API Route] Canceling class ${classId} by teacher ${session.user.id}`, { reason, allowMakeup });
+    
     const teacherId = session.user.id;
     const result = await schedulingService.cancelClassByTeacher(
       teacherId,
@@ -30,9 +32,15 @@ export async function POST(request: NextRequest) {
       allowMakeup
     );
 
+    console.log(`[API Route] Class cancellation completed successfully for class ${classId}`);
     return NextResponse.json(result);
   } catch (error: any) {
-    console.error("Erro ao cancelar aula:", error);
+    console.error("[API Route] Erro ao cancelar aula:", error);
+    console.error("[API Route] Error details:", {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

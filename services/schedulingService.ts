@@ -278,157 +278,6 @@ export class SchedulingService {
     });
   }
 
-  /**
-   * Create a class using student's regular class credits (for teachers)
-   * @param teacherId - The teacher creating the class
-   * @param studentId - The student who will attend the class
-   * @param scheduledAt - When the class will happen
-   * @param language - Language of the class
-   * @param creditType - Optional preferred credit type to use
-   * @param reason - Optional reason for the class
-   * @returns Created class details
-   */
-  async createClassWithCredits(
-    teacherId: string,
-    studentId: string,
-    scheduledAt: Date,
-    language: string,
-    creditType?: RegularCreditType,
-    reason?: string
-  ): Promise<{ success: boolean; classData: StudentClass; creditUsed: any }> {
-    // Validate teacher exists and has permission
-    const teacher = await userAdminRepository.findUserById(teacherId);
-    if (!teacher) {
-      throw new Error('Professor não encontrado.');
-    }
-
-    // Validate student exists and is not occasional student
-    const student = await userAdminRepository.findUserById(studentId);
-    if (!student) {
-      throw new Error('Estudante não encontrado.');
-    }
-
-    if (student.role === 'occasional_student') {
-      throw new Error('Estudantes ocasionais não podem usar créditos de aulas regulares.');
-    }
-
-    // Check if student has available credits
-    const hasCredits = await creditService.hasAvailableCredits(studentId);
-    if (!hasCredits) {
-      throw new Error('Estudante não possui créditos disponíveis.');
-    }
-
-    // Find an available credit
-    const availableCredit = await creditService.findAvailableCredit(studentId, creditType);
-    if (!availableCredit) {
-      throw new Error('Nenhum crédito disponível encontrado.');
-    }
-
-    // Validate scheduling constraints
-    const now = new Date();
-    const settings = teacher.schedulingSettings || {};
-    const leadTimeHours = settings.bookingLeadTimeHours || 24;
-    const earliestBookingTime = new Date(now.getTime() + leadTimeHours * 60 * 60 * 1000);
-
-    if (scheduledAt < earliestBookingTime) {
-      throw new Error(`As aulas devem ser agendadas com pelo menos ${leadTimeHours} horas de antecedência.`);
-    }
-
-    const horizonDays = settings.bookingHorizonDays || 30;
-    const latestBookingDate = new Date(now.getTime() + horizonDays * 24 * 60 * 60 * 1000);
-
-    if (scheduledAt > latestBookingDate) {
-      throw new Error(`As aulas só podem ser agendadas para os próximos ${horizonDays} dias.`);
-    }
-
-    // Check for existing classes at the same time
-    const existingClass = await classRepository.findClassById('temp'); // This is just for type checking
-    const classesAtTime = await adminDb.collection('classes')
-      .where('teacherId', '==', teacherId)
-      .where('scheduledAt', '==', scheduledAt)
-      .where('status', '==', ClassStatus.SCHEDULED)
-      .get();
-
-    if (!classesAtTime.empty) {
-      throw new Error('Já existe uma aula agendada para este horário.');
-    }
-
-    const studentClassesAtTime = await adminDb.collection('classes')
-      .where('studentId', '==', studentId)
-      .where('scheduledAt', '==', scheduledAt)
-      .where('status', '==', ClassStatus.SCHEDULED)
-      .get();
-
-    if (!studentClassesAtTime.empty) {
-      throw new Error('O estudante já possui uma aula agendada para este horário.');
-    }
-
-    // Create the class
-    const newClassData: Omit<StudentClass, "id"> = {
-      studentId,
-      teacherId,
-      language,
-      scheduledAt,
-      durationMinutes: 50, // Regular classes are 50 minutes
-      status: ClassStatus.SCHEDULED,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      createdBy: teacherId,
-      classType: 'regular',
-      creditId: availableCredit.id,
-      creditType: availableCredit.type,
-      isReschedulable: false, // Credit classes cannot be rescheduled
-      notes: reason,
-    };
-
-    return adminDb.runTransaction(async (transaction) => {
-      // Create the class
-      const newClassRef = adminDb.collection('classes').doc();
-      const classDataWithId = { ...newClassData, id: newClassRef.id };
-      transaction.set(newClassRef, {
-        ...newClassData,
-        scheduledAt: new Date(scheduledAt),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-
-      return {
-        success: true,
-        classData: classDataWithId as StudentClass,
-        creditUsed: availableCredit,
-      };
-    }).then(async (result) => {
-      // Use the credit (outside transaction to avoid conflicts)
-      await creditService.useCredit({
-        studentId,
-        creditId: availableCredit.id,
-        classId: result.classData.id,
-      }, teacherId);
-
-      // Send email notifications
-      try {
-        const formatDate = (date: Date) => date.toLocaleDateString('pt-BR');
-        const formatTime = (date: Date) => date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        const className = `${language} - Aula com Crédito (${availableCredit.type === 'bonus' ? 'Bônus' : 'Estudante Tardio'})`;
-        const platformLink = process.env.NEXT_PUBLIC_APP_URL || 'https://app.fluencylab.com';
-
-        // Send confirmation to student
-        await emailService.sendWelcomeAndSetPasswordEmail(
-          student.email,
-          student.name,
-          `${platformLink}/hub/plataforma/student/my-class`
-        );
-
-        console.log(`E-mail de confirmação de aula com crédito enviado para estudante (${student.email})`);
-      } catch (emailError) {
-        console.error('Erro ao enviar e-mails de confirmação:', emailError);
-        // Don't fail the operation if email fails
-      }
-
-      return result;
-    });
-  }
-
   // 👇 MÉTODO APRIMORADO PARA CANCELAMENTO COM SUGESTÃO DE REAGENDAMENTO
   async cancelClassByStudent(studentId: string, classId: string) {
     const classRef = adminDb.collection("classes").doc(classId);
@@ -598,7 +447,7 @@ export class SchedulingService {
     }
   }
 
-  /**
+    /**
    * Cancela uma aula pelo professor, marcando-a como makeup class se permitir reagendamento.
    * @param teacherId O ID do professor que está cancelando.
    * @param classId O ID da aula a ser cancelada.
@@ -611,6 +460,8 @@ export class SchedulingService {
     reason?: string, 
     allowMakeup: boolean = true
   ) {
+    console.log(`[cancelClassByTeacher] Starting cancellation process for class ${classId} by teacher ${teacherId}`);
+    
     const classRef = adminDb.collection("classes").doc(classId);
 
     const classDoc = await classRef.get();
@@ -620,9 +471,17 @@ export class SchedulingService {
 
     const classData = classDoc.data() as StudentClass;
     const scheduledAt = (classData.scheduledAt as any).toDate();
+    
+    console.log(`[cancelClassByTeacher] Class data retrieved:`, { 
+      classId, 
+      studentId: classData.studentId, 
+      teacherId: classData.teacherId,
+      scheduledAt 
+    });
 
     // Determinar o status baseado na permissão de makeup
     const newStatus = allowMakeup ? ClassStatus.CANCELED_TEACHER_MAKEUP : ClassStatus.CANCELED_TEACHER;
+    console.log(`[cancelClassByTeacher] New status will be: ${newStatus}`);
     
     // Atualizar a aula
     await classRef.update({ 
@@ -631,6 +490,7 @@ export class SchedulingService {
       canceledBy: "teacher",
       reason: reason
     });
+    console.log(`[cancelClassByTeacher] Class status updated in database`);
 
     // Liberar o horário removendo a exceção
     if (classData.availabilitySlotId) {
@@ -638,14 +498,44 @@ export class SchedulingService {
         classData.availabilitySlotId,
         scheduledAt
       );
+      console.log(`[cancelClassByTeacher] Availability exception deleted`);
+    }
+
+    // Se for cancelamento com reposição, conceder crédito automático ao aluno
+    if (newStatus === ClassStatus.CANCELED_TEACHER_MAKEUP) {
+      try {
+        console.log(`[cancelClassByTeacher] Granting makeup credit to student ${classData.studentId}`);
+        // Conceder crédito de reposição ao aluno
+        const creditService = new CreditService();
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 45); // 45 dias de expiração
+        
+        await creditService.grantCredits({
+          studentId: classData.studentId,
+          type: RegularCreditType.TEACHER_CANCELLATION, // Usar o novo tipo de crédito para cancelamentos do professor
+          amount: 1,
+          expiresAt: expiresAt,
+          reason: `Crédito de reposição por cancelamento do professor em ${new Date().toLocaleDateString('pt-BR')}`
+        }, teacherId); // teacherId como quem concedeu o crédito
+        console.log(`[cancelClassByTeacher] Makeup credit granted successfully`);
+      } catch (error) {
+        console.error("Erro ao conceder crédito de reposição:", error);
+        // Não falha a operação se o crédito falhar, apenas loga o erro
+      }
     }
 
     // --- ENVIAR NOTIFICAÇÕES POR E-MAIL ---
     try {
+      console.log(`[cancelClassByTeacher] Fetching user data for email notifications`);
       const [student, teacher] = await Promise.all([
         userAdminRepository.findUserById(classData.studentId),
         userAdminRepository.findUserById(teacherId)
       ]);
+      
+      console.log(`[cancelClassByTeacher] User data fetched:`, { 
+        student: student ? `${student.name} (${student.email})` : 'not found',
+        teacher: teacher ? `${teacher.name} (${teacher.email})` : 'not found'
+      });
 
       if (student && teacher) {
         const formatDate = (date: Date) => date.toLocaleDateString('pt-BR');
@@ -655,9 +545,10 @@ export class SchedulingService {
 
         const emailReason = reason || "Cancelamento pelo professor";
         const makeupMessage = allowMakeup 
-          ? " Você pode reagendar esta aula como reposição sem usar seus reagendamentos mensais."
+          ? " Você pode reagendar esta aula como reposição sem usar seus reagendamentos mensais. Um crédito foi concedido para uso em até 45 dias."
           : "";
 
+        console.log(`[cancelClassByTeacher] Sending emails to student and teacher`);
         // Enviar e-mail para o estudante
         await emailService.sendClassCanceledEmail({
           email: student.email,
@@ -669,6 +560,7 @@ export class SchedulingService {
           canceledBy: teacher.name,
           reason: emailReason + makeupMessage,
           creditRefunded: true, // Professor cancellations always refund
+          makeupCreditGranted: newStatus === ClassStatus.CANCELED_TEACHER_MAKEUP, // Add this parameter
           platformLink: `${platformLink}/hub/plataforma/student/my-class`
         });
 
@@ -682,26 +574,29 @@ export class SchedulingService {
           scheduledTime: formatTime(scheduledAt),
           canceledBy: teacher.name,
           reason: emailReason,
+          makeupCreditGranted: newStatus === ClassStatus.CANCELED_TEACHER_MAKEUP, // Add this parameter
           platformLink: `${platformLink}/hub/plataforma/teacher/my-classes`
         });
-
-        console.log(`E-mails de cancelamento do professor enviados para estudante (${student.email}) e professor (${teacher.email})`);
+        
+        console.log(`[cancelClassByTeacher] E-mails de cancelamento enviados para estudante (${student.email}) e professor (${teacher.email})`);
+      } else {
+        console.log(`[cancelClassByTeacher] Could not send emails - missing user data`, { 
+          studentExists: !!student, 
+          teacherExists: !!teacher 
+        });
       }
-    } catch (emailError) {
-      console.error('Erro ao enviar e-mails de cancelamento do professor:', emailError);
+    } catch (error) {
+      console.error("[cancelClassByTeacher] Erro ao enviar e-mails de cancelamento:", error);
       // Não falha a operação se o e-mail falhar, apenas loga o erro
     }
 
     return {
       success: true,
-      message: allowMakeup 
-        ? "Aula cancelada. O aluno pode reagendar como aula de reposição."
-        : "Aula cancelada pelo professor.",
-      allowMakeup,
-      status: newStatus
+      message: "Aula cancelada. O cancelamento fora do prazo não devolve o crédito.",
+      suggestReschedule: false,
+      rescheduleInfo: null
     };
   }
-
   /**
    * Busca os detalhes completos de uma aula, incluindo os perfis do
    * aluno e do professor, e verifica a autorização.

@@ -97,6 +97,7 @@ export class EmailService {
     canceledBy,
     reason,
     creditRefunded,
+    makeupCreditGranted,
     platformLink
   }: {
     email: string;
@@ -108,6 +109,7 @@ export class EmailService {
     canceledBy: string;
     reason?: string;
     creditRefunded?: boolean;
+    makeupCreditGranted?: boolean;
     platformLink: string;
   }) {
     try {
@@ -128,6 +130,7 @@ export class EmailService {
           canceledBy,
           reason,
           creditRefunded,
+          makeupCreditGranted,
           platformLink
         }),
       });

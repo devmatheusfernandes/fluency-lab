@@ -248,7 +248,7 @@ export const useStudentPanel = (studentId: string) => {
     }
   }, [studentId]);
 
-  const updateClassStatus = useCallback(async (classId: string, newStatus: ClassStatus) => {
+    const updateClassStatus = useCallback(async (classId: string, newStatus: ClassStatus) => {
     try {
       // For students, use their own endpoint for canceling classes
       if (typeof window !== 'undefined') {
@@ -286,28 +286,58 @@ export const useStudentPanel = (studentId: string) => {
         }
       }
       
-      // For teachers/admins, use the general endpoint
-      const response = await fetch(`/api/classes/${classId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
+      // For teachers/admins, check if this is a special cancellation with makeup
+      if (newStatus === ClassStatus.CANCELED_TEACHER_MAKEUP || newStatus === ClassStatus.CANCELED_TEACHER) {
+        // Use the specific teacher cancel endpoint which handles makeup credits and emails
+        const response = await fetch(`/api/teacher/cancel-class`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            classId, 
+            reason: 'Cancelamento pelo professor', // Default reason
+            allowMakeup: newStatus === ClassStatus.CANCELED_TEACHER_MAKEUP
+          }),
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update class status');
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to cancel class');
+        }
+
+        // Update the class status in the local state
+        setClasses(prev => 
+          prev.map(cls => 
+            cls.id === classId ? { ...cls, status: newStatus } : cls
+          )
+        );
+        
+        return true;
+      } else {
+        // For other status updates, use the general endpoint
+        const response = await fetch(`/api/classes/${classId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ status: newStatus }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to update class status');
+        }
+
+        // Update the class status in the local state
+        setClasses(prev => 
+          prev.map(cls => 
+            cls.id === classId ? { ...cls, status: newStatus } : cls
+          )
+        );
+        
+        return true;
       }
-
-      // Update the class status in the local state
-      setClasses(prev => 
-        prev.map(cls => 
-          cls.id === classId ? { ...cls, status: newStatus } : cls
-        )
-      );
-      
-      return true;
     } catch (err: any) {
       setError(err.message);
       return false;

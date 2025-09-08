@@ -458,7 +458,7 @@ const ModalPrimaryButton = React.forwardRef<
       whileTap={{ scale: 0.98 }}
       transition={{ type: "spring", stiffness: 400, damping: 17 }}
       className={twMerge(
-        `flex-1 px-6 py-3 text-base font-semibold text-white rounded-xl 
+        `min-w-fit flex-1 px-6 py-3 text-base font-semibold text-white rounded-xl 
         transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2
         disabled:opacity-50 disabled:cursor-not-allowed shadow-lg
         ${variantStyles[variant]}`,

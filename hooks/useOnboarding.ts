@@ -22,12 +22,12 @@ export const useOnboarding = () => {
     }
 
     // Debug logging for troubleshooting
-    console.log('🔍 Onboarding Debug:', {
-      status,
-      userRole: session?.user?.role,
-      tutorialCompleted: session?.user?.tutorialCompleted,
-      userId: session?.user?.id
-    });
+    // console.log('🔍 Onboarding Debug:', {
+    //   status,
+    //   userRole: session?.user?.role,
+    //   tutorialCompleted: session?.user?.tutorialCompleted,
+    //   userId: session?.user?.id
+    // });
 
     // Check if user is a student or occasional student AND hasn't completed onboarding
     if (
@@ -39,7 +39,7 @@ export const useOnboarding = () => {
       console.log('✅ Showing onboarding modal for user');
       setShowOnboarding(true);
     } else {
-      console.log('❌ Onboarding conditions not met or already completed');
+      // console.log('❌ Onboarding conditions not met or already completed');
       setShowOnboarding(false);
     }
     

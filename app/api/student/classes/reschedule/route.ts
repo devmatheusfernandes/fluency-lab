@@ -16,20 +16,30 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { classId } = await request.json();
+    const { classId, newScheduledAt, availabilitySlotId, reason } = await request.json();
     
     if (!classId) {
       return NextResponse.json({ error: 'ID da aula não fornecido.' }, { status: 400 });
     }
 
+    if (!newScheduledAt) {
+      return NextResponse.json({ error: 'Nova data não fornecida.' }, { status: 400 });
+    }
+
     const studentId = session.user.id;
     
-    // Use the enhanced cancellation method from the service
-    const result = await schedulingService.cancelClassByStudent(studentId, classId);
+    // Reschedule the class
+    const result = await schedulingService.rescheduleClass({
+      classId,
+      reschedulerId: studentId,
+      newScheduledAt: new Date(newScheduledAt),
+      availabilitySlotId,
+      reason: reason || 'Reagendamento solicitado pelo aluno'
+    });
 
     return NextResponse.json(result);
   } catch (error: any) {
-    console.error('Error canceling class:', error);
-    return NextResponse.json({ error: error.message || 'Failed to cancel class' }, { status: 500 });
+    console.error('Error rescheduling class:', error);
+    return NextResponse.json({ error: error.message || 'Failed to reschedule class' }, { status: 500 });
   }
 }

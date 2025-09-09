@@ -51,7 +51,7 @@ export const useStudentPanel = (studentId: string) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchStudentInfo = useCallback(async () => {
+   const fetchStudentInfo = useCallback(async () => {
     if (!studentId) return;
     
     try {
@@ -72,10 +72,12 @@ export const useStudentPanel = (studentId: string) => {
             email: "Email não disponível",
           });
         }
+        // Return early since we successfully got the student info
         return;
       }
       
-      // If teacher endpoint fails, try admin endpoint (for admin users)
+      // Only try admin endpoint if teacher endpoint failed
+      // For students, this will fail with 403, but that's expected
       const response = await fetch(`/api/admin/users/${studentId}/details`);
       if (!response.ok) {
         return;
@@ -139,7 +141,7 @@ export const useStudentPanel = (studentId: string) => {
           if (!response.ok) throw new Error('Failed to fetch tasks');
           
           const data = await response.json();
-          console.log('Student tasks fetched:', data); // Debug log
+          
           setTasks(data.map(parseTaskDates));
           return;
         }
@@ -258,27 +260,12 @@ export const useStudentPanel = (studentId: string) => {
         if (session?.user?.id && session?.user?.role === 'student') {
           // Student canceling their own class
           if (newStatus === ClassStatus.CANCELED_STUDENT) {
-            const response = await fetch(`/api/student/classes/cancel`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ classId }),
-            });
-
-            if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.error || 'Failed to cancel class');
-            }
-
-            // Update the class status in the local state
-            setClasses(prev => 
-              prev.map(cls => 
-                cls.id === classId ? { ...cls, status: newStatus } : cls
-              )
-            );
-            
-            return true;
+            // Instead of directly calling the API, we'll return data for the UI to handle
+            // the cancellation flow with rescheduling options
+            return {
+              requiresConfirmation: true,
+              classId
+            };
           } else {
             // Students can only cancel classes, not change to other statuses
             throw new Error('Students can only cancel their own classes');

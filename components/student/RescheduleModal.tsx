@@ -59,6 +59,10 @@ export default function RescheduleModal({
     }
   };
 
+  // Check if this is a teacher makeup class that will use a teacher cancellation credit
+  const isTeacherMakeupClass =
+    classToReschedule?.status === "canceled-teacher-makeup";
+
   return (
     <Modal open={isOpen} onOpenChange={onClose}>
       <ModalContent>
@@ -73,6 +77,16 @@ export default function RescheduleModal({
               <span className="font-bold">{classToReschedule.teacherName}</span>
               .
             </Text>
+
+            {isTeacherMakeupClass && (
+              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md mb-4">
+                <p className="text-sm text-yellow-800">
+                  <span className="font-bold">Aviso:</span> Esta aula foi
+                  cancelada pelo professor e será reagendada usando um crédito
+                  de reposição. Após reagendar, o crédito será consumido.
+                </p>
+              </div>
+            )}
 
             {isLoadingSlots ? (
               <Loading />
@@ -139,7 +153,11 @@ export default function RescheduleModal({
             onClick={handleConfirmReschedule}
             disabled={!selectedSlot || isHookLoading}
           >
-            {isHookLoading ? "A Reagendar..." : "Confirmar Novo Horário"}
+            {isHookLoading
+              ? "A Reagendar..."
+              : isTeacherMakeupClass
+                ? "Confirmar e Usar Crédito"
+                : "Confirmar Novo Horário"}
           </Button>
         </ModalFooter>
       </ModalContent>

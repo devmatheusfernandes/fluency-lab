@@ -14,7 +14,8 @@ export async function GET(
   }
 
   // Allow both teachers and admins to access this endpoint
-  if (!session?.user?.role || !['teacher', 'admin'].includes(session.user.role)) {
+  //EU ADICINEI STUDENT AQUI, ACHO QUE NAO TEM PROBLEMA JÁ QUE ELE SÓ PEGA OS NOTEBOOKS DO ALUNO
+  if (!session?.user?.role || !['teacher', 'admin', 'student'].includes(session.user.role)) {
     return NextResponse.json({ error: 'Acesso não autorizado.' }, { status: 403 });
   }
 

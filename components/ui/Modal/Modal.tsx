@@ -150,7 +150,7 @@ const ModalTitle = React.forwardRef<
     <Dialog.Title
       ref={ref}
       className={twMerge(
-        "text-xl font-bold leading-tight tracking-tight text-gray-900 dark:text-gray-100",
+        "text-xl font-bold text-center leading-tight tracking-tight text-gray-900 dark:text-gray-100",
         className
       )}
       {...props}

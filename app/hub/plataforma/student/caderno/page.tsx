@@ -12,6 +12,7 @@ import ClassesCard from "@/components/teacher/student-panel/ClassesCard";
 import { Container } from "@/components/ui/Container";
 import { SubContainer } from "@/components/ui/SubContainer";
 import SkeletonLoader from "@/components/shared/Skeleton/SkeletonLoader";
+import { ClassCancellationModal } from "@/components/student/ClassCancellationModal";
 
 interface Notebook {
   studentName: string;
@@ -216,17 +217,13 @@ export default function Caderno() {
     updateClassStatus,
     updateTask,
   } = useStudentPanel(studentId as string);
+  const [showCancellationModal, setShowCancellationModal] = useState(false);
+  const [classToCancel, setClassToCancel] = useState<StudentClass | null>(null);
 
   // Add Google Calendar sync hook
   const { isSyncing: isSyncingWithGoogleCalendar, syncWithGoogleCalendar } =
     useGoogleCalendarSync(studentId as string);
 
-  // Debug: Log tasks to see if they're being fetched
-  React.useEffect(() => {
-    console.log("Tasks:", tasks);
-  }, [tasks]);
-
-  // Handle updating class status - simplified for students
   const handleUpdateClassStatus = async (
     classId: string,
     newStatus: ClassStatus
@@ -266,38 +263,36 @@ export default function Caderno() {
   }
 
   return (
-    <div className="fade-in fade-out p-2 h-max md:h-max lg:h-[92vh] min-w-screen overflow-hidden">
-      <Container className="flex flex-col sm:flex-row gap-4">
-        <div className="w-full sm:w-fit h-[50vh] sm:h-full flex flex-col gap-2">
-          <NotebooksCard
-            student={student}
-            notebooks={notebooks}
-            onCreateNotebook={async () => false} // Students cannot create notebooks
-            userRole="student"
-            onAddTask={undefined} // Students cannot add notebooks as tasks
-            loading={loading}
-          />
-        </div>
-
-        <TasksCard
-          tasks={tasks}
-          onAddTask={undefined} // Students cannot add tasks
-          onUpdateTask={updateTask}
-          onDeleteTask={undefined} // Students cannot delete tasks
-          onDeleteAllTasks={undefined} // Students cannot delete all tasks
-          onSyncWithGoogleCalendar={syncWithGoogleCalendar} // Add Google Calendar sync function
-          isSyncingWithGoogleCalendar={isSyncingWithGoogleCalendar} // Add syncing state
-        />
-
-        <ClassesCard
-          classes={classes}
-          onUpdateClassStatus={handleUpdateClassStatus}
-          onUpdateClassFeedback={undefined} // Students cannot update feedback
-          onFetchClasses={fetchClasses}
+    <Container className="flex flex-col sm:flex-row gap-4">
+      <div className="w-full sm:w-fit h-[50vh] sm:h-full flex flex-col gap-2">
+        <NotebooksCard
+          student={student}
+          notebooks={notebooks}
+          onCreateNotebook={async () => false} // Students cannot create notebooks
+          userRole="student"
+          onAddTask={undefined} // Students cannot add notebooks as tasks
           loading={loading}
-          userRole="student" // Pass userRole prop
         />
-      </Container>
-    </div>
+      </div>
+
+      <TasksCard
+        tasks={tasks}
+        onAddTask={undefined} // Students cannot add tasks
+        onUpdateTask={updateTask}
+        onDeleteTask={undefined} // Students cannot delete tasks
+        onDeleteAllTasks={undefined} // Students cannot delete all tasks
+        onSyncWithGoogleCalendar={syncWithGoogleCalendar} // Add Google Calendar sync function
+        isSyncingWithGoogleCalendar={isSyncingWithGoogleCalendar} // Add syncing state
+      />
+
+      <ClassesCard
+        classes={classes}
+        onUpdateClassStatus={handleUpdateClassStatus}
+        onUpdateClassFeedback={undefined} // Students cannot update feedback
+        onFetchClasses={fetchClasses}
+        loading={loading}
+        userRole="student" // Pass userRole prop
+      />
+    </Container>
   );
 }

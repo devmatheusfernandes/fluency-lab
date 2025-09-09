@@ -23,9 +23,12 @@ import {
   ModalSecondaryButton,
 } from "@/components/ui/Modal";
 import { TextArea } from "@/components/ui/TextArea";
-import { Document } from "@solar-icons/react/ssr";
+import { ClockCircle, Document } from "@solar-icons/react/ssr";
 import SkeletonLoader from "@/components/shared/Skeleton/SkeletonLoader";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/Button";
+import { cloudcontrolspartner } from "googleapis/build/src/apis/cloudcontrolspartner";
+import { ClassCancellationModal } from "@/components/student/ClassCancellationModal";
 
 // Enhanced skeleton with modern shimmer effect
 const ClassSkeleton = () => (
@@ -130,6 +133,9 @@ export default function ClassesCard({
       classDate.getFullYear() === selectedYear
     );
   });
+
+  const [showCancellationModal, setShowCancellationModal] = useState(false);
+  const [classToCancel, setClassToCancel] = useState<StudentClass | null>(null);
 
   // When month/year changes, fetch classes for that period
   useEffect(() => {
@@ -327,6 +333,20 @@ export default function ClassesCard({
 
   return (
     <SubContainer className="min-h-[60vh] lg:h-full">
+      {classToCancel && (
+        <ClassCancellationModal
+          classData={classToCancel}
+          isOpen={showCancellationModal}
+          onClose={() => setShowCancellationModal(false)}
+          onConfirm={() => {
+            // Refresh classes to ensure UI is up to date
+            if (onFetchClasses) {
+              onFetchClasses(new Date().getMonth(), new Date().getFullYear());
+            }
+          }}
+        />
+      )}
+
       {/* Enhanced Feedback Modal - only for teachers */}
       {onUpdateClassFeedback && userRole === "teacher" && (
         <Modal
@@ -487,57 +507,6 @@ export default function ClassesCard({
                 className="bg-red-600 hover:bg-red-700"
               >
                 Confirmar Falta
-              </ModalPrimaryButton>
-            </ModalFooter>
-          </ModalContent>
-        </Modal>
-      )}
-
-      {/* Cancel Confirmation Modal - only for students */}
-      {userRole === "student" && (
-        <Modal
-          open={cancelModal.open}
-          onOpenChange={(open) => {
-            setCancelModal({ ...cancelModal, open });
-            if (!open) {
-              setCancelModal({
-                open: false,
-                classId: null,
-              });
-            }
-          }}
-        >
-          <ModalContent className="max-w-md">
-            <ModalHeader>
-              <ModalTitle className="flex items-center gap-2">
-                ❌ Cancelar Aula
-              </ModalTitle>
-            </ModalHeader>
-            <ModalBody>
-              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                Tem certeza que deseja cancelar esta aula? Esta ação irá marcar
-                a aula como "Cancelada (Aluno)" e não poderá ser desfeita.
-              </p>
-            </ModalBody>
-            <ModalFooter className="flex gap-3">
-              <ModalSecondaryButton
-                onClick={() => setCancelModal({ ...cancelModal, open: false })}
-              >
-                Voltar
-              </ModalSecondaryButton>
-              <ModalPrimaryButton
-                onClick={async () => {
-                  if (cancelModal.classId) {
-                    await handleUpdateClassStatus(
-                      cancelModal.classId,
-                      ClassStatus.CANCELED_STUDENT
-                    );
-                    setCancelModal({ open: false, classId: null });
-                  }
-                }}
-                className="bg-danger hover:bg-danger-light"
-              >
-                Confirmar Cancelamento
               </ModalPrimaryButton>
             </ModalFooter>
           </ModalContent>
@@ -726,7 +695,7 @@ export default function ClassesCard({
                       )}
 
                       {/* For students, show reschedule and cancel buttons for future classes */}
-                      {userRole === "student" && isFuture && (
+                      {userRole === "student" && (
                         <>
                           <button
                             className="flex items-center justify-center w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-500 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-400 transition-all duration-200"
@@ -736,18 +705,21 @@ export default function ClassesCard({
                             <span className="text-lg">🔄</span>
                           </button>
 
-                          <button
-                            onClick={() => {
-                              setCancelModal({
-                                open: true,
-                                classId: cls.id,
-                              });
-                            }}
-                            className="flex items-center justify-center w-10 h-10 rounded-xl bg-red-100 hover:bg-red-200 text-red-600 dark:bg-red-950/50 dark:hover:bg-red-900/50 dark:text-red-400 transition-all duration-200"
-                            title="Cancelar aula"
-                          >
-                            <span className="text-lg">❌</span>
-                          </button>
+                          {userRole === "student" &&
+                            cls.status === ClassStatus.SCHEDULED && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                onClick={() => {
+                                  setClassToCancel(cls);
+                                  setShowCancellationModal(true);
+                                }}
+                              >
+                                <ClockCircle className="w-4 h-4 mr-2" />
+                                Cancelar
+                              </Button>
+                            )}
                         </>
                       )}
 

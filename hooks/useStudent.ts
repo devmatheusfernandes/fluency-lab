@@ -162,10 +162,10 @@ export const useStudent = () => {
   ): Promise<boolean> => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/classes/${classId}/reschedule`, {
+      const response = await fetch(`/api/student/classes/reschedule`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ newScheduledAt, reason, availabilitySlotId }),
+        body: JSON.stringify({ classId, newScheduledAt, reason, availabilitySlotId }),
       });
 
       const result = await response.json();

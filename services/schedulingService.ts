@@ -935,6 +935,25 @@ export class SchedulingService {
         studentData = studentDoc.data() as User;
       }
 
+      // Check if this is a makeup class (teacher cancellation) and find an available teacher cancellation credit
+      const isTeacherMakeup = originalClass.status === ClassStatus.CANCELED_TEACHER_MAKEUP;
+      let creditToUse: any = null;
+      
+      if (isTeacherMakeup && isStudentRescheduling) {
+        // Find an available teacher cancellation credit for this student
+        const creditService = new CreditService();
+        creditToUse = await creditService.findAvailableCredit(
+          originalClass.studentId, 
+          RegularCreditType.TEACHER_CANCELLATION
+        );
+        
+        if (!creditToUse) {
+          throw new Error(
+            "Você não possui créditos de reposição disponíveis para reagendar esta aula. Verifique se seus créditos ainda estão válidos."
+          );
+        }
+      }
+
       // Now perform all writes
       // 1. Marcar a aula original como reagendada
       transaction.update(originalClassRef, { status: ClassStatus.RESCHEDULED });
@@ -952,14 +971,17 @@ export class SchedulingService {
         },
         rescheduleReason: reason,
         availabilitySlotId: availabilitySlotId, // Associa ao slot de disponibilidade, se aplicável
+        // If using a teacher cancellation credit, mark the new class with credit info
+        ...(isTeacherMakeup && creditToUse ? {
+          creditId: creditToUse.id,
+          creditType: "teacher-cancellation" as any,
+          isReschedulable: false // Teacher cancellation credits can only be used once
+        } : {})
       };
       classRepository.createWithTransaction(transaction, newClassData);
 
       // 3. Incrementar o contador de reagendamento do aluno (se aplicável)
       if (isStudentRescheduling && studentData) {
-        // Check if this is a makeup class (teacher cancellation)
-        const isTeacherMakeup = originalClass.status === ClassStatus.CANCELED_TEACHER_MAKEUP;
-        
         if (!isTeacherMakeup) {
           // Only count regular reschedules against the monthly limit
           const currentMonthStr = new Date().toISOString().slice(0, 7);
@@ -990,8 +1012,37 @@ export class SchedulingService {
         );
       }
 
-      return { success: true, newClassData };
+      return { success: true, newClassData, creditToUse };
     });
+
+    // After the transaction, if we used a teacher cancellation credit, mark it as used
+    if (result.creditToUse) {
+      try {
+        const creditService = new CreditService();
+        // We need to find the newly created class by its scheduledAt time and other properties
+        const newClassSnapshot = await adminDb.collection('classes')
+          .where('studentId', '==', originalClass.studentId)
+          .where('scheduledAt', '==', result.newClassData.scheduledAt)
+          .where('teacherId', '==', originalClass.teacherId)
+          .limit(1)
+          .get();
+        
+        if (!newClassSnapshot.empty) {
+          const newClassDoc = newClassSnapshot.docs[0];
+          const newClassId = newClassDoc.id;
+          
+          // Update the newly created class with the correct ID in the credit
+          await creditService.useCredit({
+            studentId: originalClass.studentId,
+            creditId: result.creditToUse.id,
+            classId: newClassId
+          }, originalClass.studentId);
+        }
+      } catch (error) {
+        console.error('Error using teacher cancellation credit:', error);
+        // Don't fail the entire operation if credit usage fails, but log it
+      }
+    }
 
     // --- ENVIAR NOTIFICAÇÕES POR E-MAIL APÓS SUCESSO ---
     try {

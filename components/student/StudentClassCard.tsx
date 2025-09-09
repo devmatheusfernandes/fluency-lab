@@ -135,7 +135,7 @@ export default function StudentClassCard({
             disabled={!isReschedulable}
             variant={isTeacherMakeup ? "primary" : "secondary"}
           >
-            {isTeacherMakeup ? "Reagendar Reposição" : "Reagendar"}
+            {isTeacherMakeup ? "Reagendar com Crédito" : "Reagendar"}
           </Button>
         </div>
       </Card>

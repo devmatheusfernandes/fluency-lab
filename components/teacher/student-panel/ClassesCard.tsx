@@ -16,11 +16,13 @@ import {
   ModalContent,
   ModalHeader,
   ModalTitle,
+  ModalDescription,
   ModalBody,
   ModalFooter,
   ModalPrimaryButton,
   ModalClose,
   ModalSecondaryButton,
+  ModalIcon,
 } from "@/components/ui/Modal";
 import { TextArea } from "@/components/ui/TextArea";
 import { ClockCircle, Document } from "@solar-icons/react/ssr";
@@ -29,6 +31,10 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
 import { cloudcontrolspartner } from "googleapis/build/src/apis/cloudcontrolspartner";
 import { ClassCancellationModal } from "@/components/student/ClassCancellationModal";
+import { useStudent } from "@/hooks/useStudent";
+import RescheduleModal from "@/components/student/RescheduleModal";
+import { Card } from "@/components/ui/Card";
+import { Text } from "@/components/ui/Text";
 
 // Enhanced skeleton with modern shimmer effect
 const ClassSkeleton = () => (
@@ -82,6 +88,16 @@ export default function ClassesCard({
   loading = false,
   userRole = "teacher",
 }: ClassesCardProps) {
+  const {
+    myClasses,
+    rescheduleInfo,
+    isLoading: studentLoading,
+    fetchMyClasses,
+    checkRescheduleStatus,
+    getUserMonthlyReschedules,
+    cancelClass: studentCancelClass,
+  } = useStudent();
+
   const [selectedMonth, setSelectedMonth] = useState<number>(
     new Date().getMonth()
   );
@@ -109,6 +125,20 @@ export default function ClassesCard({
     classId: string | null;
   }>({ open: false, classId: null });
 
+  // Student specific states
+  const [monthlyRescheduleData, setMonthlyRescheduleData] = useState<{
+    month: string;
+    count: number;
+    limit: number;
+  } | null>(null);
+  const [teacherCancellationCredits, setTeacherCancellationCredits] =
+    useState<number>(0);
+  const [showCancellationModal, setShowCancellationModal] = useState(false);
+  const [classToCancel, setClassToCancel] = useState<StudentClass | null>(null);
+  const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
+  const [classToReschedule, setClassToReschedule] =
+    useState<StudentClass | null>(null);
+
   // Enhanced month names for better UX
   const monthNames = [
     "Janeiro",
@@ -126,21 +156,60 @@ export default function ClassesCard({
   ];
 
   // Filter classes by selected month and year
-  const filteredClasses = classes.filter((cls) => {
-    const classDate = new Date(cls.scheduledAt);
-    return (
-      classDate.getMonth() === selectedMonth &&
-      classDate.getFullYear() === selectedYear
-    );
-  });
-
-  const [showCancellationModal, setShowCancellationModal] = useState(false);
-  const [classToCancel, setClassToCancel] = useState<StudentClass | null>(null);
+  const filteredClasses = (userRole === "student" ? myClasses : classes).filter(
+    (cls) => {
+      const classDate = new Date(cls.scheduledAt);
+      return (
+        classDate.getMonth() === selectedMonth &&
+        classDate.getFullYear() === selectedYear
+      );
+    }
+  );
 
   // When month/year changes, fetch classes for that period
   useEffect(() => {
-    onFetchClasses(selectedMonth, selectedYear);
-  }, [selectedMonth, selectedYear, onFetchClasses]);
+    if (userRole === "student") {
+      fetchMyClasses();
+      checkRescheduleStatus();
+      fetchTeacherCancellationCredits();
+    } else {
+      onFetchClasses(selectedMonth, selectedYear);
+    }
+  }, [
+    selectedMonth,
+    selectedYear,
+    userRole,
+    fetchMyClasses,
+    checkRescheduleStatus,
+    onFetchClasses,
+  ]);
+
+  // Update monthly reschedule data when month/year changes (for students)
+  useEffect(() => {
+    if (userRole === "student" && getUserMonthlyReschedules) {
+      const monthStr = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}`;
+      getUserMonthlyReschedules(monthStr).then((data) => {
+        setMonthlyRescheduleData(data);
+      });
+    } else {
+      setMonthlyRescheduleData(null);
+    }
+  }, [selectedMonth, selectedYear, userRole, getUserMonthlyReschedules]);
+
+  // Fetch teacher cancellation credits (for students)
+  const fetchTeacherCancellationCredits = async () => {
+    if (userRole !== "student") return;
+
+    try {
+      const response = await fetch("/api/student/credits/balance");
+      if (response.ok) {
+        const data = await response.json();
+        setTeacherCancellationCredits(data.teacherCancellationCredits || 0);
+      }
+    } catch (error) {
+      console.error("Error fetching teacher cancellation credits:", error);
+    }
+  };
 
   // Handle updating class status with optimistic updates
   const handleUpdateClassStatus = async (
@@ -331,6 +400,68 @@ export default function ClassesCard({
     handleUpdateClassStatus(classId, newStatus);
   };
 
+  // Handle class cancellation with reschedule suggestion (for students)
+  const handleCancelClass = async (classId: string) => {
+    try {
+      const response = await fetch("/api/student/classes/cancel", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ classId }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Erro ao cancelar aula");
+      }
+
+      if (result.success) {
+        if (result.suggestReschedule) {
+          // Show reschedule suggestion
+          toast.info(
+            `Você ainda tem ${result.rescheduleInfo.remaining} reagendamentos disponíveis este mês. Que tal reagendar esta aula ao invés de cancelar?`,
+            {
+              duration: 8000,
+              action: {
+                label: "OK",
+                onClick: () => {},
+              },
+            }
+          );
+        } else {
+          toast.success("Aula cancelada com sucesso!");
+        }
+
+        // Refresh the classes list and reschedule info
+        await fetchMyClasses();
+        await checkRescheduleStatus();
+        await fetchTeacherCancellationCredits(); // Refresh credits after cancellation
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao cancelar aula");
+    }
+  };
+
+  // Get reschedule info to display (for students)
+  const displayRescheduleInfo = monthlyRescheduleData || rescheduleInfo;
+  const isCurrentMonth =
+    selectedMonth === new Date().getMonth() &&
+    selectedYear === new Date().getFullYear();
+
+  // Handle reschedule button click (for students)
+  const handleRescheduleClick = (cls: StudentClass) => {
+    setClassToReschedule(cls);
+    setIsRescheduleModalOpen(true);
+  };
+
+  // Close reschedule modal
+  const handleCloseRescheduleModal = () => {
+    setIsRescheduleModalOpen(false);
+    setClassToReschedule(null);
+  };
+
   return (
     <SubContainer className="min-h-[60vh] lg:h-full">
       {classToCancel && (
@@ -344,6 +475,15 @@ export default function ClassesCard({
               onFetchClasses(new Date().getMonth(), new Date().getFullYear());
             }
           }}
+        />
+      )}
+
+      {/* Reschedule Modal for students */}
+      {userRole === "student" && classToReschedule && (
+        <RescheduleModal
+          isOpen={isRescheduleModalOpen}
+          onClose={handleCloseRescheduleModal}
+          classToReschedule={classToReschedule}
         />
       )}
 
@@ -364,6 +504,7 @@ export default function ClassesCard({
         >
           <ModalContent className="max-w-2xl">
             <ModalHeader>
+              <ModalIcon type="document" />
               <ModalTitle className="flex items-center gap-2">
                 📝 Relatório da Aula
               </ModalTitle>
@@ -427,6 +568,7 @@ export default function ClassesCard({
         >
           <ModalContent className="max-w-md">
             <ModalHeader>
+              <ModalIcon type="warning" />
               <ModalTitle className="flex items-center gap-2">
                 🔄 Cancelar com Reposição
               </ModalTitle>
@@ -478,6 +620,7 @@ export default function ClassesCard({
         >
           <ModalContent className="max-w-md">
             <ModalHeader>
+              <ModalIcon type="warning" />
               <ModalTitle className="flex items-center gap-2">
                 👤 Marcar como Falta
               </ModalTitle>
@@ -516,48 +659,90 @@ export default function ClassesCard({
       {/* Modern Header with Glass Effect */}
       <div className="border-b border-gray-200/50 dark:border-gray-700/50 py-4 mb-6">
         <div className="flex flex-col gap-4">
-          <div className="grid grid-cols-2 lg:flex gap-3">
-            <Select
-              value={selectedMonth.toString()}
-              onValueChange={(value) => setSelectedMonth(parseInt(value))}
-            >
-              <SelectTrigger className="h-10 lg:w-44 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
-                <SelectValue>{monthNames[selectedMonth]}</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {monthNames.map((month, index) => (
-                  <SelectOption key={index} value={index.toString()}>
-                    {month}
-                  </SelectOption>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={selectedYear.toString()}
-              onValueChange={(value) => setSelectedYear(parseInt(value))}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.from({ length: 5 }, (_, i) => {
-                  const year = new Date().getFullYear() - 2 + i;
-                  return (
-                    <SelectOption key={year} value={year.toString()}>
-                      {year}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg bg-surface-0/30">
+            <div className="space-y-1">
+              <Text size="sm" variant="subtitle">
+                Mês
+              </Text>
+              <Select
+                value={selectedMonth.toString()}
+                onValueChange={(value) => setSelectedMonth(parseInt(value))}
+              >
+                <SelectTrigger className="h-10 lg:w-44 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
+                  <SelectValue>{monthNames[selectedMonth]}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {monthNames.map((month, index) => (
+                    <SelectOption key={index} value={index.toString()}>
+                      {month}
                     </SelectOption>
-                  );
-                })}
-              </SelectContent>
-            </Select>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1">
+              <Text size="sm" variant="subtitle">
+                Ano
+              </Text>
+              <Select
+                value={selectedYear.toString()}
+                onValueChange={(value) => setSelectedYear(parseInt(value))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 5 }, (_, i) => {
+                    const year = new Date().getFullYear() - 2 + i;
+                    return (
+                      <SelectOption key={year} value={year.toString()}>
+                        {year}
+                      </SelectOption>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Enhanced Reschedule Card - only for students */}
+            {userRole === "student" && (
+              <Card className="p-3">
+                <Text size="sm" className="font-medium text-subtitle mb-1">
+                  Reagendamentos em {monthNames[selectedMonth]} {selectedYear}
+                </Text>
+                <Text className="font-bold text-lg">
+                  {displayRescheduleInfo.count} / {displayRescheduleInfo.limit}
+                </Text>
+                {!isCurrentMonth && (
+                  <Text size="xs" className="text-subtitle mt-1">
+                    Histórico do mês selecionado
+                  </Text>
+                )}
+              </Card>
+            )}
+
+            {/* Teacher Cancellation Credits Card - only for students */}
+            {userRole === "student" && (
+              <Card className="p-3 bg-yellow-50 border-yellow-200">
+                <Text size="sm" className="font-medium text-subtitle mb-1">
+                  Créditos de Reposição
+                </Text>
+                <Text className="font-bold text-lg text-yellow-800">
+                  {teacherCancellationCredits}
+                </Text>
+                <Text size="xs" className="text-subtitle mt-1">
+                  Aulas canceladas pelo professor
+                </Text>
+              </Card>
+            )}
           </div>
         </div>
       </div>
 
       {/* Enhanced Classes Grid */}
       <div className="space-y-4">
-        {loading ? (
+        {loading || studentLoading ? (
           <div className="space-y-4">
             {Array.from({ length: 3 }).map((_, index) => (
               <ClassSkeleton key={index} />
@@ -565,7 +750,7 @@ export default function ClassesCard({
           </div>
         ) : filteredClasses.length > 0 ? (
           <div className="space-y-2">
-            {filteredClasses.map((cls) => {
+            {filteredClasses.map((cls, index) => {
               const statusConfig = getStatusConfig(cls.status);
               // Ensure we have a proper Date object
               const classDate = new Date(cls.scheduledAt);
@@ -583,9 +768,13 @@ export default function ClassesCard({
               const isPast = classDateWithoutTime < todayWithoutTime;
               const isFuture = classDateWithoutTime > todayWithoutTime;
 
+              // Create a unique key that combines the class ID with its scheduled time and index
+              // This ensures uniqueness even for rescheduled classes or classes with same ID
+              const uniqueKey = `${cls.id}-${cls.scheduledAt}-${index}`;
+
               return (
                 <div
-                  key={cls.id}
+                  key={uniqueKey}
                   className={`group relative overflow-hidden rounded-xl p-3 border transition-all duration-200 card-base ${
                     isToday
                       ? "border-blue-300 dark:border-blue-600 bg-blue-50/30 dark:bg-blue-950/20"
@@ -697,13 +886,20 @@ export default function ClassesCard({
                       {/* For students, show reschedule and cancel buttons for future classes */}
                       {userRole === "student" && (
                         <>
-                          <button
-                            className="flex items-center justify-center w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-500 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-400 transition-all duration-200"
-                            title="Reagendar aula"
-                            disabled={true} // Disabled for now, will be implemented later
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full"
+                            onClick={() => handleRescheduleClick(cls)}
+                            disabled={
+                              !isFuture &&
+                              cls.status !== ClassStatus.CANCELED_TEACHER_MAKEUP
+                            }
                           >
-                            <span className="text-lg">🔄</span>
-                          </button>
+                            {cls.status === ClassStatus.CANCELED_TEACHER_MAKEUP
+                              ? "Reagendar com Crédito"
+                              : "Reagendar"}
+                          </Button>
 
                           {userRole === "student" &&
                             cls.status === ClassStatus.SCHEDULED && (

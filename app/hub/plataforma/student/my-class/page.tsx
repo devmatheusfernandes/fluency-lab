@@ -45,11 +45,27 @@ export default function StudentMyClassesPage() {
     count: number;
     limit: number;
   } | null>(null);
+  const [teacherCancellationCredits, setTeacherCancellationCredits] =
+    useState<number>(0);
 
   useEffect(() => {
     fetchMyClasses();
     checkRescheduleStatus();
+    fetchTeacherCancellationCredits();
   }, [fetchMyClasses, checkRescheduleStatus]);
+
+  // Fetch teacher cancellation credits
+  const fetchTeacherCancellationCredits = async () => {
+    try {
+      const response = await fetch("/api/student/credits/balance");
+      if (response.ok) {
+        const data = await response.json();
+        setTeacherCancellationCredits(data.teacherCancellationCredits || 0);
+      }
+    } catch (error) {
+      console.error("Error fetching teacher cancellation credits:", error);
+    }
+  };
 
   // Update monthly reschedule data when month/year changes
   useEffect(() => {
@@ -126,6 +142,7 @@ export default function StudentMyClassesPage() {
         // Refresh the classes list and reschedule info
         await fetchMyClasses();
         await checkRescheduleStatus();
+        await fetchTeacherCancellationCredits(); // Refresh credits after cancellation
       }
     } catch (error: any) {
       throw error; // Re-throw to be handled by the component
@@ -139,7 +156,7 @@ export default function StudentMyClassesPage() {
       </div>
 
       {/* Filter Controls */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border rounded-lg bg-surface-0/30">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg bg-surface-0/30">
         <div className="space-y-1">
           <Text size="sm" variant="subtitle">
             Mês
@@ -206,6 +223,19 @@ export default function StudentMyClassesPage() {
               </Text>
             )}
         </Card>
+
+        {/* Teacher Cancellation Credits Card */}
+        <Card className="p-3 bg-yellow-50 border-yellow-200">
+          <Text size="sm" className="font-medium text-subtitle mb-1">
+            Créditos de Reposição
+          </Text>
+          <Text className="font-bold text-lg text-yellow-800">
+            {teacherCancellationCredits}
+          </Text>
+          <Text size="xs" className="text-subtitle mt-1">
+            Aulas canceladas pelo professor
+          </Text>
+        </Card>
       </div>
 
       {isLoading && myClasses.length === 0 && (
@@ -229,7 +259,10 @@ export default function StudentMyClassesPage() {
             <StudentClassCard
               key={`${cls.id}-${cls.scheduledAt}-${index}`}
               cls={cls}
-              canReschedule={rescheduleInfo.allowed}
+              canReschedule={
+                rescheduleInfo.allowed ||
+                cls.status === "canceled-teacher-makeup"
+              }
               onCancel={handleCancelClass}
             />
           ))}

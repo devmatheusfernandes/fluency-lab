@@ -264,3 +264,5 @@ export class CreditService {
     })) as CreditTransaction[];
   }
 }
+
+export const creditService = new CreditService();

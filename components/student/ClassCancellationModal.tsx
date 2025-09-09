@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { StudentClass } from "@/types/classes/class";
+import { StudentClass, ClassStatus } from "@/types/classes/class";
 import {
   Modal,
   ModalContent,
@@ -182,6 +182,16 @@ export const ClassCancellationModal: React.FC<ClassCancellationModalProps> = ({
                   Você tem opções de reagendamento disponíveis! Em vez de
                   cancelar, você pode reagendar esta aula.
                 </Text>
+                {classData.status === ClassStatus.CANCELED_TEACHER_MAKEUP && (
+                  <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                    <p className="text-sm text-yellow-800 text-center">
+                      <span className="font-bold">Aviso:</span> Esta aula foi
+                      cancelada pelo professor. Você pode reagendá-la usando um
+                      crédito de reposição sem consumir seus reagendamentos
+                      mensais.
+                    </p>
+                  </div>
+                )}
                 <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
                   <div className="font-medium text-blue-900 dark:text-blue-100">
                     {classData.language}

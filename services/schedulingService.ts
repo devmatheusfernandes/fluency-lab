@@ -263,7 +263,7 @@ export class SchedulingService {
       };
       if (classTopic) newClassData.notes = classTopic;
 
-      classRepository.createWithTransaction(transaction, newClassData);
+      const newClassId = await classRepository.createWithTransaction(transaction, newClassData);
       transaction.update(studentRef, {
         classCredits: FieldValue.increment(-1),
       });
@@ -362,7 +362,7 @@ export class SchedulingService {
       if (classData.availabilitySlotId) {
         await availabilityRepository.findAndDeleteException(
           classData.availabilitySlotId,
-          classData.scheduledAt
+          (classData.scheduledAt as any).toDate() // Convert Timestamp to Date
         );
       }
 
@@ -1018,8 +1018,9 @@ export class SchedulingService {
       transaction.update(originalClassRef, { status: ClassStatus.RESCHEDULED });
 
       // 2. Criar a nova aula
+      const { id: _, ...originalClassWithoutId } = originalClass; // Remove o ID da aula original
       const newClassData: Omit<StudentClass, "id"> = {
-        ...originalClass, // Copia a maioria dos dados
+        ...originalClassWithoutId, // Copia os dados sem o ID
         scheduledAt: newScheduledAt,
         status: ClassStatus.SCHEDULED,
         createdAt: new Date(), // A nova aula tem sua própria data de criação
@@ -1037,7 +1038,7 @@ export class SchedulingService {
           isReschedulable: false // Teacher cancellation credits can only be used once
         } : {})
       };
-      classRepository.createWithTransaction(transaction, newClassData);
+      const newClassId = await classRepository.createWithTransaction(transaction, newClassData);
 
       // 3. Incrementar o contador de reagendamento do aluno (se aplicável)
       if (isStudentRescheduling && studentData) {
@@ -1071,32 +1072,20 @@ export class SchedulingService {
         );
       }
 
-      return { success: true, newClassData, creditToUse };
+      return { success: true, newClassData: { ...newClassData, id: newClassId }, creditToUse };
     });
 
     // After the transaction, if we used a teacher cancellation credit, mark it as used
     if (result.creditToUse) {
       try {
         const creditService = new CreditService();
-        // We need to find the newly created class by its scheduledAt time and other properties
-        const newClassSnapshot = await adminDb.collection('classes')
-          .where('studentId', '==', originalClass.studentId)
-          .where('scheduledAt', '==', result.newClassData.scheduledAt)
-          .where('teacherId', '==', originalClass.teacherId)
-          .limit(1)
-          .get();
         
-        if (!newClassSnapshot.empty) {
-          const newClassDoc = newClassSnapshot.docs[0];
-          const newClassId = newClassDoc.id;
-          
-          // Update the newly created class with the correct ID in the credit
-          await creditService.useCredit({
-            studentId: originalClass.studentId,
-            creditId: result.creditToUse.id,
-            classId: newClassId
-          }, originalClass.studentId);
-        }
+        // Use the newly created class ID directly
+        await creditService.useCredit({
+          studentId: originalClass.studentId,
+          creditId: result.creditToUse.id,
+          classId: result.newClassData.id
+        }, originalClass.studentId);
       } catch (error) {
         console.error('Error using teacher cancellation credit:', error);
         // Don't fail the entire operation if credit usage fails, but log it

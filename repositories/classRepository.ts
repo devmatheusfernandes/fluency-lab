@@ -45,7 +45,7 @@ export class ClassRepository {
   createWithTransaction(
     transaction: FirebaseFirestore.Transaction,
     classData: Omit<StudentClass, 'id'>
-  ) {
+  ): string {
     const newClassRef = this.collectionRef.doc();
     // Garante que as datas sejam salvas no formato Timestamp
     const dataToSave = {
@@ -55,6 +55,7 @@ export class ClassRepository {
       updatedAt: Timestamp.fromDate(new Date(classData.updatedAt)),
     };
     transaction.set(newClassRef, dataToSave);
+    return newClassRef.id;
   }
 
   /**
@@ -355,14 +356,14 @@ export class ClassRepository {
   }
 
   /**
-   * Busca TODAS as aulas de um aluno específico (passadas e futuras), ordenadas por data.
-   * Ideal para visualizações de histórico administrativo.
+   * Busca todas as aulas de um aluno específico, excluindo aulas reagendadas.
    * @param studentId O ID do aluno.
-   * @returns Uma lista de todas as aulas.
+   * @returns Uma lista de todas as aulas ativas (não reagendadas).
    */
   async findAllClassesByStudentId(studentId: string): Promise<StudentClass[]> {
     const snapshot = await this.collectionRef
       .where('studentId', '==', studentId)
+      .where('status', '!=', ClassStatus.RESCHEDULED) // Excluir aulas reagendadas
       .orderBy('scheduledAt', 'asc') // Ordena da mais antiga para a mais nova
       .get();
 
@@ -376,7 +377,14 @@ export class ClassRepository {
         id: doc.id,
         ...data,
         scheduledAt: (data.scheduledAt as Timestamp).toDate(),
-        // ... outras conversões de data
+        canceledAt: data.canceledAt ? (data.canceledAt as Timestamp).toDate() : undefined,
+        completedAt: data.completedAt ? (data.completedAt as Timestamp).toDate() : undefined,
+        createdAt: (data.createdAt as Timestamp).toDate(),
+        updatedAt: (data.updatedAt as Timestamp).toDate(),
+        rescheduledFrom: data.rescheduledFrom ? {
+          originalClassId: data.rescheduledFrom.originalClassId,
+          originalScheduledAt: (data.rescheduledFrom.originalScheduledAt as Timestamp).toDate()
+        } : undefined,
       } as StudentClass;
     });
   }

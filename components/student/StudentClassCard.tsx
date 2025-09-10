@@ -107,7 +107,7 @@ export default function StudentClassCard({
               <AvatarFallback>{cls.teacherName?.charAt(0)}</AvatarFallback>
             </Avatar>
             <div>
-              <h3 className="font-bold text-lg">{cls.teacherName}</h3>
+              <h3 className="font-bold text-lg">{cls.id}</h3>
               <p className="text-sm font-semibold text-primary">
                 {new Date(cls.scheduledAt).toLocaleDateString("pt-BR", {
                   weekday: "long",
@@ -121,6 +121,11 @@ export default function StudentClassCard({
                   minute: "2-digit",
                 })}
               </p>
+              {cls.rescheduledFrom && (
+                <p className="text-xs text-blue-600 font-medium mt-1">
+                  📅 Aula reagendada
+                </p>
+              )}
               {isTeacherMakeup && (
                 <p className="text-xs text-warning font-medium mt-1">
                   ⚠️ Aula de reposição - Cancelada pelo professor

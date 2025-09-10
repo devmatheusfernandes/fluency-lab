@@ -417,7 +417,8 @@ export class SchedulingService {
             scheduledDate: formatDate(classScheduledAt),
             scheduledTime: formatTime(classScheduledAt),
             canceledBy: student.name,
-            platformLink: `${platformLink}/hub/plataforma/teacher/my-classes`
+            platformLink: `${platformLink}/hub/plataforma/teacher/my-classes`,
+            classId: classId
           });
 
           console.log(`E-mails de cancelamento enviados para estudante (${student.email}) e professor (${teacher.email})`);
@@ -481,7 +482,8 @@ export class SchedulingService {
             scheduledTime: formatTime(classScheduledAt),
             canceledBy: student.name,
             reason: "Cancelamento fora do prazo permitido",
-            platformLink: `${platformLink}/hub/plataforma/teacher/my-classes`
+            platformLink: `${platformLink}/hub/plataforma/teacher/my-classes`,
+            classId: classId
           });
 
           console.log(`E-mails de cancelamento (sem crédito) enviados para estudante (${student.email}) e professor (${teacher.email})`);
@@ -628,7 +630,8 @@ export class SchedulingService {
           canceledBy: teacher.name,
           reason: emailReason,
           makeupCreditGranted: newStatus === ClassStatus.CANCELED_TEACHER_MAKEUP, // Add this parameter
-          platformLink: `${platformLink}/hub/plataforma/teacher/my-classes`
+          platformLink: `${platformLink}/hub/plataforma/teacher/my-classes`,
+          classId: classId
         });
         
         console.log(`[cancelClassByTeacher] E-mails de cancelamento enviados para estudante (${student.email}) e professor (${teacher.email})`);

@@ -98,7 +98,8 @@ export class EmailService {
     reason,
     creditRefunded,
     makeupCreditGranted,
-    platformLink
+    platformLink,
+    classId
   }: {
     email: string;
     recipientName: string;
@@ -111,6 +112,7 @@ export class EmailService {
     creditRefunded?: boolean;
     makeupCreditGranted?: boolean;
     platformLink: string;
+    classId?: string;
   }) {
     try {
       const subject = recipientType === "student" 
@@ -131,7 +133,8 @@ export class EmailService {
           reason,
           creditRefunded,
           makeupCreditGranted,
-          platformLink
+          platformLink,
+          classId
         }),
       });
 

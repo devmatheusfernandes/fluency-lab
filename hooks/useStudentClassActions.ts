@@ -188,17 +188,22 @@ export const useStudentClassActions = (studentId: string) => {
     }
   }, []);
 
-  const cancelClass = useCallback(async (classId: string): Promise<CancellationResult> => {
+  const cancelClass = useCallback(async (classId: string, scheduledAt?: Date): Promise<CancellationResult> => {
     try {
       setLoading(true);
       setError(null);
+      
+      const requestBody: { classId: string; scheduledAt?: string } = { classId };
+      if (scheduledAt) {
+        requestBody.scheduledAt = scheduledAt.toISOString();
+      }
       
       const response = await fetch(`/api/student/classes/cancel`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ classId }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {

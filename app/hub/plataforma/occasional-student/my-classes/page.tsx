@@ -13,10 +13,10 @@ export default function MyClassesPage() {
     fetchMyClasses();
   }, [fetchMyClasses]); // A dependência garante que a função seja estável
 
-  const handleCancel = (classId: string) => {
+  const handleCancel = (classId: string, scheduledAt: Date) => {
     if (window.confirm("Tem certeza que deseja cancelar esta aula?")) {
-      // A chamada agora passa apenas o ID da aula, como esperado pelo hook.
-      cancelClass(classId); // 👈 Corrigido: sem o segundo argumento e a vírgula
+      // A chamada agora passa o ID da aula e a data agendada
+      cancelClass(classId, scheduledAt);
     }
   };
 
@@ -66,7 +66,7 @@ export default function MyClassesPage() {
                 {cls.status === "scheduled" &&
                   new Date(cls.scheduledAt) > new Date() && (
                     <button
-                      onClick={() => handleCancel(cls.id)}
+                      onClick={() => handleCancel(cls.id, new Date(cls.scheduledAt))}
                       disabled={isLoading}
                       style={{ marginTop: "10px", color: "red" }}
                     >

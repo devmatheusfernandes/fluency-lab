@@ -12,10 +12,14 @@ export default function StudentClassCard({
   cls,
   canReschedule,
   onCancel,
+  onReschedule,
+  onCancelWithCheck,
 }: {
   cls: PopulatedStudentClass;
   canReschedule: boolean;
-  onCancel?: (classId: string) => Promise<void>;
+  onCancel?: (classId: string, scheduledAt?: Date) => Promise<void>;
+  onReschedule?: (cls: PopulatedStudentClass) => void;
+  onCancelWithCheck?: (cls: PopulatedStudentClass) => void;
 }) {
   const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
@@ -31,7 +35,11 @@ export default function StudentClassCard({
   const isTeacherMakeup = cls.status === ClassStatus.CANCELED_TEACHER_MAKEUP;
 
   const handleRescheduleClick = () => {
-    setIsRescheduleModalOpen(true);
+    if (onReschedule) {
+      onReschedule(cls);
+    } else {
+      setIsRescheduleModalOpen(true);
+    }
   };
 
   const handleCloseModal = () => {
@@ -39,6 +47,11 @@ export default function StudentClassCard({
   };
 
   const handleCancelClick = async () => {
+    if (onCancelWithCheck) {
+      onCancelWithCheck(cls);
+      return;
+    }
+
     if (!onCancel) return;
 
     const confirmMessage =
@@ -47,7 +60,7 @@ export default function StudentClassCard({
 
     setIsCanceling(true);
     try {
-      await onCancel(cls.id);
+      await onCancel(cls.id, new Date(cls.scheduledAt));
       toast.success("Aula cancelada com sucesso!");
     } catch (error: any) {
       toast.error(error.message || "Erro ao cancelar aula");

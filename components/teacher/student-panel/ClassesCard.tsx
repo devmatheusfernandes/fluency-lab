@@ -16,24 +16,16 @@ import {
   ModalContent,
   ModalHeader,
   ModalTitle,
-  ModalDescription,
   ModalBody,
   ModalFooter,
   ModalPrimaryButton,
-  ModalClose,
   ModalSecondaryButton,
   ModalIcon,
 } from "@/components/ui/Modal";
 import { TextArea } from "@/components/ui/TextArea";
-import { ClockCircle, Document } from "@solar-icons/react/ssr";
+import { Document } from "@solar-icons/react/ssr";
 import SkeletonLoader from "@/components/shared/Skeleton/SkeletonLoader";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/Button";
-import { cloudcontrolspartner } from "googleapis/build/src/apis/cloudcontrolspartner";
-import { ClassCancellationModal } from "@/components/student/ClassCancellationModal";
-import { useStudent } from "@/hooks/useStudent";
-import RescheduleModal from "@/components/student/RescheduleModal";
-import { Card } from "@/components/ui/Card";
 import { Text } from "@/components/ui/Text";
 
 // Enhanced skeleton with modern shimmer effect
@@ -69,7 +61,7 @@ const ClassSkeleton = () => (
 );
 
 interface ClassesCardProps {
-  classes: StudentClass[]; // This should match the type from the hook
+  classes: StudentClass[];
   onUpdateClassStatus: (
     classId: string,
     newStatus: ClassStatus
@@ -77,7 +69,6 @@ interface ClassesCardProps {
   onUpdateClassFeedback?: (classId: string, feedback: string) => Promise<void>;
   onFetchClasses: (month: number, year: number) => Promise<void>;
   loading?: boolean;
-  userRole?: "teacher" | "student";
 }
 
 export default function ClassesCard({
@@ -86,18 +77,7 @@ export default function ClassesCard({
   onUpdateClassFeedback,
   onFetchClasses,
   loading = false,
-  userRole = "teacher",
 }: ClassesCardProps) {
-  const {
-    myClasses,
-    rescheduleInfo,
-    isLoading: studentLoading,
-    fetchMyClasses,
-    checkRescheduleStatus,
-    getUserMonthlyReschedules,
-    cancelClass: studentCancelClass,
-  } = useStudent();
-
   const [selectedMonth, setSelectedMonth] = useState<number>(
     new Date().getMonth()
   );
@@ -109,12 +89,8 @@ export default function ClassesCard({
     classId: string | null;
     currentFeedback: string;
   }>({ open: false, classId: null, currentFeedback: "" });
-  const [cancelModal, setCancelModal] = useState<{
-    open: boolean;
-    classId: string | null;
-  }>({ open: false, classId: null });
 
-  // New confirmation modals for teacher actions
+  // Teacher confirmation modals
   const [teacherCancelModal, setTeacherCancelModal] = useState<{
     open: boolean;
     classId: string | null;
@@ -124,20 +100,6 @@ export default function ClassesCard({
     open: boolean;
     classId: string | null;
   }>({ open: false, classId: null });
-
-  // Student specific states
-  const [monthlyRescheduleData, setMonthlyRescheduleData] = useState<{
-    month: string;
-    count: number;
-    limit: number;
-  } | null>(null);
-  const [teacherCancellationCredits, setTeacherCancellationCredits] =
-    useState<number>(0);
-  const [showCancellationModal, setShowCancellationModal] = useState(false);
-  const [classToCancel, setClassToCancel] = useState<StudentClass | null>(null);
-  const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
-  const [classToReschedule, setClassToReschedule] =
-    useState<StudentClass | null>(null);
 
   // Enhanced month names for better UX
   const monthNames = [
@@ -156,60 +118,18 @@ export default function ClassesCard({
   ];
 
   // Filter classes by selected month and year
-  const filteredClasses = (userRole === "student" ? myClasses : classes).filter(
-    (cls) => {
-      const classDate = new Date(cls.scheduledAt);
-      return (
-        classDate.getMonth() === selectedMonth &&
-        classDate.getFullYear() === selectedYear
-      );
-    }
-  );
+  const filteredClasses = classes.filter((cls) => {
+    const classDate = new Date(cls.scheduledAt);
+    return (
+      classDate.getMonth() === selectedMonth &&
+      classDate.getFullYear() === selectedYear
+    );
+  });
 
   // When month/year changes, fetch classes for that period
   useEffect(() => {
-    if (userRole === "student") {
-      fetchMyClasses();
-      checkRescheduleStatus();
-      fetchTeacherCancellationCredits();
-    } else {
-      onFetchClasses(selectedMonth, selectedYear);
-    }
-  }, [
-    selectedMonth,
-    selectedYear,
-    userRole,
-    fetchMyClasses,
-    checkRescheduleStatus,
-    onFetchClasses,
-  ]);
-
-  // Update monthly reschedule data when month/year changes (for students)
-  useEffect(() => {
-    if (userRole === "student" && getUserMonthlyReschedules) {
-      const monthStr = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}`;
-      getUserMonthlyReschedules(monthStr).then((data) => {
-        setMonthlyRescheduleData(data);
-      });
-    } else {
-      setMonthlyRescheduleData(null);
-    }
-  }, [selectedMonth, selectedYear, userRole, getUserMonthlyReschedules]);
-
-  // Fetch teacher cancellation credits (for students)
-  const fetchTeacherCancellationCredits = async () => {
-    if (userRole !== "student") return;
-
-    try {
-      const response = await fetch("/api/student/credits/balance");
-      if (response.ok) {
-        const data = await response.json();
-        setTeacherCancellationCredits(data.teacherCancellationCredits || 0);
-      }
-    } catch (error) {
-      console.error("Error fetching teacher cancellation credits:", error);
-    }
-  };
+    onFetchClasses(selectedMonth, selectedYear);
+  }, [selectedMonth, selectedYear]);
 
   // Handle updating class status with optimistic updates
   const handleUpdateClassStatus = async (
@@ -377,118 +297,25 @@ export default function ClassesCard({
     return mainOptions;
   };
 
-  // Student-specific status options (only allow canceling by student)
-  const studentStatusOptions: { value: ClassStatus; label: string }[] = [
-    { value: ClassStatus.SCHEDULED, label: "Agendada" },
-    { value: ClassStatus.CANCELED_STUDENT, label: "Cancelada (Aluno)" },
-  ];
-
   // Handle status change with confirmation modals for teacher
   const handleStatusChange = (classId: string, newStatus: ClassStatus) => {
-    if (userRole === "teacher") {
-      if (newStatus === ClassStatus.CANCELED_TEACHER_MAKEUP) {
-        setTeacherCancelModal({ open: true, classId });
-        return;
-      }
-      if (newStatus === ClassStatus.NO_SHOW) {
-        setNoShowModal({ open: true, classId });
-        return;
-      }
+    if (newStatus === ClassStatus.CANCELED_TEACHER_MAKEUP) {
+      setTeacherCancelModal({ open: true, classId });
+      return;
+    }
+    if (newStatus === ClassStatus.NO_SHOW) {
+      setNoShowModal({ open: true, classId });
+      return;
     }
 
-    // For completed status or student actions, update directly
+    // For completed status, update directly
     handleUpdateClassStatus(classId, newStatus);
-  };
-
-  // Handle class cancellation with reschedule suggestion (for students)
-  const handleCancelClass = async (classId: string) => {
-    try {
-      const response = await fetch("/api/student/classes/cancel", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ classId }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Erro ao cancelar aula");
-      }
-
-      if (result.success) {
-        if (result.suggestReschedule) {
-          // Show reschedule suggestion
-          toast.info(
-            `Você ainda tem ${result.rescheduleInfo.remaining} reagendamentos disponíveis este mês. Que tal reagendar esta aula ao invés de cancelar?`,
-            {
-              duration: 8000,
-              action: {
-                label: "OK",
-                onClick: () => {},
-              },
-            }
-          );
-        } else {
-          toast.success("Aula cancelada com sucesso!");
-        }
-
-        // Refresh the classes list and reschedule info
-        await fetchMyClasses();
-        await checkRescheduleStatus();
-        await fetchTeacherCancellationCredits(); // Refresh credits after cancellation
-      }
-    } catch (error: any) {
-      toast.error(error.message || "Erro ao cancelar aula");
-    }
-  };
-
-  // Get reschedule info to display (for students)
-  const displayRescheduleInfo = monthlyRescheduleData || rescheduleInfo;
-  const isCurrentMonth =
-    selectedMonth === new Date().getMonth() &&
-    selectedYear === new Date().getFullYear();
-
-  // Handle reschedule button click (for students)
-  const handleRescheduleClick = (cls: StudentClass) => {
-    setClassToReschedule(cls);
-    setIsRescheduleModalOpen(true);
-  };
-
-  // Close reschedule modal
-  const handleCloseRescheduleModal = () => {
-    setIsRescheduleModalOpen(false);
-    setClassToReschedule(null);
   };
 
   return (
     <SubContainer className="min-h-[60vh] lg:h-full">
-      {classToCancel && (
-        <ClassCancellationModal
-          classData={classToCancel}
-          isOpen={showCancellationModal}
-          onClose={() => setShowCancellationModal(false)}
-          onConfirm={() => {
-            // Refresh classes to ensure UI is up to date
-            if (onFetchClasses) {
-              onFetchClasses(new Date().getMonth(), new Date().getFullYear());
-            }
-          }}
-        />
-      )}
-
-      {/* Reschedule Modal for students */}
-      {userRole === "student" && classToReschedule && (
-        <RescheduleModal
-          isOpen={isRescheduleModalOpen}
-          onClose={handleCloseRescheduleModal}
-          classToReschedule={classToReschedule}
-        />
-      )}
-
       {/* Enhanced Feedback Modal - only for teachers */}
-      {onUpdateClassFeedback && userRole === "teacher" && (
+      {onUpdateClassFeedback && (
         <Modal
           open={feedbackModal.open}
           onOpenChange={(open) => {
@@ -556,105 +383,101 @@ export default function ClassesCard({
       )}
 
       {/* Teacher Cancel Confirmation Modal */}
-      {userRole === "teacher" && (
-        <Modal
-          open={teacherCancelModal.open}
-          onOpenChange={(open) => {
-            setTeacherCancelModal({ ...teacherCancelModal, open });
-            if (!open) {
-              setTeacherCancelModal({ open: false, classId: null });
-            }
-          }}
-        >
-          <ModalContent className="max-w-md">
-            <ModalHeader>
-              <ModalIcon type="warning" />
-              <ModalTitle className="flex items-center gap-2">
-                🔄 Cancelar com Reposição
-              </ModalTitle>
-            </ModalHeader>
-            <ModalBody>
-              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                Tem certeza que deseja cancelar esta aula? Esta ação irá marcar
-                a aula como "Cancelada (Professor + Reposição)" e uma nova aula
-                deverá ser agendada para repor esta.
-              </p>
-            </ModalBody>
-            <ModalFooter className="flex gap-3">
-              <ModalSecondaryButton
-                onClick={() =>
-                  setTeacherCancelModal({ ...teacherCancelModal, open: false })
+      <Modal
+        open={teacherCancelModal.open}
+        onOpenChange={(open) => {
+          setTeacherCancelModal({ ...teacherCancelModal, open });
+          if (!open) {
+            setTeacherCancelModal({ open: false, classId: null });
+          }
+        }}
+      >
+        <ModalContent className="max-w-md">
+          <ModalHeader>
+            <ModalIcon type="warning" />
+            <ModalTitle className="flex items-center gap-2">
+              🔄 Cancelar com Reposição
+            </ModalTitle>
+          </ModalHeader>
+          <ModalBody>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              Tem certeza que deseja cancelar esta aula? Esta ação irá marcar a
+              aula como "Cancelada (Professor + Reposição)" e uma nova aula
+              deverá ser agendada para repor esta.
+            </p>
+          </ModalBody>
+          <ModalFooter className="flex gap-3">
+            <ModalSecondaryButton
+              onClick={() =>
+                setTeacherCancelModal({ ...teacherCancelModal, open: false })
+              }
+            >
+              Voltar
+            </ModalSecondaryButton>
+            <ModalPrimaryButton
+              onClick={async () => {
+                if (teacherCancelModal.classId) {
+                  await handleUpdateClassStatus(
+                    teacherCancelModal.classId,
+                    ClassStatus.CANCELED_TEACHER_MAKEUP
+                  );
+                  setTeacherCancelModal({ open: false, classId: null });
                 }
-              >
-                Voltar
-              </ModalSecondaryButton>
-              <ModalPrimaryButton
-                onClick={async () => {
-                  if (teacherCancelModal.classId) {
-                    await handleUpdateClassStatus(
-                      teacherCancelModal.classId,
-                      ClassStatus.CANCELED_TEACHER_MAKEUP
-                    );
-                    setTeacherCancelModal({ open: false, classId: null });
-                  }
-                }}
-                className="bg-orange-600 hover:bg-orange-700"
-              >
-                Confirmar Cancelamento
-              </ModalPrimaryButton>
-            </ModalFooter>
-          </ModalContent>
-        </Modal>
-      )}
+              }}
+              className="bg-orange-600 hover:bg-orange-700"
+            >
+              Confirmar Cancelamento
+            </ModalPrimaryButton>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       {/* Teacher No Show Confirmation Modal */}
-      {userRole === "teacher" && (
-        <Modal
-          open={noShowModal.open}
-          onOpenChange={(open) => {
-            setNoShowModal({ ...noShowModal, open });
-            if (!open) {
-              setNoShowModal({ open: false, classId: null });
-            }
-          }}
-        >
-          <ModalContent className="max-w-md">
-            <ModalHeader>
-              <ModalIcon type="warning" />
-              <ModalTitle className="flex items-center gap-2">
-                👤 Marcar como Falta
-              </ModalTitle>
-            </ModalHeader>
-            <ModalBody>
-              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                Tem certeza que deseja marcar esta aula como "Falta"? Esta ação
-                indica que o aluno não compareceu à aula agendada.
-              </p>
-            </ModalBody>
-            <ModalFooter className="flex gap-3">
-              <ModalSecondaryButton
-                onClick={() => setNoShowModal({ ...noShowModal, open: false })}
-              >
-                Voltar
-              </ModalSecondaryButton>
-              <ModalPrimaryButton
-                onClick={async () => {
-                  if (noShowModal.classId) {
-                    await handleUpdateClassStatus(
-                      noShowModal.classId,
-                      ClassStatus.NO_SHOW
-                    );
-                    setNoShowModal({ open: false, classId: null });
-                  }
-                }}
-                className="bg-red-600 hover:bg-red-700"
-              >
-                Confirmar Falta
-              </ModalPrimaryButton>
-            </ModalFooter>
-          </ModalContent>
-        </Modal>
-      )}
+      <Modal
+        open={noShowModal.open}
+        onOpenChange={(open) => {
+          setNoShowModal({ ...noShowModal, open });
+          if (!open) {
+            setNoShowModal({ open: false, classId: null });
+          }
+        }}
+      >
+        <ModalContent className="max-w-md">
+          <ModalHeader>
+            <ModalIcon type="warning" />
+            <ModalTitle className="flex items-center gap-2">
+              👤 Marcar como Falta
+            </ModalTitle>
+          </ModalHeader>
+          <ModalBody>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              Tem certeza que deseja marcar esta aula como "Falta"? Esta ação
+              indica que o aluno não compareceu à aula agendada.
+            </p>
+          </ModalBody>
+          <ModalFooter className="flex gap-3">
+            <ModalSecondaryButton
+              onClick={() => setNoShowModal({ ...noShowModal, open: false })}
+            >
+              Voltar
+            </ModalSecondaryButton>
+            <ModalPrimaryButton
+              onClick={async () => {
+                if (noShowModal.classId) {
+                  await handleUpdateClassStatus(
+                    noShowModal.classId,
+                    ClassStatus.NO_SHOW
+                  );
+                  setNoShowModal({ open: false, classId: null });
+                }
+              }}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Confirmar Falta
+            </ModalPrimaryButton>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       {/* Modern Header with Glass Effect */}
       <div className="border-b border-gray-200/50 dark:border-gray-700/50 py-4 mb-6">
@@ -704,45 +527,13 @@ export default function ClassesCard({
                 </SelectContent>
               </Select>
             </div>
-
-            {/* Enhanced Reschedule Card - only for students */}
-            {userRole === "student" && (
-              <Card className="p-3">
-                <Text size="sm" className="font-medium text-subtitle mb-1">
-                  Reagendamentos em {monthNames[selectedMonth]} {selectedYear}
-                </Text>
-                <Text className="font-bold text-lg">
-                  {displayRescheduleInfo.count} / {displayRescheduleInfo.limit}
-                </Text>
-                {!isCurrentMonth && (
-                  <Text size="xs" className="text-subtitle mt-1">
-                    Histórico do mês selecionado
-                  </Text>
-                )}
-              </Card>
-            )}
-
-            {/* Teacher Cancellation Credits Card - only for students */}
-            {userRole === "student" && (
-              <Card className="p-3 bg-yellow-50 border-yellow-200">
-                <Text size="sm" className="font-medium text-subtitle mb-1">
-                  Créditos de Reposição
-                </Text>
-                <Text className="font-bold text-lg text-yellow-800">
-                  {teacherCancellationCredits}
-                </Text>
-                <Text size="xs" className="text-subtitle mt-1">
-                  Aulas canceladas pelo professor
-                </Text>
-              </Card>
-            )}
           </div>
         </div>
       </div>
 
       {/* Enhanced Classes Grid */}
       <div className="space-y-4">
-        {loading || studentLoading ? (
+        {loading ? (
           <div className="space-y-4">
             {Array.from({ length: 3 }).map((_, index) => (
               <ClassSkeleton key={index} />
@@ -817,117 +608,65 @@ export default function ClassesCard({
 
                     {/* Actions Section */}
                     <div className="flex flex-row gap-2">
-                      {/* For teachers, show the status select and feedback button */}
-                      {userRole === "teacher" && (
-                        <>
-                          <Select
-                            value={cls.status}
-                            onValueChange={(value) =>
-                              handleStatusChange(cls.id, value as ClassStatus)
-                            }
-                            disabled={isPast}
-                          >
-                            <SelectTrigger
-                              className={`w-full lg:w-48 h-10 text-sm bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors ${isPast ? "opacity-50 cursor-not-allowed" : ""} ${getStatusConfig(cls.status).selectClassName}`}
-                            >
-                              <div className="flex items-center gap-2">
-                                <span>{statusConfig.icon}</span>
-                                <SelectValue />
-                              </div>
-                            </SelectTrigger>
-                            <SelectContent>
-                              {getTeacherStatusOptions(cls.status).map(
-                                (option) => (
-                                  <SelectOption
-                                    key={option.value}
-                                    value={option.value}
-                                    className={
-                                      getStatusConfig(option.value)
-                                        .selectClassName
-                                    }
-                                  >
-                                    <div className="flex items-center gap-2">
-                                      <span>{option.label}</span>
-                                    </div>
-                                  </SelectOption>
-                                )
-                              )}
-                            </SelectContent>
-                          </Select>
-
-                          <button
-                            onClick={() => {
-                              setFeedbackModal({
-                                open: true,
-                                classId: cls.id,
-                                currentFeedback: cls.feedback || "",
-                              });
-                            }}
-                            className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 ${
-                              cls.feedback
-                                ? "bg-green-100 hover:bg-green-200 text-green-600 dark:bg-green-950/50 dark:hover:bg-green-900/50 dark:text-green-400"
-                                : "bg-gray-100 hover:bg-gray-200 text-gray-500 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-400"
-                            } ${isPast ? "opacity-50 cursor-not-allowed" : ""}`}
-                            title={
-                              cls.feedback
-                                ? "Editar relatório"
-                                : "Adicionar relatório"
-                            }
-                            disabled={isPast}
-                          >
-                            <Document
-                              weight="BoldDuotone"
-                              className="w-6 h-6"
-                            />
-                          </button>
-                        </>
-                      )}
-
-                      {/* For students, show reschedule and cancel buttons for future classes */}
-                      {userRole === "student" && (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full"
-                            onClick={() => handleRescheduleClick(cls)}
-                            disabled={
-                              !isFuture &&
-                              cls.status !== ClassStatus.CANCELED_TEACHER_MAKEUP
-                            }
-                          >
-                            {cls.status === ClassStatus.CANCELED_TEACHER_MAKEUP
-                              ? "Reagendar com Crédito"
-                              : "Reagendar"}
-                          </Button>
-
-                          {userRole === "student" &&
-                            cls.status === ClassStatus.SCHEDULED && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
-                                onClick={() => {
-                                  setClassToCancel(cls);
-                                  setShowCancellationModal(true);
-                                }}
-                              >
-                                <ClockCircle className="w-4 h-4 mr-2" />
-                                Cancelar
-                              </Button>
-                            )}
-                        </>
-                      )}
-
-                      {/* For students, show status badge for non-future classes (past and today) */}
-                      {userRole === "student" && !isFuture && (
-                        <div
-                          className={`flex items-center justify-center w-32 h-10 rounded-xl text-sm font-medium ${statusConfig.className}`}
+                      <>
+                        <Select
+                          value={cls.status}
+                          onValueChange={(value) =>
+                            handleStatusChange(cls.id, value as ClassStatus)
+                          }
+                          disabled={isPast}
                         >
-                          <span className="mr-2">{statusConfig.icon}</span>
-                          <span>{statusConfig.label}</span>
-                        </div>
-                      )}
+                          <SelectTrigger
+                            className={`w-full lg:w-48 h-10 text-sm bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors ${isPast ? "opacity-50 cursor-not-allowed" : ""} ${getStatusConfig(cls.status).selectClassName}`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span>{statusConfig.icon}</span>
+                              <SelectValue />
+                            </div>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {getTeacherStatusOptions(cls.status).map(
+                              (option) => (
+                                <SelectOption
+                                  key={option.value}
+                                  value={option.value}
+                                  className={
+                                    getStatusConfig(option.value)
+                                      .selectClassName
+                                  }
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <span>{option.label}</span>
+                                  </div>
+                                </SelectOption>
+                              )
+                            )}
+                          </SelectContent>
+                        </Select>
+
+                        <button
+                          onClick={() => {
+                            setFeedbackModal({
+                              open: true,
+                              classId: cls.id,
+                              currentFeedback: cls.feedback || "",
+                            });
+                          }}
+                          className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 ${
+                            cls.feedback
+                              ? "bg-green-100 hover:bg-green-200 text-green-600 dark:bg-green-950/50 dark:hover:bg-green-900/50 dark:text-green-400"
+                              : "bg-gray-100 hover:bg-gray-200 text-gray-500 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-400"
+                          } ${isPast ? "opacity-50 cursor-not-allowed" : ""}`}
+                          title={
+                            cls.feedback
+                              ? "Editar relatório"
+                              : "Adicionar relatório"
+                          }
+                          disabled={isPast}
+                        >
+                          <Document weight="BoldDuotone" className="w-6 h-6" />
+                        </button>
+                      </>
                     </div>
                   </div>
                 </div>

@@ -45,7 +45,7 @@ export type StudentClass = {
 
   // CREDIT-BASED CLASSES
   creditId?: string;                    // ID of the credit used to create this class
-  creditType?: 'bonus' | 'late-students'; // Type of credit used
+  creditType?: 'bonus' | 'late-students' | 'teacher-cancellation'; // Type of credit used
   isReschedulable?: boolean;            // Whether this class can be rescheduled (false for credit classes)
 
   // CAMPOS ADICIONADOS PARA RASTREAR REAGENDAMENTOS

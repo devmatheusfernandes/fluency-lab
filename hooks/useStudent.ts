@@ -89,14 +89,19 @@ export const useStudent = () => {
     }
   };
 
-  const cancelClass = async (classId: string) => { // Remove o parâmetro 'onComplete'
+  const cancelClass = async (classId: string, scheduledAt?: Date) => { // Adiciona o parâmetro scheduledAt
     setIsLoading(true);
     setError(null);
     try {
+      const requestBody: { classId: string; scheduledAt?: string } = { classId };
+      if (scheduledAt) {
+        requestBody.scheduledAt = scheduledAt.toISOString();
+      }
+      
       const response = await fetch(`/api/student/classes/cancel`, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ classId }),
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();

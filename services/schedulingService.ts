@@ -279,16 +279,64 @@ export class SchedulingService {
   }
 
   // 👇 MÉTODO APRIMORADO PARA CANCELAMENTO COM SUGESTÃO DE REAGENDAMENTO
-  async cancelClassByStudent(studentId: string, classId: string) {
-    const classRef = adminDb.collection("classes").doc(classId);
-    const studentRef = adminDb.collection("users").doc(studentId);
-
-    const classDoc = await classRef.get();
-    if (!classDoc.exists || classDoc.data()?.studentId !== studentId) {
-      throw new Error("Aula não encontrada ou não pertence a este aluno.");
+  async cancelClassByStudent(studentId: string, classId: string, paramScheduledAt?: Date) {
+    console.log(`[cancelClassByStudent] Starting cancellation for class ${classId} by student ${studentId}`);
+    
+    // If scheduledAt is provided, find the specific class instance
+    let classData: StudentClass;
+    let actualClassId: string; // Track the correct class ID to use
+    
+    if (paramScheduledAt) {
+      // Find the specific class instance by ID and scheduled date
+      const classesSnapshot = await adminDb.collection("classes")
+        .where("studentId", "==", studentId)
+        .where("status", "==", "scheduled")
+        .get();
+      
+      const matchingClass = classesSnapshot.docs.find(doc => {
+        const data = doc.data();
+        const docScheduledAt = (data.scheduledAt as any).toDate();
+        // Check if this is the exact class by ID and scheduledAt
+        // OR if this is a rescheduled class from the original classId
+        const isExactMatch = doc.id === classId && 
+                            Math.abs(docScheduledAt.getTime() - paramScheduledAt.getTime()) < 60000;
+        const isRescheduledFromOriginal = data.rescheduledFrom?.originalClassId === classId &&
+                                         Math.abs(docScheduledAt.getTime() - paramScheduledAt.getTime()) < 60000;
+        
+        return isExactMatch || isRescheduledFromOriginal;
+      });
+      
+      if (!matchingClass) {
+        throw new Error("Aula específica não encontrada ou não pertence a este aluno.");
+      }
+      
+      actualClassId = matchingClass.id; // Use the ID of the found class
+      classData = { id: matchingClass.id, ...matchingClass.data() } as StudentClass;
+    } else {
+      // Fallback to original method
+      actualClassId = classId; // Use the original ID when no specific search
+      const classRef = adminDb.collection("classes").doc(classId);
+      const classDoc = await classRef.get();
+      
+      if (!classDoc.exists || classDoc.data()?.studentId !== studentId) {
+        throw new Error("Aula não encontrada ou não pertence a este aluno.");
+      }
+      
+      classData = classDoc.data() as StudentClass;
     }
-
-    const classData = classDoc.data() as StudentClass;
+    
+    // Define classRef using the correct class ID
+    const classRef = adminDb.collection("classes").doc(actualClassId);
+    
+    console.log(`[cancelClassByStudent] Class data retrieved:`, {
+      classId,
+      scheduledAt: classData.scheduledAt,
+      status: classData.status,
+      studentId: classData.studentId,
+      teacherId: classData.teacherId,
+      language: classData.language,
+      classType: classData.classType
+    });
     const teacher = classData.teacherId 
       ? await userAdminRepository.findUserById(classData.teacherId) 
       : null;
@@ -296,26 +344,25 @@ export class SchedulingService {
 
     const cancellationHours = settings.cancellationPolicyHours || 24;
     const now = new Date();
-    const scheduledAt = (classData.scheduledAt as any).toDate();
+    const classScheduledAt = (classData.scheduledAt as any).toDate();
     const hoursBeforeClass =
-      (scheduledAt.getTime() - now.getTime()) / (1000 * 60 * 60);
+      (classScheduledAt.getTime() - now.getTime()) / (1000 * 60 * 60);
 
-    // Verificar se o aluno tem reagendamentos disponíveis
-    const rescheduleCheck = await this.canReschedule(studentId);
-    const hasReschedulesLeft = rescheduleCheck.allowed;
+    // Para cancelamentos, não precisamos verificar reagendamentos disponíveis
+    // const rescheduleCheck = await this.canReschedule(studentId, classId);
+    // const hasReschedulesLeft = rescheduleCheck.allowed;
 
     // Se cancelou com antecedência...
     if (hoursBeforeClass > cancellationHours) {
       // Atualiza o status da aula
       await classRef.update({ status: ClassStatus.CANCELED_STUDENT });
-      // Devolve o crédito ao aluno
-      await studentRef.update({ classCredits: FieldValue.increment(1) });
+      // Não devolve crédito quando o aluno cancela sua própria aula
 
       // 👇 A PEÇA QUE FALTAVA: Remove a exceção para liberar o horário
       if (classData.availabilitySlotId) {
         await availabilityRepository.findAndDeleteException(
           classData.availabilitySlotId,
-          scheduledAt
+          classData.scheduledAt
         );
       }
 
@@ -338,6 +385,15 @@ export class SchedulingService {
           const formatTime = (date: Date) => date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
           const className = `${classData.language} - ${classData.classType === 'regular' ? 'Aula Regular' : 'Aula Avulsa'}`;
           const platformLink = process.env.NEXT_PUBLIC_APP_URL || 'https://app.fluencylab.com';
+          
+          console.log(`[cancelClassByStudent] Email data being sent:`, {
+            scheduledAt: classScheduledAt,
+            formattedDate: formatDate(classScheduledAt),
+            formattedTime: formatTime(classScheduledAt),
+            className,
+            studentEmail: student.email,
+            teacherEmail: teacher.email
+          });
 
           // Enviar e-mail para o estudante
           await emailService.sendClassCanceledEmail({
@@ -345,10 +401,10 @@ export class SchedulingService {
             recipientName: student.name,
             recipientType: "student",
             className,
-            scheduledDate: formatDate(scheduledAt),
-            scheduledTime: formatTime(scheduledAt),
+            scheduledDate: formatDate(classScheduledAt),
+            scheduledTime: formatTime(classScheduledAt),
             canceledBy: student.name,
-            creditRefunded: true,
+            creditRefunded: false,
             platformLink: `${platformLink}/hub/plataforma/student/my-class`
           });
 
@@ -358,8 +414,8 @@ export class SchedulingService {
             recipientName: teacher.name,
             recipientType: "teacher",
             className,
-            scheduledDate: formatDate(scheduledAt),
-            scheduledTime: formatTime(scheduledAt),
+            scheduledDate: formatDate(classScheduledAt),
+            scheduledTime: formatTime(classScheduledAt),
             canceledBy: student.name,
             platformLink: `${platformLink}/hub/plataforma/teacher/my-classes`
           });
@@ -373,12 +429,9 @@ export class SchedulingService {
 
       return {
         success: true,
-        message: "Aula cancelada com sucesso! Seu crédito foi devolvido e o horário está livre novamente.",
-        suggestReschedule: hasReschedulesLeft,
-        rescheduleInfo: hasReschedulesLeft ? {
-          remainingReschedules: rescheduleCheck.limit - rescheduleCheck.count,
-          message: `Você ainda tem ${rescheduleCheck.limit - rescheduleCheck.count} reagendamento(s) disponível(is) este mês. Deseja reagendar ao invés de cancelar?`
-        } : null
+        message: "Aula cancelada com sucesso! O horário está livre novamente.",
+        suggestReschedule: false,
+        rescheduleInfo: null
       };
     } else {
       // Se cancelou em cima da hora, não devolve o crédito e não libera o horário
@@ -410,8 +463,8 @@ export class SchedulingService {
             recipientName: student.name,
             recipientType: "student",
             className,
-            scheduledDate: formatDate(scheduledAt),
-            scheduledTime: formatTime(scheduledAt),
+            scheduledDate: formatDate(classScheduledAt),
+            scheduledTime: formatTime(classScheduledAt),
             canceledBy: student.name,
             reason: "Cancelamento fora do prazo permitido",
             creditRefunded: false,
@@ -424,8 +477,8 @@ export class SchedulingService {
             recipientName: teacher.name,
             recipientType: "teacher",
             className,
-            scheduledDate: formatDate(scheduledAt),
-            scheduledTime: formatTime(scheduledAt),
+            scheduledDate: formatDate(classScheduledAt),
+            scheduledTime: formatTime(classScheduledAt),
             canceledBy: student.name,
             reason: "Cancelamento fora do prazo permitido",
             platformLink: `${platformLink}/hub/plataforma/teacher/my-classes`
@@ -470,13 +523,13 @@ export class SchedulingService {
     }
 
     const classData = classDoc.data() as StudentClass;
-    const scheduledAt = (classData.scheduledAt as any).toDate();
+    const teacherClassScheduledAt = (classData.scheduledAt as any).toDate();
     
     console.log(`[cancelClassByTeacher] Class data retrieved:`, { 
       classId, 
       studentId: classData.studentId, 
       teacherId: classData.teacherId,
-      scheduledAt 
+      scheduledAt: teacherClassScheduledAt 
     });
 
     // Determinar o status baseado na permissão de makeup
@@ -496,7 +549,7 @@ export class SchedulingService {
     if (classData.availabilitySlotId) {
       await availabilityRepository.findAndDeleteException(
         classData.availabilitySlotId,
-        scheduledAt
+        teacherClassScheduledAt
       );
       console.log(`[cancelClassByTeacher] Availability exception deleted`);
     }
@@ -555,8 +608,8 @@ export class SchedulingService {
           recipientName: student.name,
           recipientType: "student",
           className,
-          scheduledDate: formatDate(scheduledAt),
-          scheduledTime: formatTime(scheduledAt),
+          scheduledDate: formatDate(teacherClassScheduledAt),
+          scheduledTime: formatTime(teacherClassScheduledAt),
           canceledBy: teacher.name,
           reason: emailReason + makeupMessage,
           creditRefunded: true, // Professor cancellations always refund
@@ -570,8 +623,8 @@ export class SchedulingService {
           recipientName: teacher.name,
           recipientType: "teacher",
           className,
-          scheduledDate: formatDate(scheduledAt),
-          scheduledTime: formatTime(scheduledAt),
+          scheduledDate: formatDate(teacherClassScheduledAt),
+          scheduledTime: formatTime(teacherClassScheduledAt),
           canceledBy: teacher.name,
           reason: emailReason,
           makeupCreditGranted: newStatus === ClassStatus.CANCELED_TEACHER_MAKEUP, // Add this parameter
@@ -707,8 +760,8 @@ export class SchedulingService {
       for (const templateDay of templateDaysForCurrentDay) {
         const [hour, minute] = templateDay.hour.split(':').map(Number);
         
-        const scheduledAt = new Date(currentDate);
-        scheduledAt.setHours(hour, minute, 0, 0);
+        const classScheduledAt = new Date(currentDate);
+        classScheduledAt.setHours(hour, minute, 0, 0);
 
         // =================================================================
         // ▼▼▼ A CONDIÇÃO "if (scheduledAt >= new Date())" FOI REMOVIDA DAQUI ▼▼▼
@@ -720,7 +773,7 @@ export class SchedulingService {
           studentId: student.id,
           teacherId: templateDay.teacherId,
           language: templateDay.language,
-          scheduledAt,
+          scheduledAt: classScheduledAt,
           durationMinutes: 50,
           status: ClassStatus.SCHEDULED,
           createdBy: 'system',
@@ -768,36 +821,24 @@ export class SchedulingService {
           const currentMonth = now.getMonth();
           const currentYear = now.getFullYear();
           
-          // Verificar se pode reagendar no mês do cancelamento ou próximo mês
-          // Se cancelado na última semana do mês, pode reagendar no próximo mês
-          const lastWeekOfMonth = new Date(canceledYear, canceledMonth + 1, 0);
-          const daysDifference = (lastWeekOfMonth.getTime() - canceledDate.getTime()) / (1000 * 60 * 60 * 24);
-          const isLastWeek = daysDifference <= 7;
-          
-          const canRescheduleInCurrentMonth = (canceledYear === currentYear && canceledMonth === currentMonth);
-          const canRescheduleInNextMonth = isLastWeek && 
-            ((canceledYear === currentYear && currentMonth === canceledMonth + 1) ||
-             (canceledYear === currentYear - 1 && canceledMonth === 11 && currentMonth === 0));
-          
-          if (canRescheduleInCurrentMonth || canRescheduleInNextMonth) {
-            return {
-              allowed: true,
-              count: 0, // Makeup classes don't count against normal limit
-              limit: 999, // Effectively unlimited for makeup
-              isTeacherMakeup: true
-            };
-          } else {
-            throw new Error("O prazo para reagendar esta aula de reposição expirou. Aulas canceladas pelo professor podem ser reagendadas apenas no mês do cancelamento (ou no mês seguinte se canceladas na última semana).");
-          }
+          // Teacher makeup classes can be rescheduled using credits without time restrictions
+          // The credit system handles the expiration (45 days from cancellation)
+          return {
+            allowed: true,
+            count: 0, // Makeup classes don't count against normal limit
+            limit: 999, // Effectively unlimited for makeup
+            isTeacherMakeup: true
+          };
         }
 
         // Check if it's a credit-based class (bonus or late-students)
-        if (classData.creditId && classData.creditType) {
+        if (classData.creditId && classData.creditType && classData.creditType !== 'teacher-cancellation') {
           throw new Error(`Aulas criadas com créditos de ${classData.creditType === 'bonus' ? 'bônus' : 'estudantes tardios'} não podem ser reagendadas.`);
         }
 
         // Check if class is explicitly marked as non-reschedulable
-        if (classData.isReschedulable === false) {
+        // Exception: teacher-cancellation credit classes can be canceled but not rescheduled
+        if (classData.isReschedulable === false && classData.creditType !== 'teacher-cancellation') {
           throw new Error("Esta aula não pode ser reagendada.");
         }
       }
@@ -841,6 +882,14 @@ export class SchedulingService {
     const originalClass = await classRepository.findClassById(classId);
     const rescheduler = await userAdminRepository.findUserById(reschedulerId);
 
+    console.log(`[rescheduleClass] Original class data:`, {
+      classId,
+      status: originalClass?.status,
+      creditType: originalClass?.creditType,
+      isReschedulable: originalClass?.isReschedulable,
+      creditId: originalClass?.creditId
+    });
+
     // --- Validações Iniciais ---
     if (!originalClass) throw new Error("Aula original não encontrada.");
     if (!rescheduler)
@@ -859,6 +908,15 @@ export class SchedulingService {
       throw new Error("Usuário não autorizado para reagendar esta aula.");
     }
 
+    console.log(`[rescheduleClass] Checking status validation:`, {
+      currentStatus: originalClass.status,
+      scheduledStatus: ClassStatus.SCHEDULED,
+      noShowStatus: ClassStatus.NO_SHOW,
+      teacherMakeupStatus: ClassStatus.CANCELED_TEACHER_MAKEUP,
+      creditType: originalClass.creditType,
+      isReschedulable: originalClass.isReschedulable
+    });
+
     if (
       originalClass.status !== ClassStatus.SCHEDULED &&
       originalClass.status !== ClassStatus.NO_SHOW &&
@@ -870,7 +928,8 @@ export class SchedulingService {
     }
 
     // Check if it's a credit-based class that cannot be rescheduled
-    if (originalClass.creditId && originalClass.isReschedulable === false) {
+    // Exception: teacher-cancellation credit classes can be rescheduled despite isReschedulable: false
+    if (originalClass.creditId && originalClass.isReschedulable === false && originalClass.creditType !== 'teacher-cancellation') {
       throw new Error(
         `Aulas criadas com créditos de ${originalClass.creditType === 'bonus' ? 'bônus' : 'estudantes tardios'} não podem ser reagendadas.`
       );

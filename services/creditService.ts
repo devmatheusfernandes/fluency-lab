@@ -146,11 +146,17 @@ export class CreditService {
     }
 
     // Update the credit as used
-    const updatedCredit = {
-      ...credit,
+    const updatedCredit: RegularClassCredit = {
+      id: credit.id,
+      type: credit.type,
+      amount: credit.amount - 1, // Decrease amount by 1
+      expiresAt: credit.expiresAt,
+      grantedBy: credit.grantedBy,
+      grantedAt: credit.grantedAt,
       usedAt: new Date(),
       usedForClassId: classId,
-      amount: credit.amount - 1, // Decrease amount by 1
+      ...(credit.reason && { reason: credit.reason }),
+      ...(credit.isExpired !== undefined && { isExpired: credit.isExpired })
     };
 
     // Update user document

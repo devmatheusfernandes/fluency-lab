@@ -51,6 +51,15 @@ export async function GET(request: NextRequest) {
         language: data.language || 'Não especificado',
         status: data.status || ClassStatus.SCHEDULED,
         feedback: data.feedback || undefined,
+        classType: data.classType,
+        durationMinutes: data.durationMinutes,
+        studentId: data.studentId,
+        rescheduledFrom: data.rescheduledFrom,
+        rescheduleReason: data.rescheduleReason,
+        createdAt: data.createdAt?.toDate()?.toISOString(),
+        updatedAt: data.updatedAt?.toDate()?.toISOString(),
+        availabilitySlotId: data.availabilitySlotId,
+        createdBy: data.createdBy
       };
     });
 

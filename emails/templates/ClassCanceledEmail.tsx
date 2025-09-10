@@ -21,6 +21,7 @@ interface ClassCanceledEmailProps {
   creditRefunded?: boolean;
   makeupCreditGranted?: boolean; // New property for makeup credit
   platformLink: string;
+  classId?: string; // ID da aula para conversão em slot livre
 }
 
 export const ClassCanceledEmail: React.FC<ClassCanceledEmailProps> = ({
@@ -34,6 +35,7 @@ export const ClassCanceledEmail: React.FC<ClassCanceledEmailProps> = ({
   creditRefunded,
   makeupCreditGranted, // New property
   platformLink,
+  classId,
 }) => {
   const isStudent = recipientType === "student";
   const title = isStudent ? "Sua aula foi cancelada" : "Aula cancelada";
@@ -109,6 +111,19 @@ export const ClassCanceledEmail: React.FC<ClassCanceledEmailProps> = ({
           <EmailButton href={platformLink}>
             {isStudent ? "Agendar Nova Aula" : "Acessar Plataforma"}
           </EmailButton>
+
+          {!isStudent && classId && (
+            <>
+              <Text style={paragraph}>
+                <strong>Quer disponibilizar este horário para outros alunos?</strong>
+                <br />
+                Você pode converter esta aula cancelada em um slot disponível para que outros alunos possam agendá-la.
+              </Text>
+              <EmailButton href={`${platformLink}/convert-slot/${classId}`}>
+                Tornar Slot Livre
+              </EmailButton>
+            </>
+          )}
 
           <Text style={paragraph}>
             Se você tiver dúvidas, não hesite em entrar em contato conosco.

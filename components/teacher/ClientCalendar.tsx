@@ -72,12 +72,6 @@ export default function ClientCalendar({
 
   return (
     <>
-      {/* <div className="mb-4 flex justify-end">
-        <Button onClick={() => setIsSlotModalOpen(true)}>
-          <AddCircle className="mr-2 h-4 w-4" />
-          Adicionar Horário
-        </Button>
-      </div> */}
       <Calendar
         events={events}
         onEventClick={handleEventClick}
@@ -87,6 +81,7 @@ export default function ClientCalendar({
         isOpen={isClassModalOpen}
         onClose={() => setIsClassModalOpen(false)}
         classData={selectedClass}
+        onSlotConverted={onRefresh}
       />
       <AvailabilitySlotDetailsModal
         isOpen={isSlotDetailsModalOpen}

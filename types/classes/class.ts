@@ -66,6 +66,10 @@ export type StudentClass = {
 
   // OCASIONAL STUDENTS TYPES SPECIFIC
   availabilitySlotId?: string;
+
+  // CONVERSÃO PARA SLOT DISPONÍVEL
+  convertedToAvailableSlot?: boolean; // Se a aula foi convertida em slot disponível
+  convertedAt?: Date; // Quando foi convertida
 };
 
 // Novo tipo que combina dados da aula com os do aluno

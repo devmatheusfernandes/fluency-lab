@@ -21,6 +21,7 @@ interface ClassRescheduledEmailProps {
   reason?: string;
   rescheduleBy: string;
   platformLink: string;
+  originalClassId?: string; // ID da aula original para conversão em slot livre
 }
 
 export const ClassRescheduledEmail: React.FC<ClassRescheduledEmailProps> = ({
@@ -34,6 +35,7 @@ export const ClassRescheduledEmail: React.FC<ClassRescheduledEmailProps> = ({
   reason,
   rescheduleBy,
   platformLink,
+  originalClassId,
 }) => {
   const isStudent = recipientType === "student";
   const title = isStudent ? "Sua aula foi reagendada" : "Aula reagendada";
@@ -83,6 +85,19 @@ export const ClassRescheduledEmail: React.FC<ClassRescheduledEmailProps> = ({
           <EmailButton href={platformLink}>
             {isStudent ? "Acessar Minhas Aulas" : "Acessar Plataforma"}
           </EmailButton>
+
+          {!isStudent && originalClassId && (
+            <>
+              <Text style={paragraph}>
+                <strong>Quer disponibilizar o horário original para outros alunos?</strong>
+                <br />
+                Você pode converter o horário original desta aula reagendada em um slot disponível para que outros alunos possam agendá-lo.
+              </Text>
+              <EmailButton href={`${platformLink}/convert-slot/${originalClassId}`}>
+                Tornar Slot Livre
+              </EmailButton>
+            </>
+          )}
 
           <Text style={paragraph}>
             Se você tiver dúvidas, não hesite em entrar em contato conosco.

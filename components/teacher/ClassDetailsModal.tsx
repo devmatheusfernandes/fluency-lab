@@ -13,19 +13,61 @@ import { Text } from "@/components/ui/Text";
 import { Card } from "@/components/ui/Card";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface ClassDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   classData: PopulatedStudentClass | null;
+  onSlotConverted?: () => void; // Callback para atualizar a lista após conversão
 }
 
 export default function ClassDetailsModal({
   isOpen,
   onClose,
   classData,
+  onSlotConverted,
 }: ClassDetailsModalProps) {
+  const [isConverting, setIsConverting] = useState(false);
   if (!classData) return null;
+
+  // Verificar se a aula pode ser convertida em slot livre
+  const canConvertToSlot = (
+    classData.status === ClassStatus.CANCELED_STUDENT ||
+    classData.status === ClassStatus.CANCELED_TEACHER ||
+    classData.status === ClassStatus.CANCELED_TEACHER_MAKEUP ||
+    classData.status === ClassStatus.CANCELED_CREDIT ||
+    classData.status === ClassStatus.RESCHEDULED
+  ) && !classData.convertedToAvailableSlot;
+
+  const handleConvertToSlot = async () => {
+    if (!classData.id) return;
+
+    setIsConverting(true);
+    try {
+      const response = await fetch(`/api/classes/${classData.id}/convert-to-slot`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erro ao converter aula em slot livre');
+      }
+
+      toast.success('Aula convertida em slot disponível com sucesso!');
+      onSlotConverted?.();
+      onClose();
+    } catch (error: any) {
+      console.error('Erro ao converter aula:', error);
+      toast.error(error.message || 'Erro ao converter aula em slot livre');
+    } finally {
+      setIsConverting(false);
+    }
+  };
 
   const getStatusText = (status: ClassStatus) => {
     switch (status) {
@@ -150,7 +192,19 @@ export default function ClassDetailsModal({
           </div>
         </ModalBody>
         <ModalFooter>
-          <Button onClick={onClose}>Fechar</Button>
+          <div className="flex gap-2">
+            {canConvertToSlot && (
+              <Button
+                onClick={handleConvertToSlot}
+                disabled={isConverting}
+                variant="outline"
+                className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+              >
+                {isConverting ? 'Convertendo...' : 'Tornar Slot Livre'}
+              </Button>
+            )}
+            <Button onClick={onClose}>Fechar</Button>
+          </div>
         </ModalFooter>
       </ModalContent>
     </Modal>

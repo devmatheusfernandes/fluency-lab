@@ -650,6 +650,80 @@ export class SchedulingService {
       rescheduleInfo: null
     };
   }
+
+  /**
+   * Converte uma aula cancelada/reagendada em um slot disponível para outros alunos
+   * @param classId - ID da aula cancelada/reagendada
+   * @param teacherId - ID do professor
+   * @returns Promise<boolean> - true se convertido com sucesso
+   */
+  async convertCanceledClassToAvailableSlot(classId: string, teacherId: string): Promise<boolean> {
+    try {
+      // Buscar a aula cancelada/reagendada
+      const classDoc = await adminDb.collection('classes').doc(classId).get();
+      
+      if (!classDoc.exists) {
+        throw new Error('Aula não encontrada');
+      }
+
+      const classData = classDoc.data();
+      
+      // Verificar se a aula está cancelada ou reagendada
+      if (!classData || (classData.status !== 'canceled-student' && classData.status !== 'rescheduled')) {
+        throw new Error('Apenas aulas canceladas ou reagendadas podem ser convertidas em slots livres');
+      }
+
+      // Verificar se o professor é o dono da aula
+      if (classData.teacherId !== teacherId) {
+        throw new Error('Apenas o professor da aula pode converter em slot livre');
+      }
+
+      // Criar um novo slot disponível baseado na aula cancelada
+      const scheduledAt = classData.scheduledAt.toDate ? classData.scheduledAt.toDate() : new Date(classData.scheduledAt);
+      const endTime = new Date(scheduledAt.getTime() + (classData.durationMinutes * 60000));
+      
+      // Converter Date para string no formato HH:MM
+      const startTimeString = scheduledAt.toTimeString().slice(0, 5); // HH:MM
+      const endTimeString = endTime.toTimeString().slice(0, 5); // HH:MM
+      
+      const availableSlot = {
+        teacherId: teacherId,
+        startTime: startTimeString,
+        endTime: endTimeString,
+        startDate: scheduledAt,
+        isAvailable: true,
+        createdAt: new Date(),
+        createdFrom: 'canceled_class',
+        originalClassId: classId,
+        duration: 45,
+        type: 'makeup',
+        title: 'Aula que foi cancelada'
+      };
+
+      // Adicionar o slot à coleção de slots disponíveis
+      await adminDb.collection('availabilities').add(availableSlot);
+
+      // Mover a aula para a coleção de histórico antes de removê-la
+      const historyData = {
+        ...classData,
+        convertedToSlotAt: new Date(),
+        convertedBy: teacherId,
+        originalId: classId
+      };
+      
+      await adminDb.collection('canceled_classes_history').doc(classId).set(historyData);
+      
+      // Remover a aula da coleção principal para evitar conflitos de agendamento
+      await adminDb.collection('classes').doc(classId).delete();
+
+      console.log(`Aula ${classId} convertida em slot disponível e movida para histórico com sucesso`);
+      return true;
+
+    } catch (error) {
+      console.error('Erro ao converter aula em slot disponível:', error);
+      throw error;
+    }
+  }
   /**
    * Busca os detalhes completos de uma aula, incluindo os perfis do
    * aluno e do professor, e verifica a autorização.

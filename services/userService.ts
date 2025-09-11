@@ -24,6 +24,57 @@ export class UserService {
     return await userAdminRepo.listUsers(filters);
   }
 
+  /**
+   * Alias para getUsers - mantém compatibilidade com código existente
+   */
+  async getAllUsers(filters?: { role?: string; isActive?: boolean }): Promise<User[]> {
+    return await this.getUsers(filters);
+  }
+
+  /**
+   * Cria um novo usuário no sistema
+   */
+  async createUser(userData: Partial<User>): Promise<string> {
+    try {
+      // Criar usuário no Firebase Auth se email fornecido
+      let firebaseUid: string | undefined;
+      if (userData.email) {
+        const userRecord = await adminAuth.createUser({
+          email: userData.email,
+          displayName: userData.name,
+          disabled: false
+        });
+        firebaseUid = userRecord.uid;
+      }
+
+      // Criar usuário no Firestore
+      const newUser: Partial<User> = {
+        ...userData,
+        firebaseUid,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        // Inicializar dias de férias para professores
+        ...(userData.role === 'teacher' && { vacationDaysRemaining: 30 })
+      };
+
+      const userId = await userAdminRepo.create(newUser);
+      
+      // Log da criação
+      await AuditService.logUserAction({
+        userId: firebaseUid || 'system',
+        action: 'CREATE_USER',
+        targetUserId: userId,
+        details: { role: userData.role, email: userData.email }
+      });
+
+      return userId;
+    } catch (error) {
+      console.error('Erro ao criar usuário:', error);
+      throw new Error('Falha ao criar usuário');
+    }
+  }
+
 // Método principal que o PATCH vai usar
   async updateUser(userId: string, userData: Partial<User>): Promise<void> {
     const allowedUpdates = { ...userData };

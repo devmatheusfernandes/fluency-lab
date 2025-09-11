@@ -1,22 +1,61 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { schedulingService } from '@/services/schedulingService';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import { withAuth, createStudentConfig } from '../../../../lib/auth/middleware';
+import { schedulingService } from '../../../../services/schedulingService';
 
-export async function GET(request: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Acesso não autorizado.' }, { status: 401 });
-  }
-
+/**
+ * Endpoint para listagem de aulas do estudante
+ * 
+ * Aplicação do novo sistema de autorização:
+ * - Validação automática de autenticação
+ * - Verificação de role STUDENT
+ * - Validação de ownership (estudante só vê suas próprias aulas)
+ * - Rate limiting (100 requests/min)
+ * - Logging automático de operações
+ */
+async function getStudentClassesHandler(
+  request: NextRequest,
+  { params, authContext }: { params?: any; authContext: any }
+) {
   try {
-    const studentId = session.user.id;
-    // Usamos o serviço para obter as aulas já "populadas" com os dados do professor
-    const populatedClasses = await schedulingService.getPopulatedClassesForStudent(studentId);
-    return NextResponse.json(populatedClasses);
-  } catch (error: any) {
-    console.error("Erro ao buscar as aulas do aluno:", error);
-    return NextResponse.json({ error: 'Erro interno do servidor.' }, { status: 500 });
+    // Parse query parameters for filtering
+    const { searchParams } = new URL(request.url);
+    const status = searchParams.get('status');
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+    const limit = searchParams.get('limit');
+    const offset = searchParams.get('offset');
+
+    // O middleware já validou:
+    // 1. Autenticação do usuário
+    // 2. Role de estudante
+    // 3. Rate limiting
+    
+    const classes = await schedulingService.getPopulatedClassesForStudent(
+      authContext.userId
+    );
+
+    return NextResponse.json({
+      success: true,
+      data: classes,
+      total: classes.length,
+      pagination: {
+        limit: limit ? parseInt(limit) : null,
+        offset: offset ? parseInt(offset) : null
+      }
+    });
+    
+  } catch (error) {
+    console.error('Erro ao buscar aulas do estudante:', error);
+    return NextResponse.json(
+      { error: 'Erro interno do servidor.' },
+      { status: 500 }
+    );
   }
 }
+
+// Aplicar middleware de autorização com configuração específica para estudantes
+export const GET = withAuth(
+  getStudentClassesHandler,
+  createStudentConfig('class', 'general')
+);
 

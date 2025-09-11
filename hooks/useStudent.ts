@@ -45,7 +45,7 @@ export const useStudent = () => {
         throw new Error(errorData.error || "Falha ao buscar as aulas.");
       }
       const data = await response.json();
-      setMyClasses(data);
+      setMyClasses(data.data || []);
     } catch (err: any) {
       setError(err.message);
       setMyClasses([]);

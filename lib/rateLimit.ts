@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { RateLimitOperationType, DEFAULT_RATE_LIMITS } from '../types/auth';
 
 // Simple in-memory store for rate limiting
 // In production, you should use Redis or another distributed store
 const rateLimitStore: Map<string, { count: number; resetTime: number }> = new Map();
+
+// Interface para configuração customizada de rate limit
+interface CustomRateLimitConfig {
+  requests: number;
+  windowMs: number;
+}
 
 // Clean up old entries periodically
 setInterval(() => {
@@ -80,6 +87,158 @@ export function getClientIP(request: NextRequest): string {
 }
 
 // Predefined rate limiters
+// ============================================================================
+// CLASSE RATELIMITER SINGLETON
+// ============================================================================
+
+/**
+ * Classe singleton para gerenciamento centralizado de rate limiting
+ */
+export class RateLimiter {
+  private static instance: RateLimiter | null = null;
+  private store: Map<string, { count: number; resetTime: number }>;
+  private cleanupInterval: NodeJS.Timeout;
+
+  private constructor() {
+    this.store = rateLimitStore;
+    
+    // Configurar limpeza automática
+    this.cleanupInterval = setInterval(() => {
+      this.cleanup();
+    }, 60000); // Limpar a cada minuto
+  }
+
+  /**
+   * Obtém a instância singleton
+   */
+  public static getInstance(): RateLimiter {
+    if (!RateLimiter.instance) {
+      RateLimiter.instance = new RateLimiter();
+    }
+    return RateLimiter.instance;
+  }
+
+  /**
+   * Verifica rate limit para uma operação específica
+   */
+  public async checkRateLimit(
+    key: string,
+    operationType: RateLimitOperationType,
+    customConfig?: CustomRateLimitConfig
+  ): Promise<boolean> {
+    const config = customConfig || DEFAULT_RATE_LIMITS[operationType];
+    const now = Date.now();
+    
+    const record = this.store.get(key);
+    
+    // Se não existe registro ou a janela expirou, criar novo
+    if (!record || record.resetTime <= now) {
+      this.store.set(key, {
+        count: 1,
+        resetTime: now + config.windowMs
+      });
+      return true; // Permitido
+    }
+    
+    // Incrementar contador
+    record.count += 1;
+    this.store.set(key, record);
+    
+    // Verificar se excedeu o limite
+    return record.count <= config.requests;
+  }
+
+  /**
+   * Obtém informações sobre o rate limit atual
+   */
+  public getRateLimitInfo(
+    key: string,
+    operationType: RateLimitOperationType
+  ): {
+    remaining: number;
+    resetTime: number;
+    total: number;
+  } {
+    const config = DEFAULT_RATE_LIMITS[operationType];
+    const record = this.store.get(key);
+    const now = Date.now();
+    
+    if (!record || record.resetTime <= now) {
+      return {
+        remaining: config.requests,
+        resetTime: now + config.windowMs,
+        total: config.requests
+      };
+    }
+    
+    return {
+      remaining: Math.max(0, config.requests - record.count),
+      resetTime: record.resetTime,
+      total: config.requests
+    };
+  }
+
+  /**
+   * Reseta o rate limit para uma chave específica
+   */
+  public resetRateLimit(key: string): void {
+    this.store.delete(key);
+  }
+
+  /**
+   * Limpa registros expirados
+   */
+  private cleanup(): void {
+    const now = Date.now();
+    for (const [key, value] of this.store.entries()) {
+      if (value.resetTime <= now) {
+        this.store.delete(key);
+      }
+    }
+  }
+
+  /**
+   * Obtém estatísticas do rate limiter
+   */
+  public getStats(): {
+    totalKeys: number;
+    activeKeys: number;
+    expiredKeys: number;
+  } {
+    const now = Date.now();
+    let activeKeys = 0;
+    let expiredKeys = 0;
+    
+    for (const [, value] of this.store.entries()) {
+      if (value.resetTime > now) {
+        activeKeys++;
+      } else {
+        expiredKeys++;
+      }
+    }
+    
+    return {
+      totalKeys: this.store.size,
+      activeKeys,
+      expiredKeys
+    };
+  }
+
+  /**
+   * Destrói a instância (para testes)
+   */
+  public static destroy(): void {
+    if (RateLimiter.instance) {
+      clearInterval(RateLimiter.instance.cleanupInterval);
+      RateLimiter.instance = null;
+    }
+  }
+}
+
+// ============================================================================
+// FUNÇÕES DE CONVENIÊNCIA (MANTIDAS PARA COMPATIBILIDADE)
+// ============================================================================
+
 export const generalRateLimiter = (request: NextRequest) => 
   rateLimit(request, 15 * 60 * 1000, 100); // 100 requests per 15 minutes
 
@@ -88,3 +247,57 @@ export const authRateLimiter = (request: NextRequest) =>
 
 export const paymentRateLimiter = (request: NextRequest) => 
   rateLimit(request, 15 * 60 * 1000, 20); // 20 requests per 15 minutes
+
+// ============================================================================
+// NOVAS FUNÇÕES BASEADAS EM OPERAÇÃO
+// ============================================================================
+
+/**
+ * Rate limiter para cancelamentos
+ */
+export const cancellationRateLimiter = (request: NextRequest, userId: string) => {
+  const rateLimiter = RateLimiter.getInstance();
+  const clientIp = getClientIP(request);
+  const key = `cancellation:${userId}:${clientIp}`;
+  return rateLimiter.checkRateLimit(key, 'cancellation');
+};
+
+/**
+ * Rate limiter para reagendamentos
+ */
+export const rescheduleRateLimiter = (request: NextRequest, userId: string) => {
+  const rateLimiter = RateLimiter.getInstance();
+  const clientIp = getClientIP(request);
+  const key = `reschedule:${userId}:${clientIp}`;
+  return rateLimiter.checkRateLimit(key, 'reschedule');
+};
+
+/**
+ * Rate limiter para login
+ */
+export const loginRateLimiter = (request: NextRequest) => {
+  const rateLimiter = RateLimiter.getInstance();
+  const clientIp = getClientIP(request);
+  const key = `login:${clientIp}`;
+  return rateLimiter.checkRateLimit(key, 'login');
+};
+
+/**
+ * Rate limiter para operações administrativas
+ */
+export const adminOperationRateLimiter = (request: NextRequest, userId: string) => {
+  const rateLimiter = RateLimiter.getInstance();
+  const clientIp = getClientIP(request);
+  const key = `admin_operation:${userId}:${clientIp}`;
+  return rateLimiter.checkRateLimit(key, 'admin_operation');
+};
+
+/**
+ * Rate limiter para criação de usuários
+ */
+export const userCreationRateLimiter = (request: NextRequest, userId: string) => {
+  const rateLimiter = RateLimiter.getInstance();
+  const clientIp = getClientIP(request);
+  const key = `user_creation:${userId}:${clientIp}`;
+  return rateLimiter.checkRateLimit(key, 'user_creation');
+};

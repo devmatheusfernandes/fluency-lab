@@ -1,46 +1,60 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { schedulingService } from '@/services/schedulingService';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import { withAuth, createTeacherConfig } from '../../../../lib/auth/middleware';
+import { schedulingService } from '../../../../services/schedulingService';
 
-export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Acesso não autorizado.' }, { status: 401 });
-  }
-
-  // Verificar se é professor
-  if (session.user.role !== 'teacher' && session.user.role !== 'admin' && session.user.role !== 'manager') {
-    return NextResponse.json({ error: 'Apenas professores podem cancelar aulas.' }, { status: 403 });
-  }
-
+/**
+ * Endpoint para cancelamento de aulas por professores
+ * 
+ * Aplicação do novo sistema de autorização:
+ * - Validação automática de autenticação
+ * - Verificação de role TEACHER, ADMIN ou MANAGER
+ * - Validação de contexto (professor só pode cancelar aulas que leciona)
+ * - Rate limiting (10 cancelamentos/hora)
+ * - Logging automático de operações
+ */
+async function cancelClassHandler(
+  request: NextRequest,
+  { params, authContext }: { params?: any; authContext: any }
+) {
   try {
-    const body = await request.json();
-    const { classId, reason, allowMakeup = true } = body;
+    const { classId, reason } = await request.json();
 
     if (!classId) {
-      return NextResponse.json({ error: 'ID da aula é obrigatório.' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'ID da aula é obrigatório.' },
+        { status: 400 }
+      );
     }
 
-    console.log(`[API Route] Canceling class ${classId} by teacher ${session.user.id}`, { reason, allowMakeup });
+    // O middleware já validou:
+    // 1. Autenticação do usuário
+    // 2. Role de professor/admin/manager
+    // 3. Contexto da aula (professor pode cancelar aulas que leciona)
+    // 4. Rate limiting
     
-    const teacherId = session.user.id;
-    const result = await schedulingService.cancelClassByTeacher(
-      teacherId,
+    const result = await schedulingService.cancelClass(
       classId,
-      reason,
-      allowMakeup
+      'teacher',
+      reason
     );
 
-    console.log(`[API Route] Class cancellation completed successfully for class ${classId}`);
-    return NextResponse.json(result);
-  } catch (error: any) {
-    console.error("[API Route] Erro ao cancelar aula:", error);
-    console.error("[API Route] Error details:", {
-      message: error.message,
-      stack: error.stack,
-      name: error.name
+    return NextResponse.json({
+      success: true,
+      message: 'Aula cancelada com sucesso.',
+      data: result
     });
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    
+  } catch (error) {
+    console.error('Erro ao cancelar aula:', error);
+    return NextResponse.json(
+      { error: 'Erro interno do servidor.' },
+      { status: 500 }
+    );
   }
 }
+
+// Aplicar middleware de autorização com configuração específica para professores
+export const POST = withAuth(
+  cancelClassHandler,
+  createTeacherConfig('class', 'cancellation')
+);

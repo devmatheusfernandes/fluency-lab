@@ -207,6 +207,14 @@ export default function ClassesCard({
         selectClassName:
           "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800",
       },
+      [ClassStatus.CANCELED_ADMIN]: {
+        label: "Cancelada (Admin)",
+        className:
+          "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800",
+        icon: "🛡️",
+        selectClassName:
+          "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800",
+      },
       [ClassStatus.CANCELED_TEACHER_MAKEUP]: {
         label: "Cancelada (Prof. + Reposição)",
         className:

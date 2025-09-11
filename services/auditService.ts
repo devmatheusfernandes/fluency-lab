@@ -136,4 +136,25 @@ export class AuditService {
       return [];
     }
   }
+
+  /**
+   * Log a user action - convenience method for user-related actions
+   * @param params - Object containing userId, action, targetUserId, and details
+   */
+  static async logUserAction(params: {
+    userId: string;
+    action: string;
+    targetUserId?: string;
+    details?: any;
+  }): Promise<void> {
+    await this.logEvent(
+      params.userId,
+      params.action,
+      'user',
+      {
+        ...params.details,
+        targetUserId: params.targetUserId
+      }
+    );
+  }
 }

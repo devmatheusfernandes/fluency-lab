@@ -1,58 +1,77 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { ClassStatus } from '@/types/classes/class';
-import { schedulingService } from '@/services/schedulingService';
-import { authOptions } from '../../auth/[...nextauth]/route';
-import { ClassRepository } from '@/repositories/classRepository';
+import { withAuth, createTeacherConfig } from '../../../../lib/auth/middleware';
+import { schedulingService } from '../../../../services/schedulingService';
 
-const classRepository = new ClassRepository();
-
-// Manipulador para o método PATCH para atualizar status da aula
-export async function PATCH(
+/**
+ * Endpoint para atualização de status de aulas
+ * 
+ * Aplicação do novo sistema de autorização:
+ * - Validação automática de autenticação
+ * - Verificação de role TEACHER, ADMIN ou MANAGER
+ * - Validação de contexto (professor só pode atualizar aulas que leciona)
+ * - Rate limiting (100 requests/min)
+ * - Logging automático de operações
+ */
+async function updateClassStatusHandler(
   request: NextRequest,
-  { params }: { params: Promise<{ classId: string }> }
+  { params, authContext }: { params?: { classId: string }; authContext: any }
 ) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Acesso não autorizado.' }, { status: 401 });
-  }
-
   try {
-    const { classId } = await params;
-    const { status, feedback } = (await request.json()) as { status?: ClassStatus, feedback?: string };
+    if (!params?.classId) {
+      return NextResponse.json(
+        { error: 'ID da aula é obrigatório.' },
+        { status: 400 }
+      );
+    }
+    const { classId } = params;
+    const { status, feedback } = await request.json();
 
-    // If neither status nor feedback is provided, return an error
-    if (!status && !feedback) {
-      return NextResponse.json({ error: 'Nenhum dado fornecido para atualização.' }, { status: 400 });
+    if (!status) {
+      return NextResponse.json(
+        { error: 'Status é obrigatório.' },
+        { status: 400 }
+      );
     }
 
-    // If status is provided, validate it
-    if (status && !Object.values(ClassStatus).includes(status)) {
-      return NextResponse.json({ error: 'Status inválido fornecido.' }, { status: 400 });
+    // Validate status values
+    const validStatuses = ['scheduled', 'completed', 'cancelled', 'no_show'];
+    if (!validStatuses.includes(status)) {
+      return NextResponse.json(
+        { error: 'Status inválido.' },
+        { status: 400 }
+      );
     }
 
-    // If no status is provided, get the current status from the class
-    let currentClassStatus: ClassStatus;
-    if (status) {
-      currentClassStatus = status;
-    } else {
-      const currentClass = await classRepository.findClassById(classId);
-      if (!currentClass) {
-        return NextResponse.json({ error: 'Aula não encontrada.' }, { status: 404 });
-      }
-      currentClassStatus = currentClass.status;
-    }
-
-    const updatedClass = await schedulingService.updateClassStatus(
+    // O middleware já validou:
+    // 1. Autenticação do usuário
+    // 2. Role de professor/admin/manager
+    // 3. Contexto da aula (professor pode atualizar aulas que leciona)
+    // 4. Rate limiting
+    
+    const result = await schedulingService.updateClassStatus(
       classId,
-      currentClassStatus, // Pass the validated status
+      status,
       feedback,
-      session.user.id
+      authContext.userId
     );
 
-    return NextResponse.json({ message: 'Aula atualizada com sucesso.', data: updatedClass });
-  } catch (error: any) {
-    console.error("Erro ao atualizar aula:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({
+      success: true,
+      message: 'Status da aula atualizado com sucesso.',
+      data: result
+    });
+    
+  } catch (error) {
+    console.error('Erro ao atualizar status da aula:', error);
+    return NextResponse.json(
+      { error: 'Erro interno do servidor.' },
+      { status: 500 }
+    );
   }
 }
+
+// Aplicar middleware de autorização com configuração específica para professores
+export const PATCH = withAuth(
+  updateClassStatusHandler,
+  createTeacherConfig('class', 'general')
+);

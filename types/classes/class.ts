@@ -9,6 +9,7 @@ export enum ClassStatus {
   CANCELED_STUDENT = "canceled-student",
   CANCELED_TEACHER = "canceled-teacher",
   CANCELED_TEACHER_MAKEUP = "canceled-teacher-makeup", // Teacher cancellation allowing makeup
+  CANCELED_ADMIN = "canceled-admin", // Administrative cancellation
   CANCELED_CREDIT = "canceled-credit",  // Credit-based class canceled (cannot be rescheduled)
   NO_SHOW = "no-show",
   RESCHEDULED = "rescheduled",

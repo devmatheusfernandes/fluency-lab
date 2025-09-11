@@ -1,21 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { withAuth, createUniversalConfig } from '@/lib/auth/middleware';
 import { schedulingService } from '@/services/schedulingService';
 
-export async function POST(
+/**
+ * Endpoint para reagendamento de aulas
+ * 
+ * Aplicação do novo sistema de autorização:
+ * - Validação automática de autenticação
+ * - Verificação de role (STUDENT, TEACHER, ADMIN, MANAGER)
+ * - Validação de ownership/contexto baseada no role
+ * - Rate limiting (10 reagendamentos/hora)
+ * - Logging automático de operações
+ */
+async function rescheduleClassHandler(
     request: NextRequest,
-    { params }: { params: Promise<{ classId: string }> }
+    { params, authContext }: { params?: { classId: string }; authContext: any }
 ) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-        return NextResponse.json({ error: 'Acesso não autorizado. Sessão não encontrada.' }, { status: 401 });
-    }
-
     try {
-        const { classId } = await params;
+        if (!params?.classId) {
+            return NextResponse.json(
+                { error: 'ID da aula é obrigatório.' },
+                { status: 400 }
+            );
+        }
+        const { classId } = params;
         const { newScheduledAt, reason, availabilitySlotId } = await request.json();
-        const reschedulerId = session.user.id;
 
         // --- Validação dos dados de entrada ---
         if (!newScheduledAt) {
@@ -27,16 +36,34 @@ export async function POST(
             return NextResponse.json({ error: 'Formato de data inválido.' }, { status: 400 });
         }
 
+        // Validate future date
+        if (newScheduledDate <= new Date()) {
+            return NextResponse.json(
+                { error: 'A nova data deve ser no futuro.' },
+                { status: 400 }
+            );
+        }
+
+        // O middleware já validou:
+        // 1. Autenticação do usuário
+        // 2. Role apropriado
+        // 3. Ownership/contexto da aula
+        // 4. Rate limiting
+        
         // --- Chamada ao Serviço ---
         const result = await schedulingService.rescheduleClass({
             classId,
-            reschedulerId,
+            reschedulerId: authContext.userId,
             newScheduledAt: newScheduledDate,
             reason,
             availabilitySlotId,
         });
 
-        return NextResponse.json({ message: 'Aula reagendada com sucesso.', data: result });
+        return NextResponse.json({
+            success: true,
+            message: 'Aula reagendada com sucesso.',
+            data: result
+        });
 
     } catch (error: any) {
         console.error("Erro ao reagendar aula:", error);
@@ -44,3 +71,9 @@ export async function POST(
         return NextResponse.json({ error: error.message || 'Erro interno do servidor.' }, { status: 500 });
     }
 }
+
+// Aplicar middleware de autorização com configuração universal (todos os roles)
+export const POST = withAuth(
+    rescheduleClassHandler,
+    createUniversalConfig('class', 'reschedule')
+);

@@ -1,40 +1,60 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { withAuth, createStudentConfig } from '@/lib/auth/middleware';
 import { schedulingService } from '@/services/schedulingService';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
-export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
-  
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Acesso não autorizado.' }, { status: 401 });
-  }
-
-  // Check if the current user is a student
-  if (session.user.role !== 'student') {
-    return NextResponse.json({ error: 'Acesso não autorizado.' }, { status: 403 });
-  }
-
+/**
+ * Endpoint para cancelamento de aulas por estudantes
+ * 
+ * Aplicação do novo sistema de autorização:
+ * - Validação automática de autenticação
+ * - Verificação de role STUDENT
+ * - Validação de ownership (estudante só pode cancelar suas próprias aulas)
+ * - Rate limiting (5 cancelamentos/hora)
+ * - Logging automático de operações
+ */
+async function cancelClassHandler(
+  request: NextRequest,
+  { params, authContext }: { params?: any; authContext: any }
+) {
   try {
-    const { classId, scheduledAt } = await request.json();
-    
-    console.log(`[API Cancel] Student ${session.user.id} attempting to cancel class ${classId}`, scheduledAt ? `scheduled for ${scheduledAt}` : '');
-    
+    const { classId, reason } = await request.json();
+
     if (!classId) {
-      return NextResponse.json({ error: 'ID da aula não fornecido.' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'ID da aula é obrigatório.' },
+        { status: 400 }
+      );
     }
 
-    const studentId = session.user.id;
-    const scheduledAtDate = scheduledAt ? new Date(scheduledAt) : undefined;
+    // O middleware já validou:
+    // 1. Autenticação do usuário
+    // 2. Role de estudante
+    // 3. Ownership da aula
+    // 4. Rate limiting
     
-    // Use the enhanced cancellation method from the service
-    const result = await schedulingService.cancelClassByStudent(studentId, classId, scheduledAtDate);
-    
-    console.log(`[API Cancel] Cancellation completed successfully for class ${classId}:`, result);
+    const result = await schedulingService.cancelClass(
+      classId,
+      'student',
+      reason
+    );
 
-    return NextResponse.json(result);
-  } catch (error: any) {
-    console.error('Error canceling class:', error);
-    return NextResponse.json({ error: error.message || 'Failed to cancel class' }, { status: 500 });
+    return NextResponse.json({
+      success: true,
+      message: 'Aula cancelada com sucesso.',
+      data: result
+    });
+    
+  } catch (error) {
+    console.error('Erro ao cancelar aula:', error);
+    return NextResponse.json(
+      { error: 'Erro interno do servidor.' },
+      { status: 500 }
+    );
   }
 }
+
+// Aplicar middleware de autorização com configuração específica para estudantes
+export const POST = withAuth(
+  cancelClassHandler,
+  createStudentConfig('class', 'cancellation')
+);

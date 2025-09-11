@@ -26,6 +26,7 @@ export interface GoogleCalendarDefaultTimes {
 //firebase > db > users > user.id
 export type User = {
     id: string;
+    firebaseUid?: string; // UID do Firebase Auth
     name: string;
     nickname?: string;
     email: string;

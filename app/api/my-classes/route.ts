@@ -1,21 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { schedulingService } from '@/services/schedulingService';
-import { authOptions } from '../auth/[...nextauth]/route';
+import { withAuth, createTeacherConfig } from '../../../lib/auth/middleware';
+import { schedulingService } from '../../../services/schedulingService';
 
-export async function GET(request: NextRequest) {
-  const session = await getServerSession(authOptions);
-  // Allow both teachers and admins to access this endpoint
-  if (!session?.user?.id || !session?.user?.role || !['teacher', 'admin'].includes(session.user.role)) {
-    return NextResponse.json({ error: 'Acesso não autorizado.' }, { status: 403 });
-  }
-
+/**
+ * Endpoint para listagem de aulas do professor
+ * 
+ * Aplicação do novo sistema de autorização:
+ * - Validação automática de autenticação
+ * - Verificação de role TEACHER, ADMIN ou MANAGER
+ * - Validação de contexto (professor só vê suas próprias aulas)
+ * - Rate limiting (100 requests/min)
+ * - Logging automático de operações
+ */
+async function getTeacherClassesHandler(
+  request: NextRequest,
+  { params, authContext }: { params?: any; authContext: any }
+) {
   try {
-    const teacherId = session.user.id;
-    const populatedClasses = await schedulingService.getPopulatedClassesForTeacher(teacherId);
-    return NextResponse.json(populatedClasses);
-  } catch (error: any) {
-    console.error("Erro ao buscar aulas do professor:", error);
-    return NextResponse.json({ error: 'Erro interno do servidor.' }, { status: 500 });
+    // Parse query parameters for filtering
+    const { searchParams } = new URL(request.url);
+    const status = searchParams.get('status');
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+
+    // O middleware já validou:
+    // 1. Autenticação do usuário
+    // 2. Role de professor/admin/manager
+    // 3. Rate limiting
+    
+    const classes = await schedulingService.getTeacherClasses(
+      authContext.userId,
+      {
+        status: status || undefined,
+        startDate: startDate ? new Date(startDate) : undefined,
+        endDate: endDate ? new Date(endDate) : undefined
+      }
+    );
+
+    return NextResponse.json({
+      success: true,
+      data: classes,
+      total: classes.length
+    });
+    
+  } catch (error) {
+    console.error('Erro ao buscar aulas do professor:', error);
+    return NextResponse.json(
+      { error: 'Erro interno do servidor.' },
+      { status: 500 }
+    );
   }
 }
+
+// Aplicar middleware de autorização com configuração específica para professores
+export const GET = withAuth(
+  getTeacherClassesHandler,
+  createTeacherConfig('class', 'general')
+);

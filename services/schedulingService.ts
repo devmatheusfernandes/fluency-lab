@@ -1864,6 +1864,98 @@ export class SchedulingService {
       settings: teacher.schedulingSettings 
     };
   }
+
+  /**
+   * Obtém as aulas de um professor específico
+   * @param teacherId O ID do professor
+   * @param filters Filtros opcionais (status, data, etc.)
+   */
+  async getTeacherClasses(teacherId: string, filters?: {
+    status?: string;
+    startDate?: Date;
+    endDate?: Date;
+    limit?: number;
+  }): Promise<StudentClass[]> {
+    try {
+      let query = adminDb.collection('classes')
+        .where('teacherId', '==', teacherId);
+
+      if (filters?.status) {
+        query = query.where('status', '==', filters.status);
+      }
+
+      if (filters?.startDate) {
+        query = query.where('scheduledAt', '>=', filters.startDate);
+      }
+
+      if (filters?.endDate) {
+        query = query.where('scheduledAt', '<=', filters.endDate);
+      }
+
+      query = query.orderBy('scheduledAt', 'desc');
+
+      if (filters?.limit) {
+        query = query.limit(filters.limit);
+      }
+
+      const snapshot = await query.get();
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as StudentClass[];
+    } catch (error) {
+      console.error('Erro ao buscar aulas do professor:', error);
+      throw new Error('Falha ao buscar aulas do professor');
+    }
+  }
+
+  /**
+   * Cancela uma aula - método genérico que determina o tipo de cancelamento
+   * @param classId O ID da aula
+   * @param canceledBy Quem está cancelando ('student' | 'teacher' | 'admin')
+   * @param reason Motivo do cancelamento
+   * @param allowMakeup Se deve permitir reposição (apenas para cancelamentos do professor)
+   */
+  async cancelClass(classId: string, canceledBy: 'student' | 'teacher' | 'admin', reason?: string, allowMakeup: boolean = true): Promise<void> {
+    try {
+      const classRef = adminDb.collection('classes').doc(classId);
+      const classDoc = await classRef.get();
+      
+      if (!classDoc.exists) {
+        throw new Error('Aula não encontrada');
+      }
+
+      const classData = classDoc.data() as StudentClass;
+      
+      if (canceledBy === 'student') {
+        await this.cancelClassByStudent(classData.studentId, classId);
+      } else if (canceledBy === 'teacher') {
+        if (!classData.teacherId) {
+          throw new Error('Teacher ID is required for teacher cancellation');
+        }
+        await this.cancelClassByTeacher(classData.teacherId, classId, reason, allowMakeup);
+      } else {
+        // Cancelamento administrativo
+        await classRef.update({
+          status: ClassStatus.CANCELED_ADMIN,
+          canceledAt: new Date(),
+          canceledBy: 'admin',
+          reason: reason || 'Cancelamento administrativo'
+        });
+
+        // Liberar horário se necessário
+        if (classData.availabilitySlotId) {
+          await availabilityRepository.findAndDeleteException(
+            classData.availabilitySlotId,
+            (classData.scheduledAt as any).toDate()
+          );
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao cancelar aula:', error);
+      throw error;
+    }
+  }
 }
 
 export const schedulingService = new SchedulingService();

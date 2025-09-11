@@ -210,5 +210,19 @@ export class UserAdminRepository {
       return snapshot.data().count;
     }
 
-    
+    /**
+     * Cria um novo usuário no Firestore
+     * @param userData - Dados do usuário a ser criado
+     * @returns O ID do documento criado
+     */
+    async create(userData: Partial<User>): Promise<string> {
+      const dataToCreate = {
+        ...userData,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      const docRef = await this.usersCollection.add(dataToCreate);
+      return docRef.id;
+    }
 }

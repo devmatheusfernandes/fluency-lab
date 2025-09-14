@@ -171,9 +171,9 @@ export default function StudentClassCard({
               size="sm"
               onClick={handleRescheduleClick}
               disabled={!isReschedulable}
-              variant={isTeacherMakeup ? "success" : "secondary"}
+              variant={isTeacherMakeup ? "success" : "primary"}
             >
-              {isTeacherMakeup ? "Reagendar com Crédito" : "Reagendar"}
+              {isTeacherMakeup ? "Reagendar com crédito" : "Reagendar"}
             </Button>
           )}
         </div>

@@ -51,7 +51,7 @@ const UserCard: React.FC<UserCardProps> = ({
         {onLogout && (
           <button
             onClick={onLogout}
-            className="p-2 rounded-lg text-paragraph hover:text-red-500 transition-colors"
+            className="p-2 rounded-lg bg-danger/20 text-danger hover:text-danger-light transition-colors"
             title="Sair"
           >
             <Login className="w-4 h-4" />

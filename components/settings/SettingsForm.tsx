@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSettings } from "@/hooks/useSettings";
+import { useTheme } from "@/context/ThemeContext";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
@@ -33,22 +34,17 @@ export default function SettingsForm({
   googleCalendarDefaultTimes = {},
 }: SettingsFormProps) {
   const [language, setLanguage] = useState(currentLanguage);
-  const [theme, setTheme] = useState(currentTheme);
   const [defaultTimes, setDefaultTimes] = useState<GoogleCalendarDefaultTimes>(
     googleCalendarDefaultTimes || {}
   );
   const { updateSettings, isLoading } = useSettings();
-
-  // Efeito para aplicar a classe 'dark' ao body
-  useEffect(() => {
-    document.body.classList.toggle("dark", theme === "dark");
-  }, [theme]);
+  const { isDark, setTheme } = useTheme();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     updateSettings({
       interfaceLanguage: language,
-      theme,
+      theme: isDark ? "dark" : "light",
       googleCalendarDefaultTimes: defaultTimes,
     });
   };
@@ -104,10 +100,8 @@ export default function SettingsForm({
             <label htmlFor="theme">Tema Escuro</label>
             <Switch
               id="theme"
-              checked={theme === "dark"}
-              onCheckedChange={(checked) =>
-                setTheme(checked ? "dark" : "light")
-              }
+              checked={isDark}
+              onCheckedChange={(checked) => setTheme(checked)}
             />
           </div>
         </div>

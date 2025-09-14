@@ -5,7 +5,17 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { twMerge } from "tailwind-merge";
-import { ArrowDown, CloseCircle, HamburgerMenu } from "@solar-icons/react/ssr";
+import {
+  AltArrowUp,
+  ArrowDown,
+  ArrowUp,
+  CloseCircle,
+  HamburgerMenu,
+  ListArrowUp,
+  ListArrowUpMinimalistic,
+  MentionSquare,
+  MenuDotsCircle,
+} from "@solar-icons/react/ssr";
 import { useSidebar } from "@/context/SidebarContext";
 import { UserCard, UserData } from "../UserCard/UserCard";
 import {
@@ -220,17 +230,17 @@ const MobileBottomDrawer: React.FC<MobileBottomDrawerProps> = ({
       {/* Bottom Drawer */}
       <div
         className={twMerge(
-          "fixed bottom-0 left-0 right-0 bg-container rounded-t-2xl border-t border-surface-2 z-50 md:hidden transition-transform duration-300 ease-out",
+          "fixed bottom-0 left-0 right-0 bg-slate-300 dark:bg-slate-950 rounded-t-2xl border-t border-primary/30 dark:border-primary z-50 md:hidden transition-transform duration-300 ease-out",
           isOpen ? "translate-y-0" : "translate-y-full"
         )}
       >
         {/* Handle */}
         <div className="flex justify-center pt-3 pb-2">
-          <div className="w-12 h-1 bg-surface-2 rounded-full" />
+          <div className="w-12 h-1 bg-primary/30 dark:bg-primary rounded-full" />
         </div>
 
         {/* Header with User Card */}
-        <div className="px-4 py-3 border-b border-surface-2">
+        <div className="px-4 py-3">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold text-title">
               {activeTab === "menu" ? "Menu" : "Notificações"}
@@ -248,13 +258,13 @@ const MobileBottomDrawer: React.FC<MobileBottomDrawerProps> = ({
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-surface-2">
+        <div className="flex">
           <button
             onClick={() => setActiveTab("menu")}
             className={twMerge(
               "flex-1 py-3 px-4 text-sm font-medium transition-colors relative",
               activeTab === "menu"
-                ? "text-primary bg-primary/5"
+                ? "rounded-t-xl  text-primary bg-primary/5 dark:text-white dark:bg-primary/15"
                 : "text-paragraph hover:text-title"
             )}
           >
@@ -268,7 +278,7 @@ const MobileBottomDrawer: React.FC<MobileBottomDrawerProps> = ({
             className={twMerge(
               "flex-1 py-3 px-4 text-sm font-medium transition-colors relative flex items-center justify-center gap-2",
               activeTab === "notifications"
-                ? "text-primary bg-primary/5"
+                ? "rounded-t-xl  text-primary bg-primary/5 dark:text-white dark:bg-primary/15"
                 : "text-paragraph hover:text-title"
             )}
           >
@@ -286,7 +296,7 @@ const MobileBottomDrawer: React.FC<MobileBottomDrawerProps> = ({
         </div>
 
         {/* Content */}
-        <div className="max-h-[60vh] overflow-y-auto">
+        <div className="min-h-[40vh] max-h-[65vh] overflow-y-auto">
           {activeTab === "menu" ? (
             <nav className="p-4">
               <ul className="space-y-2">
@@ -467,7 +477,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       </aside>
 
       {/* Mobile Bottom Navbar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-container border-t border-surface-2 px-4 py-2 z-50 shadow-lg">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-300 dark:bg-slate-950 border-t border-primary/30 dark:border-primary px-4 py-3 z-50">
         <div className="flex items-center justify-between">
           {items
             .filter((item) => !item.subItems)
@@ -482,7 +492,10 @@ const Sidebar: React.FC<SidebarProps> = ({
             className="relative flex items-center justify-center p-2 text-paragraph hover:text-primary transition-colors duration-200"
           >
             <div className="w-6 h-6 flex items-center justify-center">
-              <HamburgerMenu className="w-6 h-6" />
+              <ListArrowUp
+                weight="Broken"
+                className="text-indigo-500 dark:text-indigo-400 w-6 h-6"
+              />
             </div>
             {unreadCount > 0 && <NotificationBadge count={unreadCount} />}
           </button>

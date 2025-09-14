@@ -22,7 +22,6 @@ import { SubContainer } from "@/components/ui/SubContainer";
 import { Bag2, AddSquare, Document } from "@solar-icons/react/ssr";
 import { Notebook } from "@/types/notebooks/notebooks";
 import { generateNotebookPDF } from "@/lib/utils/pdfGenerator";
-import NotebookSkeleton from "@/components/shared/ProgressSkeletons/NotebookSkeleton";
 
 interface NotebooksCardProps {
   student: {
@@ -183,12 +182,7 @@ export default function NotebooksCard({
       </div>
 
       <div className="flex flex-col gap-2">
-        {loading ? (
-          // Render skeleton loaders when loading
-          Array.from({ length: 3 }).map((_, index) => (
-            <NotebookSkeleton key={index} />
-          ))
-        ) : filteredNotebooks.length > 0 ? (
+        {filteredNotebooks.length > 0 ? (
           [...filteredNotebooks]
             .sort(
               (a, b) =>

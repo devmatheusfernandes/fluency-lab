@@ -21,7 +21,7 @@ const TextArea = React.forwardRef<HTMLTextAreaElement, TextAreaProps>(
   ({ className, hasError = false, textareaSize = "base", ...props }, ref) => {
     // Base classes for the textarea element with modern styling
     const baseClasses =
-      "flex min-h-[80px] w-full rounded-2xl border-1 bg-container border-subcontainer text-base text-paragraph placeholder:text-placeholder disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 resize-none";
+      "flex min-h-[80px] focus:outline-none w-full rounded-2xl border-1 bg-container border-subcontainer text-base text-paragraph placeholder:text-placeholder disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 resize-none";
 
     // Size classes
     const sizeClasses = {

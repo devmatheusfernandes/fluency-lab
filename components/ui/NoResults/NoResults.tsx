@@ -64,7 +64,7 @@ export const NoResults: React.FC<NoResultsProps> = ({
 
   return (
     <motion.div
-      className={`text-wrap text-center py-8 text-primary/85 dark:text-white/60 ${className}`}
+      className={`text-wrap text-center py-8 text-primary/85 dark:text-primary/70 ${className}`}
       variants={containerVariants}
       initial="hidden"
       animate="visible"

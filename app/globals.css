@@ -116,12 +116,12 @@ E TAMBÉM PODEM FUNCIONAR COMO ITENS DENTRO DE SUBCONTAINERS*/
 
 /* Dark theme colors - applied when .dark class is present */
 .dark {
-  --color-primary: oklch(32.07% 0.1509 270.29);
-  --color-primary-hover: oklch(27.85% 0.1262 270.94);
+  --color-primary: oklch(0.491 0.27 292.581);
+  --color-primary-hover: oklch(0.438 0.218 303.724);
   --color-primary-text: oklch(95% 0.015 296.8);
 
-  --color-secondary: oklch(81.79% 0.1705 77.95);
-  --color-secondary-hover: oklch(78.39% 0.1719 68.09);
+  --color-secondary: oklch(0.769 0.188 70.08);
+  --color-secondary-hover: oklch(0.666 0.179 58.318);
   --color-secondary-text: oklch(95% 0.015 296.8);
 
   --color-background: oklch(12.27% 0.0105 280);
@@ -134,16 +134,16 @@ E TAMBÉM PODEM FUNCIONAR COMO ITENS DENTRO DE SUBCONTAINERS*/
   --color-paragraph: oklch(0.92 0.0204 295.17);
   
 
-  --color-success: oklch(0.51 0.1043 165.51);
-  --color-success-light: oklch(0.45 0.1132 165.06);
+  --color-success: oklch(0.704 0.14 182.503);
+  --color-success-light: oklch(0.777 0.152 181.912);
 
-  --color-info: oklch(60% 0.15 220);
-  --color-info-light: oklch(70% 0.12 220);
+  --color-info: oklch(0.685 0.169 237.323);
+  --color-info-light: oklch(0.746 0.16 232.661);
 
-  --color-warning: oklch(72% 0.15 85);
-  --color-warning-light: oklch(80% 0.13 85);
+  --color-warning: oklch(0.705 0.213 47.604);
+  --color-warning-light: oklch(0.75 0.183 55.934);
 
-  --color-danger: oklch(55% 0.2 26);
+  --color-danger: oklch(0.645 0.246 16.439);
   --color-danger-light: oklch(65% 0.18 26);
 
   --color-error: oklch(45% 0.2 26.8);

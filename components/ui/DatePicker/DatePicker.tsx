@@ -53,7 +53,7 @@ export default function DatePicker({
       icon: "h-4 w-4",
     },
     default: {
-      input: "px-4 py-1 text-sm h-11",
+      input: "px-4 py-1 text-sm h-10",
       icon: "h-4 w-4",
     },
     lg: {

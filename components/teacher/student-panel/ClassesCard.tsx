@@ -23,13 +23,11 @@ import {
   ModalIcon,
 } from "@/components/ui/Modal";
 import { TextArea } from "@/components/ui/TextArea";
-import { Document } from "@solar-icons/react/ssr";
-import SkeletonLoader from "@/components/shared/Skeleton/SkeletonLoader";
+import { Document, DocumentAdd } from "@solar-icons/react/ssr";
 import ClassSkeleton from "@/components/shared/ProgressSkeletons/ClassSkeleton";
 import { toast } from "sonner";
 import { Text } from "@/components/ui/Text";
-
-
+import { Card } from "@/components/ui/Card";
 
 interface ClassesCardProps {
   classes: StudentClass[];
@@ -459,55 +457,53 @@ export default function ClassesCard({
       </Modal>
 
       {/* Modern Header with Glass Effect */}
-      <div className="border-b border-gray-200/50 dark:border-gray-700/50 py-4 mb-6">
-        <div className="flex flex-col gap-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg bg-surface-0/30">
-            <div className="space-y-1">
-              <Text size="sm" variant="subtitle">
-                Mês
-              </Text>
-              <Select
-                value={selectedMonth.toString()}
-                onValueChange={(value) => setSelectedMonth(parseInt(value))}
-              >
-                <SelectTrigger className="h-10 lg:w-44 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
-                  <SelectValue>{monthNames[selectedMonth]}</SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {monthNames.map((month, index) => (
-                    <SelectOption key={index} value={index.toString()}>
-                      {month}
-                    </SelectOption>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1">
-              <Text size="sm" variant="subtitle">
-                Ano
-              </Text>
-              <Select
-                value={selectedYear.toString()}
-                onValueChange={(value) => setSelectedYear(parseInt(value))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 5 }, (_, i) => {
-                    const year = new Date().getFullYear() - 2 + i;
-                    return (
-                      <SelectOption key={year} value={year.toString()}>
-                        {year}
-                      </SelectOption>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
+      <div className="border-b border-gray-200/50 dark:border-gray-700/50 py-2 mb-2">
+        <Card className="flex flex-row w-full">
+          <div className="space-y-1">
+            <Text size="sm" variant="subtitle">
+              Mês
+            </Text>
+            <Select
+              value={selectedMonth.toString()}
+              onValueChange={(value) => setSelectedMonth(parseInt(value))}
+            >
+              <SelectTrigger className="h-10 lg:w-44 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
+                <SelectValue>{monthNames[selectedMonth]}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {monthNames.map((month, index) => (
+                  <SelectOption key={index} value={index.toString()}>
+                    {month}
+                  </SelectOption>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </div>
+
+          <div className="w-full space-y-1">
+            <Text size="sm" variant="subtitle">
+              Ano
+            </Text>
+            <Select
+              value={selectedYear.toString()}
+              onValueChange={(value) => setSelectedYear(parseInt(value))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 5 }, (_, i) => {
+                  const year = new Date().getFullYear() - 2 + i;
+                  return (
+                    <SelectOption key={year} value={year.toString()}>
+                      {year}
+                    </SelectOption>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          </div>
+        </Card>
       </div>
 
       {/* Enhanced Classes Grid */}
@@ -547,17 +543,17 @@ export default function ClassesCard({
                   key={uniqueKey}
                   className={`group relative overflow-hidden rounded-xl p-3 border transition-all duration-200 card-base ${
                     isToday
-                      ? "border-blue-300 dark:border-blue-600 bg-blue-50/30 dark:bg-blue-950/20"
+                      ? "border-primary bg-primary/5 dark:bg-primary/10"
                       : isPast
                         ? "border-gray-300 dark:border-gray-600 bg-gray-100/50 dark:bg-gray-800/50 opacity-80"
                         : "card-base"
                   } backdrop-blur-sm`}
                 >
                   {isToday && (
-                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 to-blue-600"></div>
+                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-400 to-indigo-600"></div>
                   )}
                   {isPast && !isToday && (
-                    <div className="absolute top-0 left-0 right-0 h-1 bg-primary"></div>
+                    <div className="absolute top-0 left-0 right-0 h-1 bg-primary/35"></div>
                   )}
 
                   <div className="flex flex-col lg:flex-row lg:items-center">
@@ -593,10 +589,32 @@ export default function ClassesCard({
                           onValueChange={(value) =>
                             handleStatusChange(cls.id, value as ClassStatus)
                           }
-                          disabled={isPast}
+                          disabled={
+                            isPast ||
+                            [
+                              ClassStatus.CANCELED_STUDENT,
+                              ClassStatus.CANCELED_TEACHER,
+                              ClassStatus.COMPLETED,
+                              ClassStatus.RESCHEDULED,
+                              ClassStatus.TEACHER_VACATION,
+                              ClassStatus.CANCELED_ADMIN,
+                            ].includes(cls.status)
+                          }
                         >
                           <SelectTrigger
-                            className={`w-full lg:w-48 h-10 text-sm bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors ${isPast ? "opacity-50 cursor-not-allowed" : ""} ${getStatusConfig(cls.status).selectClassName}`}
+                            className={`w-full lg:w-48 h-10 text-sm bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors ${
+                              isPast ||
+                              [
+                                ClassStatus.CANCELED_STUDENT,
+                                ClassStatus.CANCELED_TEACHER,
+                                ClassStatus.COMPLETED,
+                                ClassStatus.RESCHEDULED,
+                                ClassStatus.TEACHER_VACATION,
+                                ClassStatus.CANCELED_ADMIN,
+                              ].includes(cls.status)
+                                ? "opacity-50 cursor-not-allowed"
+                                : ""
+                            } ${getStatusConfig(cls.status).selectClassName}`}
                           >
                             <div className="flex items-center gap-2">
                               <span>{statusConfig.icon}</span>
@@ -635,15 +653,17 @@ export default function ClassesCard({
                             cls.feedback
                               ? "bg-green-100 hover:bg-green-200 text-green-600 dark:bg-green-950/50 dark:hover:bg-green-900/50 dark:text-green-400"
                               : "bg-gray-100 hover:bg-gray-200 text-gray-500 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-400"
-                          } ${isPast ? "opacity-50 cursor-not-allowed" : ""}`}
+                          }`}
                           title={
                             cls.feedback
                               ? "Editar relatório"
                               : "Adicionar relatório"
                           }
-                          disabled={isPast}
                         >
-                          <Document weight="BoldDuotone" className="w-6 h-6" />
+                          <DocumentAdd
+                            weight="BoldDuotone"
+                            className="w-6 h-6"
+                          />
                         </button>
                       </>
                     </div>

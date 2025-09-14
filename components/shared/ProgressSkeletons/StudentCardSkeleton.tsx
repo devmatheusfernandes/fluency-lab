@@ -9,17 +9,21 @@ const StudentCardSkeleton: React.FC<StudentCardSkeletonProps> = ({
   className = "",
 }) => {
   return (
-    <SkeletonLoader className={`rounded-2xl p-4 ${className}`}>
+    <SkeletonLoader className={`skeleton-base rounded-2xl p-4 ${className}`}>
       <div className="flex items-center space-x-4">
         {/* Avatar skeleton */}
-        <SkeletonLoader variant="avatar" size="lg" />
+        <SkeletonLoader
+          className="skeleton-sub rounded-2xl"
+          variant="avatar"
+          size="lg"
+        />
 
         <div className="flex-1 min-w-0 space-y-2">
           {/* Name skeleton */}
           <SkeletonLoader
             variant="text"
             lines={1}
-            className="h-5 w-3/4 rounded"
+            className="skeleton-sub h-5 w-3/4 rounded"
           />
 
           {/* Email skeleton */}
@@ -31,11 +35,11 @@ const StudentCardSkeleton: React.FC<StudentCardSkeletonProps> = ({
 
           {/* Next class info skeleton */}
           <div className="flex flex-row items-center gap-2">
-            <SkeletonLoader variant="circle" className="w-5 h-5" />
+            <SkeletonLoader variant="circle" className="skeleton-sub w-5 h-5" />
             <SkeletonLoader
               variant="text"
               lines={1}
-              className="h-4 w-1/2 rounded"
+              className="skeleton-sub h-4 w-1/2 rounded"
             />
           </div>
         </div>

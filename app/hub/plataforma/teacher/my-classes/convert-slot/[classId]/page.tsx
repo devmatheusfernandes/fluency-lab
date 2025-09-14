@@ -1,17 +1,18 @@
 "use client";
-
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Text } from "@/components/ui/Text";
 import { Container } from "@/components/ui/Container";
 import { toast } from "sonner";
+import { SubContainer } from "@/components/ui/SubContainer";
+import { Loading } from "@/components/ui/Loading";
 
-export default async function ConvertSlotPage() {
+export default function ConvertSlotPage() {
   const params = useParams();
   const router = useRouter();
-  const { classId } = await params;
+  const { classId } = params;
   const [isConverting, setIsConverting] = useState(false);
   const [isConverted, setIsConverted] = useState(false);
 
@@ -85,12 +86,12 @@ export default async function ConvertSlotPage() {
   }
 
   return (
-    <Container className="min-h-screen flex items-center justify-center">
-      <Card className="p-8 max-w-md mx-auto text-center">
+    <SubContainer className="flex flex-col items-center justify-center w-full h-full">
+      <Card className="flex flex-col items-center justify-center p-8 py-18 max-w-md mx-auto text-center">
         <div className="mb-6">
-          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-subcontainer rounded-full flex items-center justify-center mx-auto mb-4">
             <svg
-              className="w-8 h-8 text-blue-600"
+              className="w-8 h-8 text-primary"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -112,24 +113,20 @@ export default async function ConvertSlotPage() {
           </Text>
         </div>
 
-        <div className="space-y-3">
+        <div className="flex flex-wrap gap-2 space-y-3">
           <Button
             onClick={handleConvertToSlot}
             disabled={isConverting}
-            className="w-full bg-green-600 hover:bg-green-700"
+            variant="success"
           >
-            {isConverting ? "Convertendo..." : "Sim, Tornar Slot Livre"}
+            {isConverting ? <Loading size="sm" /> : "Sim, Tornar Slot Livre"}
           </Button>
 
-          <Button
-            onClick={handleGoToPlatform}
-            variant="outline"
-            className="w-full"
-          >
+          <Button onClick={handleGoToPlatform} variant="danger">
             Cancelar
           </Button>
         </div>
       </Card>
-    </Container>
+    </SubContainer>
   );
 }

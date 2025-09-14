@@ -23,6 +23,7 @@ import {
   ModalIcon,
 } from "@/components/ui/Modal";
 import DatePicker from "@/components/ui/DatePicker/DatePicker";
+import { Loading } from "@/components/ui/Loading";
 
 // Update the Task interface to include dueDate
 interface Task {
@@ -290,9 +291,11 @@ export default function TasksCard({
                   weight="BoldDuotone"
                   className={`w-4 h-4 ${isSyncingWithGoogleCalendar ? "animate-spin" : ""}`}
                 />
-                {isSyncingWithGoogleCalendar
-                  ? "Sincronizando..."
-                  : "Sincronizar"}
+                {isSyncingWithGoogleCalendar ? (
+                  <Loading size="sm" />
+                ) : (
+                  "Sincronizar"
+                )}
               </motion.button>
             )}
           </div>
@@ -300,7 +303,7 @@ export default function TasksCard({
 
         {/* Update the task input section to include date picker for teachers */}
         {onAddTask && typeof onAddTask === "function" && (
-          <div className="flex flex-col sm:flex-row gap-2 mb-4">
+          <div className="flex flex-col sm:flex-row items-center gap-2 mb-4">
             <div className="relative flex-1">
               <Input
                 type="text"
@@ -333,6 +336,7 @@ export default function TasksCard({
                     const formattedDate = formatDateForInput(date);
                     setDueDate(formattedDate);
                   }}
+                  placeholder="Selecionar dia..."
                 />
               </div>
             )}
@@ -341,16 +345,11 @@ export default function TasksCard({
             {localTasks.length > 0 &&
               onDeleteAllTasks &&
               typeof onDeleteAllTasks === "function" && (
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <TrashBinMinimalistic
-                    onClick={handleDeleteAllTasks}
-                    weight="BoldDuotone"
-                    className="w-6 h-6 text-danger hover:text-danger-light duration-300 ease-in-out transition-all cursor-pointer"
-                  />
-                </motion.div>
+                <TrashBinMinimalistic
+                  onClick={handleDeleteAllTasks}
+                  weight="BoldDuotone"
+                  className="w-8 h-8 text-danger hover:text-danger-light duration-300 ease-in-out transition-all cursor-pointer"
+                />
               )}
           </div>
         )}
@@ -447,7 +446,7 @@ export default function TasksCard({
               </ModalSecondaryButton>
               <ModalPrimaryButton
                 onClick={confirmDeleteAllTasks}
-                className="bg-danger hover:bg-danger-light"
+                className="!bg-danger !hover:bg-danger-light"
               >
                 Deletar todas
               </ModalPrimaryButton>

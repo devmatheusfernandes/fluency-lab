@@ -62,17 +62,12 @@ const teacherItems: SidebarItemType[] = [
     icon: <PeopleNearby />,
   },
   {
-    href: "/hub/plataforma/teacher",
+    href: "/hub/plataforma/teacher/calendario",
     label: "Minha Agenda",
     icon: <Calendar />,
   },
   {
-    href: "/hub/plataforma/teacher/my-classes",
-    label: "Minhas Aulas",
-    icon: <List />,
-  },
-  {
-    href: "/hub/plataforma/teacher/settings",
+    href: "/hub/plataforma/settings",
     label: "Configurações",
     icon: <Settings />,
   },

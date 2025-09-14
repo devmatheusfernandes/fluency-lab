@@ -171,10 +171,8 @@ export const ClassCancellationModal: React.FC<ClassCancellationModalProps> = ({
             >
               <ModalClose />
               <ModalHeader>
-                <ModalIcon type="calendar" />
-                <ModalTitle className="text-center">
-                  Opções de Reagendamento
-                </ModalTitle>
+                <ModalIcon type="delete" />
+                <ModalTitle className="text-center">Cancelamento</ModalTitle>
               </ModalHeader>
 
               <ModalBody>

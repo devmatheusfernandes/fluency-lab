@@ -18,18 +18,15 @@ import {
   ModalPrimaryButton,
   ModalSecondaryButton,
 } from "@/components/ui/Modal";
-import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
 import { TextArea } from "@/components/ui/TextArea";
-import { Loading } from "@/components/ui/Loading";
-import { toast } from "sonner";
-import { useRescheduleAvailability } from "@/hooks/useRescheduleAvailability";
 import { useTeacherAvailabilityForReschedule } from "@/hooks/useTeacherAvailabilityForReschedule";
 import { Card } from "@/components/ui/Card";
+import { Loading } from "../ui/Loading";
 
 interface RescheduleModalProps {
-  isOpen: any;
-  onClose: any;
+  isOpen: boolean;
+  onClose: () => void;
   classToReschedule: PopulatedStudentClass | null;
 }
 
@@ -47,7 +44,7 @@ export default function RescheduleModal({
     null
   );
   const [reason, setReason] = useState("");
-  const { availableSlots, isLoadingSlots, rawData } =
+  const { availableSlots, isLoadingSlots } =
     useTeacherAvailabilityForReschedule(isOpen, classToReschedule);
 
   const handleConfirmReschedule = async () => {
@@ -95,7 +92,7 @@ export default function RescheduleModal({
               <ModalBody>
                 <Text variant="subtitle" size="sm" className="text-center mb-6">
                   Selecione um novo horário para a sua aula com{" "}
-                  <span className="font-bold">
+                  <span className="font-bold capitalize">
                     {classToReschedule.teacherName}
                   </span>
                   .
@@ -112,21 +109,17 @@ export default function RescheduleModal({
                   </div>
                 )}
 
-                <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 mb-6">
-                  <div className="font-medium text-blue-900 dark:text-blue-100">
-                    {classToReschedule.language}
-                  </div>
+                <div className="text-center p-4 bg-primary/20 dark:bg-primary/20 rounded-xl border border-primary/80 dark:border-primary/80 mb-6">
                   <div className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                    Remarcar aula de {classToReschedule.language} de{" "}
                     {formatDate(new Date(classToReschedule.scheduledAt))}
                   </div>
                 </div>
 
                 {isLoadingSlots ? (
-                  <div className="flex justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                  </div>
+                  <Loading className="my-2" />
                 ) : (
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                  <div className="space-y-2 max-h-72 overflow-y-auto">
                     {availableSlots.length > 0 ? (
                       availableSlots.map((slot) => (
                         <Card
@@ -164,20 +157,22 @@ export default function RescheduleModal({
                   </div>
                 )}
 
-                <div className="mt-4">
-                  <label
-                    htmlFor="reason"
-                    className="block text-sm font-medium text-subtitle mb-1"
-                  >
-                    Motivo (Opcional)
-                  </label>
-                  <TextArea
-                    id="reason"
-                    value={reason}
-                    onChange={(e) => setReason(e.target.value)}
-                    placeholder="Ex: Compromisso de trabalho"
-                  />
-                </div>
+                {!isTeacherMakeupClass && (
+                  <div className="mt-4">
+                    <label
+                      htmlFor="reason"
+                      className="block text-sm font-medium text-subtitle mb-1"
+                    >
+                      Motivo (Opcional)
+                    </label>
+                    <TextArea
+                      id="reason"
+                      value={reason}
+                      onChange={(e) => setReason(e.target.value)}
+                      placeholder="Ex: Compromisso de trabalho"
+                    />
+                  </div>
+                )}
               </ModalBody>
             )}
             <ModalFooter>
@@ -191,7 +186,7 @@ export default function RescheduleModal({
                 {isHookLoading
                   ? "A Reagendar..."
                   : isTeacherMakeupClass
-                    ? "Confirmar e Usar Crédito"
+                    ? "Confirmar e usar crédito"
                     : "Confirmar Novo Horário"}
               </ModalPrimaryButton>
             </ModalFooter>

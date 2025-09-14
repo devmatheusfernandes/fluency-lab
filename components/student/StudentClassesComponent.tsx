@@ -24,11 +24,12 @@ import {
   ModalSecondaryButton,
   ModalIcon,
 } from "@/components/ui/Modal";
-import { Button } from "@/components/ui/Button";
 import { ClassCancellationModal } from "@/components/student/ClassCancellationModal";
 import RescheduleModal from "@/components/student/RescheduleModal";
 import { StudentClass } from "@/types/classes/class";
-import { ClockCircle, Document } from "@solar-icons/react/ssr";
+import { ClockCircle } from "@solar-icons/react/ssr";
+import { SubContainer } from "../ui/SubContainer";
+import { NoResults } from "@/components/ui/NoResults/NoResults";
 
 // Helper functions for date filtering
 const monthOptions = Array.from({ length: 12 }, (_, i) => ({
@@ -216,13 +217,7 @@ export default function StudentClassesComponent({
   };
 
   return (
-    <div className={`space-y-6 ${className}`}>
-      {showTitle && (
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">As Minhas Aulas</h1>
-        </div>
-      )}
-
+    <SubContainer className={`space-y-6 ${className}`}>
       {/* Modals */}
       {classToCancel && (
         <ClassCancellationModal
@@ -245,11 +240,9 @@ export default function StudentClassesComponent({
       {classToReschedule && (
         <RescheduleModal
           isOpen={isRescheduleModalOpen}
-          onClose={(open: boolean | ((prevState: boolean) => boolean)) => {
-            setIsRescheduleModalOpen(open);
-            if (!open) {
-              setClassToReschedule(null);
-            }
+          onClose={() => {
+            setIsRescheduleModalOpen(false);
+            setClassToReschedule(null);
           }}
           classToReschedule={classToReschedule}
         />
@@ -274,12 +267,15 @@ export default function StudentClassesComponent({
               <ModalTitle>Reagendar ao invés de cancelar?</ModalTitle>
             </ModalHeader>
             <ModalBody>
-              <Text>
+              <Text className="text-center my-4">
                 Você ainda tem reagendamentos disponíveis este mês. Que tal
                 reagendar esta aula ao invés de cancelar?
               </Text>
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                <Text size="sm" className="font-medium text-blue-900">
+              <div className="my-4 p-3 bg-blue-50 dark:bg-primary rounded-lg">
+                <Text
+                  size="sm"
+                  className="text-center font-medium text-blue-900 dark:text-white"
+                >
                   Reagendamentos disponíveis:{" "}
                   {rescheduleInfo.limit - rescheduleInfo.count} de{" "}
                   {rescheduleInfo.limit}
@@ -311,57 +307,59 @@ export default function StudentClassesComponent({
       )}
 
       {/* Filter Controls */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg bg-surface-0/30">
-        <div className="space-y-1">
-          <Text size="sm" variant="subtitle">
-            Mês
-          </Text>
-          <Select
-            value={String(selectedMonth)}
-            onValueChange={(val) =>
-              setSelectedMonth(val === "all" ? "all" : Number(val))
-            }
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectOption value="all">Todos os Meses</SelectOption>
-              {monthOptions.map((m) => (
-                <SelectOption key={m.value} value={String(m.value)}>
-                  {m.label}
-                </SelectOption>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      <div className="w-full flex flex-col sm:flex-row gap-2">
+        <Card className="w-full">
+          <div className="space-y-1">
+            <Text size="sm" variant="subtitle">
+              Mês
+            </Text>
+            <Select
+              value={String(selectedMonth)}
+              onValueChange={(val) =>
+                setSelectedMonth(val === "all" ? "all" : Number(val))
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectOption value="all">Todos os Meses</SelectOption>
+                {monthOptions.map((m) => (
+                  <SelectOption key={m.value} value={String(m.value)}>
+                    {m.label}
+                  </SelectOption>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        <div className="space-y-1">
-          <Text size="sm" variant="subtitle">
-            Ano
-          </Text>
-          <Select
-            value={String(selectedYear)}
-            onValueChange={(val) =>
-              setSelectedYear(val === "all" ? "all" : Number(val))
-            }
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectOption value="all">Todos os Anos</SelectOption>
-              {yearOptions.map((y) => (
-                <SelectOption key={y} value={String(y)}>
-                  {y}
-                </SelectOption>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+          <div className="space-y-1">
+            <Text size="sm" variant="subtitle">
+              Ano
+            </Text>
+            <Select
+              value={String(selectedYear)}
+              onValueChange={(val) =>
+                setSelectedYear(val === "all" ? "all" : Number(val))
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectOption value="all">Todos os Anos</SelectOption>
+                {yearOptions.map((y) => (
+                  <SelectOption key={y} value={String(y)}>
+                    {y}
+                  </SelectOption>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </Card>
 
         {/* Enhanced Reschedule Card */}
-        <Card className="p-3">
+        <Card className="p-3 w-full">
           <Text size="sm" className="font-medium text-subtitle mb-1">
             {selectedMonth === "all" || selectedYear === "all"
               ? "Reagendamentos (mês atual)"
@@ -380,7 +378,7 @@ export default function StudentClassesComponent({
         </Card>
 
         {/* Teacher Cancellation Credits Card */}
-        <Card className="p-3 bg-yellow-50 border-yellow-200">
+        <Card className="w-full p-3 bg-yellow-50 border-yellow-200">
           <Text size="sm" className="font-medium text-subtitle mb-1">
             Créditos de Reposição
           </Text>
@@ -393,23 +391,8 @@ export default function StudentClassesComponent({
         </Card>
       </div>
 
-      {isLoading && myClasses.length === 0 && (
-        <Text>A carregar as suas aulas...</Text>
-      )}
-
       {filteredClasses.length > 0 ? (
         <div className="space-y-4">
-          <Text size="sm" className="text-subtitle">
-            Exibindo {filteredClasses.length} aula
-            {filteredClasses.length !== 1 ? "s" : ""}
-            {selectedMonth !== "all" || selectedYear !== "all"
-              ? ` filtrada${filteredClasses.length !== 1 ? "s" : ""} para ${
-                  selectedMonth !== "all"
-                    ? monthOptions[selectedMonth as number]?.label
-                    : "todos os meses"
-                } de ${selectedYear !== "all" ? selectedYear : "todos os anos"}`
-              : " no total"}
-          </Text>
           {filteredClasses.map((cls, index) => (
             <StudentClassCard
               key={`${cls.id}-${cls.scheduledAt}-${index}`}
@@ -425,22 +408,23 @@ export default function StudentClassesComponent({
           ))}
         </div>
       ) : (
-        <div className="text-center py-8">
-          {!isLoading && (
-            <Text>
-              {selectedMonth === "all" && selectedYear === "all"
-                ? "Você não tem nenhuma aula no seu cronograma."
-                : `Nenhuma aula encontrada para ${
-                    selectedMonth !== "all"
-                      ? monthOptions[selectedMonth as number]?.label
-                      : "todos os meses"
-                  } de ${
-                    selectedYear !== "all" ? selectedYear : "todos os anos"
-                  }.`}
-            </Text>
-          )}
-        </div>
+        !isLoading && (
+          <NoResults
+            customMessage={{
+              withoutSearch:
+                selectedMonth === "all" && selectedYear === "all"
+                  ? "Você não tem nenhuma aula no seu cronograma."
+                  : `Nenhuma aula encontrada para ${
+                      selectedMonth !== "all"
+                        ? monthOptions[selectedMonth as number]?.label
+                        : "todos os meses"
+                    } de ${
+                      selectedYear !== "all" ? selectedYear : "todos os anos"
+                    }.`,
+            }}
+          />
+        )
       )}
-    </div>
+    </SubContainer>
   );
 }

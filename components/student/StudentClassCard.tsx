@@ -8,6 +8,35 @@ import { toast } from "sonner";
 import { useState } from "react";
 import RescheduleModal from "./RescheduleModal";
 
+// Mapeamento de status para português
+const statusTranslations: Record<string, string> = {
+  scheduled: "Agendada",
+  completed: "Concluída",
+  canceled: "Cancelada",
+  "no-show": "Faltou",
+  "canceled-teacher": "Cancelada pelo Professor",
+  "canceled-student": "Cancelada pelo Aluno",
+  "canceled-teacher-makeup": "À marcar reposição",
+  "canceled-admin": "Cancelada",
+  rescheduled: "Reagendada",
+};
+
+// Mapeamento de status para cores dos badges
+const statusVariants: Record<
+  string,
+  "primary" | "secondary" | "success" | "warning" | "danger" | "info"
+> = {
+  scheduled: "primary",
+  completed: "success",
+  canceled: "danger",
+  "no-show": "warning",
+  "canceled-teacher": "danger",
+  "canceled-student": "danger",
+  "canceled-teacher-makeup": "warning",
+  "canceled-admin": "danger",
+  rescheduled: "info",
+};
+
 export default function StudentClassCard({
   cls,
   canReschedule,
@@ -70,27 +99,15 @@ export default function StudentClassCard({
   };
 
   const getStatusBadge = () => {
-    if (cls.status === ClassStatus.CANCELED_TEACHER_MAKEUP) {
-      return (
-        <>
-          <Badge variant="warning" className="capitalize">
-            Reposição
-          </Badge>
-          <Badge variant="info" style="outline" className="text-xs">
-            Cancelada pelo Professor
-          </Badge>
-        </>
-      );
-    }
-
+    const translatedStatus = statusTranslations[cls.status] || cls.status;
+    const statusVariant = statusVariants[cls.status] || "secondary";
     return (
       <>
-        <Badge variant="secondary" className="capitalize">
-          {cls.status}
-        </Badge>
+        <Badge variant={statusVariant}>{translatedStatus}</Badge>
+
         {cls.rescheduledFrom && (
-          <Badge variant="info" style="outline" className="text-xs">
-            Reagendada
+          <Badge variant="info" className="hidden capitalize">
+            {cls.rescheduledFrom && "Reagendada"}
           </Badge>
         )}
       </>
@@ -107,8 +124,10 @@ export default function StudentClassCard({
               <AvatarFallback>{cls.teacherName?.charAt(0)}</AvatarFallback>
             </Avatar>
             <div>
-              <h3 className="font-bold text-lg">{cls.id}</h3>
-              <p className="text-sm font-semibold text-primary">
+              <h3 className="font-bold text-lg capitalize">
+                {cls.teacherName}
+              </h3>
+              <p className="text-sm font-semibold text-subtitle">
                 {new Date(cls.scheduledAt).toLocaleDateString("pt-BR", {
                   weekday: "long",
                   day: "2-digit",
@@ -123,11 +142,11 @@ export default function StudentClassCard({
               </p>
               {cls.rescheduledFrom && (
                 <p className="text-xs text-blue-600 font-medium mt-1">
-                  📅 Aula reagendada
+                  📅 Aula foi reagendada
                 </p>
               )}
               {isTeacherMakeup && (
-                <p className="text-xs text-warning font-medium mt-1">
+                <p className="text-center text-xs text-warning font-medium mt-1">
                   ⚠️ Aula de reposição - Cancelada pelo professor
                 </p>
               )}
@@ -136,25 +155,27 @@ export default function StudentClassCard({
           <div className="flex items-center gap-2">{getStatusBadge()}</div>
         </div>
 
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-center sm:justify-end gap-2">
           {isCancelable && onCancel && (
             <Button
               size="sm"
-              variant="ghost"
+              variant="warning"
               onClick={handleCancelClick}
               disabled={isCanceling}
             >
               {isCanceling ? "Cancelando..." : "Cancelar"}
             </Button>
           )}
-          <Button
-            size="sm"
-            onClick={handleRescheduleClick}
-            disabled={!isReschedulable}
-            variant={isTeacherMakeup ? "primary" : "secondary"}
-          >
-            {isTeacherMakeup ? "Reagendar com Crédito" : "Reagendar"}
-          </Button>
+          {isReschedulable && (
+            <Button
+              size="sm"
+              onClick={handleRescheduleClick}
+              disabled={!isReschedulable}
+              variant={isTeacherMakeup ? "success" : "secondary"}
+            >
+              {isTeacherMakeup ? "Reagendar com Crédito" : "Reagendar"}
+            </Button>
+          )}
         </div>
       </Card>
 

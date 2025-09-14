@@ -488,7 +488,6 @@ const ModalSecondaryButton = React.forwardRef<
         rounded-xl transition-all duration-150
         border border-gray-200/50 dark:border-gray-600/50 
         hover:border-gray-300/70 dark:hover:border-gray-500/70
-        focus:outline-none focus:ring-2 focus:ring-gray-500/50 focus:ring-offset-2
         disabled:opacity-50 disabled:cursor-not-allowed`,
         className
       )}

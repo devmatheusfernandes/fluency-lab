@@ -8,10 +8,11 @@ import { Text } from "@/components/ui/Text";
 import { Input } from "@/components/ui/Input";
 import { QRCodeSVG } from "qrcode.react";
 import { useSettings } from "@/hooks/useSettings";
+import { Loading } from "../ui/Loading";
 
 export default function TwoFactorSetup() {
   const { data: session, update } = useSession();
-  const { updateSettings, isLoading } = useSettings();
+  const { isLoading } = useSettings();
   const [isEnabling, setIsEnabling] = useState(false);
   const [isSetupComplete, setIsSetupComplete] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
@@ -62,7 +63,7 @@ export default function TwoFactorSetup() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to setup 2FA");
+        throw new Error(data.error || "Falha ao configurar");
       }
 
       setQrCodeUrl(data.qrCodeUrl);
@@ -76,7 +77,7 @@ export default function TwoFactorSetup() {
 
   const handleVerifyCode = async () => {
     if (!verificationCode || verificationCode.length !== 6) {
-      setError("Please enter a valid 6-digit code");
+      setError("Digite um código válido");
       return;
     }
 
@@ -99,7 +100,7 @@ export default function TwoFactorSetup() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to verify code");
+        throw new Error(data.error || "Falha ao verificar código");
       }
 
       setIsSetupComplete(true);
@@ -114,7 +115,7 @@ export default function TwoFactorSetup() {
         },
       });
     } catch (err: any) {
-      setError(err.message);
+      setError("Código 2FA inválido");
     } finally {
       setIsVerifying(false);
     }
@@ -134,7 +135,7 @@ export default function TwoFactorSetup() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || "Failed to disable 2FA");
+        throw new Error(data.error || "Falha ao desativar");
       }
 
       setIsSetupComplete(false);
@@ -161,11 +162,9 @@ export default function TwoFactorSetup() {
       <Card className="space-y-6">
         <section>
           <Text variant="subtitle" size="lg" weight="semibold">
-            Two-Factor Authentication
+            Autenticação
           </Text>
-          <Text size="sm" variant="placeholder" className="mt-1">
-            Loading...
-          </Text>
+          <Loading />
         </section>
       </Card>
     );
@@ -175,10 +174,10 @@ export default function TwoFactorSetup() {
     <Card className="space-y-6">
       <section>
         <Text variant="subtitle" size="lg" weight="semibold">
-          Two-Factor Authentication
+          Autenticação em Dois Fatores
         </Text>
         <Text size="sm" variant="placeholder" className="mt-1">
-          Add an extra layer of security to your account
+          Adicione uma camada extra de segurança à sua conta
         </Text>
 
         {error && (
@@ -191,11 +190,11 @@ export default function TwoFactorSetup() {
 
         {!isSetupComplete ? (
           <div className="mt-4 space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-row items-start justify-between">
               <div>
                 <Text weight="medium">Status</Text>
                 <Text size="sm" variant="placeholder">
-                  Two-factor authentication is currently disabled
+                  A autenticação em dois fatores está desativada
                 </Text>
               </div>
               <Button
@@ -203,29 +202,37 @@ export default function TwoFactorSetup() {
                 disabled={isEnabling || isLoading}
                 variant="primary"
               >
-                {isEnabling ? "Setting up..." : "Enable"}
+                {isEnabling ? <Loading size="sm" /> : "Ativar"}
               </Button>
             </div>
 
             {qrCodeUrl && (
-              <div className="mt-6 p-6 border border-surface-2 rounded-lg bg-surface-1">
+              <div className="mt-6 p-6 border border-card/80 rounded-lg bg-card/20">
                 <Text weight="medium" className="mb-4">
-                  Scan this QR code with your authenticator app
+                  Escaneie este código QR com seu aplicativo de autenticação
                 </Text>
-                <div className="flex justify-center my-4">
+                <div className="p-4 bg-white rounded-lg flex justify-center my-4">
                   <QRCodeSVG value={qrCodeUrl} size={200} />
                 </div>
-                <Text size="sm" variant="placeholder" className="mt-4">
-                  If you can't scan the QR code, enter this secret key manually:{" "}
-                  <span className="font-mono">{secret}</span>
+                <Text
+                  size="sm"
+                  variant="placeholder"
+                  className="text-center mt-4"
+                >
+                  Se você não puder escanear o código QR, insira esta chave
+                  secreta manualmente:{" "}
+                  <span className="font-mono font-semibold text-secondary">
+                    {secret}
+                  </span>
                 </Text>
 
-                <div className="mt-6">
+                <div className="justify-center items-center flex flex-col mt-6">
                   <label
                     htmlFor="verificationCode"
                     className="block text-sm font-medium mb-2"
                   >
-                    Enter the 6-digit code from your authenticator app
+                    Insira o código de 6 dígitos do seu aplicativo de
+                    autenticação
                   </label>
                   <Input
                     id="verificationCode"
@@ -238,14 +245,14 @@ export default function TwoFactorSetup() {
                     }
                     placeholder="000000"
                     maxLength={6}
-                    className="w-full max-w-xs"
+                    className="w-full"
                   />
                   <div className="mt-4">
                     <Button
                       onClick={handleVerifyCode}
                       disabled={isVerifying || verificationCode.length !== 6}
                     >
-                      {isVerifying ? "Verifying..." : "Verify"}
+                      {isVerifying ? <Loading size="sm" /> : "Verificar"}
                     </Button>
                   </div>
                 </div>

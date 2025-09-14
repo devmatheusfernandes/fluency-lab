@@ -30,7 +30,7 @@ const adminItems: SidebarItemType[] = [
   },
   {
     href: "/hub/plataforma/dashboard",
-    label: "Dashboard",
+    label: "Painel",
     icon: <Layers weight="BoldDuotone" className="w-9 h-9" />,
   },
   {
@@ -81,7 +81,7 @@ const teacherItems: SidebarItemType[] = [
 const occasionalStudentItems: SidebarItemType[] = [
   {
     href: "/hub/plataforma/occasional-student",
-    label: "Dashboard",
+    label: "Painel",
     icon: <Home />,
   },
   {

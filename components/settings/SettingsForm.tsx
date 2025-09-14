@@ -16,6 +16,8 @@ import { Switch } from "@/components/ui/Switch";
 import { Input } from "@/components/ui/Input";
 import TwoFactorSetup from "./TwoFactorSetup";
 import { GoogleCalendarDefaultTimes } from "@/types/users/users";
+import { SubContainer } from "../ui/SubContainer";
+import { Loading } from "../ui/Loading";
 
 interface SettingsFormProps {
   currentLanguage: string;
@@ -80,8 +82,8 @@ export default function SettingsForm({
   ];
 
   return (
-    <Card onSubmit={handleSubmit} className="space-y-8 max-w-2xl">
-      <section>
+    <SubContainer onSubmit={handleSubmit} className="p-3">
+      <Card>
         <Text variant="subtitle" size="lg" weight="semibold">
           Interface
         </Text>
@@ -109,30 +111,59 @@ export default function SettingsForm({
             />
           </div>
         </div>
-      </section>
+      </Card>
 
-      <div className="border-t border-surface-2" />
+      <div className="border rounded-full border-t border-card/80 my-4" />
 
-      <section>
+      <Card>
         <Text variant="subtitle" size="lg" weight="semibold">
-          Google Calendar
+          Calendário Google
         </Text>
         <div className="mt-4 space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-start justify-between">
             <div>
               <Text weight="medium">Conexão com Google Calendar</Text>
-              <Text size="sm" variant="placeholder">
+              <Text
+                size="sm"
+                variant="placeholder"
+                className={
+                  googleCalendarConnected ? "text-success font-bold" : ""
+                }
+              >
                 {googleCalendarConnected
                   ? "Conta conectada com sucesso"
                   : "Conecte sua conta do Google Calendar para sincronizar tarefas"}
               </Text>
             </div>
-            <Button
-              variant={googleCalendarConnected ? "secondary" : "primary"}
-              onClick={handleConnectGoogleCalendar}
-            >
-              {googleCalendarConnected ? "Reconectar" : "Conectar"}
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2">
+              {googleCalendarConnected ? (
+                <>
+                  <Button
+                    variant="warning"
+                    onClick={() => {
+                      // Disconnect Google Calendar
+                      fetch("/api/student/google-calendar/disconnect", {
+                        method: "POST",
+                      }).then(() => {
+                        window.location.reload();
+                      });
+                    }}
+                  >
+                    Desconectar
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={handleConnectGoogleCalendar}
+                  >
+                    Reconectar
+                  </Button>
+                </>
+              ) : (
+                <Button variant="primary" onClick={handleConnectGoogleCalendar}>
+                  Conectar
+                </Button>
+              )}
+            </div>
           </div>
 
           {googleCalendarConnected && (
@@ -177,21 +208,59 @@ export default function SettingsForm({
               </div>
             </div>
           )}
+
+          {googleCalendarConnected && (
+            <div className="mt-6">
+              <Text weight="medium" className="mb-4">
+                Horários padrão para sincronização
+              </Text>
+              <div className="space-y-4">
+                {dayNames.map(({ key, label }) => (
+                  <div
+                    key={key}
+                    className="flex items-center justify-between gap-4"
+                  >
+                    <label className="w-32">{label}</label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="time"
+                        value={
+                          defaultTimes[key as keyof GoogleCalendarDefaultTimes]
+                            ?.startTime || "09:00"
+                        }
+                        onChange={(e) =>
+                          handleTimeChange(key, "startTime", e.target.value)
+                        }
+                        className="w-24"
+                      />
+                      <span>até</span>
+                      <Input
+                        type="time"
+                        value={
+                          defaultTimes[key as keyof GoogleCalendarDefaultTimes]
+                            ?.endTime || "10:00"
+                        }
+                        onChange={(e) =>
+                          handleTimeChange(key, "endTime", e.target.value)
+                        }
+                        className="w-24"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-      </section>
+      </Card>
 
-      <div className="border-t border-surface-2" />
+      <div className="border rounded-full border-t border-card/80 my-4" />
 
-      <section>
-        <Text variant="subtitle" size="lg" weight="semibold">
-          Security
-        </Text>
-        <TwoFactorSetup />
-      </section>
+      <TwoFactorSetup />
 
-      <div className="border-t border-surface-2" />
+      <div className="border rounded-full border-t border-card/80 my-4" />
 
-      <section>
+      <Card className="hidden">
         <Text
           variant="subtitle"
           size="lg"
@@ -211,13 +280,13 @@ export default function SettingsForm({
             <Button variant="danger">Desativar</Button>
           </div>
         </div>
-      </section>
+      </Card>
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? "A Salvar..." : "Salvar Configurações"}
+        <Button type="submit" variant="primary" disabled={isLoading}>
+          {isLoading ? <Loading /> : "Salvar Configurações"}
         </Button>
       </div>
-    </Card>
+    </SubContainer>
   );
 }

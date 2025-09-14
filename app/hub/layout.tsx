@@ -20,7 +20,7 @@ export default async function HubLayout({
   return (
     <OnboardingWrapper>
       <SidebarProvider>
-        <div className="flex flex-row gap-2 min-w-screen min-h-screen h-full p-2 sidebar-base transition-colors duration-300 max-w-screen max-h-screen overflow-y-hidden">
+        <div className="flex flex-row gap-2 min-w-screen min-h-screen h-full p-0 sm:p-2 sidebar-base transition-colors duration-300 max-w-screen max-h-screen overflow-y-hidden">
           <SidebarWrapper items={items} />
 
           {/* Main content area with padding for mobile navbar */}
@@ -29,7 +29,9 @@ export default async function HubLayout({
               <HubHeader />
             </div>
             {/* Use normal div on mobile and Container on desktop */}
-            <div className="flex flex-1 flex-col sm:hidden">{children}</div>
+            <div className="container-base flex flex-1 flex-col sm:hidden p-1">
+              {children}
+            </div>
             <Container className=" flex-1 flex-col hidden sm:flex">
               {children}
             </Container>

@@ -27,7 +27,7 @@ export interface ButtonProps
    */
   size?: "xs" | "sm" | "base" | "lg" | "xl" | "icon";
   /**
-   * If true, the button will be rendered as its child component.
+   * If true, the button will be renderose as its child component.
    * This is useful for wrapping components like Next.js's <Link>.
    * @default false
    */
@@ -80,15 +80,15 @@ const getButtonClasses = ({
 
   const variantClasses = {
     primary:
-      "bg-blue-600 border-blue-600 text-white hover:bg-blue-700 hover:border-blue-700 focus-visible:ring-blue-500 shadow-blue-500/25 hover:shadow-blue-500/40",
+      "bg-indigo-600/90 backdrop-blur-sm border-indigo-500/50 text-white hover:bg-indigo-700/90 hover:border-indigo-600/60 focus-visible:ring-indigo-500 shadow-indigo-500/30  before:absolute before:inset-0 before:rounded-lg before:bg-gradient-to-br before:from-white/20 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity relative overflow-hidden",
     secondary:
-      "bg-gray-100 border-gray-200 text-gray-900 hover:bg-gray-200 hover:border-gray-300 focus-visible:ring-gray-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:bg-gray-700 dark:hover:border-gray-600",
+      "bg-amber-100 border-amber-200 text-amber-900 hover:bg-amber-200 hover:border-amber-300 focus-visible:ring-amber-500 dark:bg-amber-800 dark:border-amber-700 dark:text-white dark:hover:bg-amber-700 dark:hover:border-amber-600",
     danger:
-      "bg-red-600 border-red-600 text-white hover:bg-red-700 hover:border-red-700 focus-visible:ring-red-500 shadow-red-500/25 hover:shadow-red-500/40",
+      "bg-rose-600 border-rose-600 text-white hover:bg-rose-700 hover:border-rose-700 focus-visible:ring-rose-500 shadow-rose-500/25 hover:shadow-rose-500/40",
     warning:
-      "bg-amber-500 border-amber-500 text-white hover:bg-amber-600 hover:border-amber-600 focus-visible:ring-amber-500 shadow-amber-500/25 hover:shadow-amber-500/40",
+      "bg-yellow-500 border-yellow-500 text-white hover:bg-yellow-600 hover:border-yellow-600 focus-visible:ring-yellow-500 shadow-yellow-500/25 hover:shadow-yellow-500/40",
     success:
-      "bg-green-600 border-green-600 text-white hover:bg-green-700 hover:border-green-700 focus-visible:ring-green-500 shadow-green-500/25 hover:shadow-green-500/40",
+      "bg-teal-600 border-teal-600 text-white hover:bg-teal-700 hover:border-teal-700 focus-visible:ring-teal-500 shadow-teal-500/25 hover:shadow-teal-500/40",
     info: "bg-cyan-600 border-cyan-600 text-white hover:bg-cyan-700 hover:border-cyan-700 focus-visible:ring-cyan-500 shadow-cyan-500/25 hover:shadow-cyan-500/40",
     ghost:
       "bg-transparent border-transparent text-gray-700 hover:bg-gray-100 hover:text-gray-900 focus-visible:ring-gray-500 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white",
@@ -197,13 +197,15 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {isLoading && <LoadingSpinner size={size} />}
 
         {/* Left icon */}
-        {showLeftIcon && <span className="flex-shrink-0">{leftIcon}</span>}
+        {showLeftIcon && (
+          <span className="flex-shrink-0 relative z-10">{leftIcon}</span>
+        )}
 
         {/* Button content */}
         {showChildren && (
           <span
             className={twMerge(
-              "flex items-center justify-center",
+              "flex items-center justify-center relative z-10",
               (showLeftIcon || showRightIcon || isLoading) && "truncate"
             )}
           >
@@ -212,7 +214,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         )}
 
         {/* Right icon */}
-        {showRightIcon && <span className="flex-shrink-0">{rightIcon}</span>}
+        {showRightIcon && (
+          <span className="flex-shrink-0 relative z-10">{rightIcon}</span>
+        )}
       </Comp>
     );
   }

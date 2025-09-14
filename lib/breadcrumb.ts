@@ -16,6 +16,17 @@ interface BreadcrumbItem {
     'my-classes': 'Minhas Aulas',
     'settings': 'Configurações',
     'schedule': 'Agendar Aula',
+    'dashboard': 'Painel',
+    'profile': 'Perfil',
+    'users': 'Usuários',
+    'finances': 'Financeiro',
+    'courses': 'Cursos',
+    'documents': 'Documentos',
+    'meus-alunos': 'Meus Alunos',
+    'meu-perfil': 'Meu Perfil',
+    'caderno': 'Caderno',
+    'pratica': 'Prática',
+    'my-class': 'Calendário',
   };
   
   // Função que gera os itens do breadcrumb a partir do pathname

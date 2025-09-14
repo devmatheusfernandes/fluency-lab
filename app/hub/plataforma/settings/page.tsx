@@ -4,8 +4,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { UserAdminRepository } from "@/repositories/user.admin.repository";
 import { redirect } from "next/navigation";
-import { Text } from "@/components/ui/Text";
 import SettingsForm from "@/components/settings/SettingsForm";
+import ErrorAlert from "@/components/ui/ErrorAlert";
 
 const userAdminRepo = new UserAdminRepository();
 
@@ -18,7 +18,7 @@ export default async function SettingsPage() {
   const user = await userAdminRepo.findUserById(session.user.id);
 
   if (!user) {
-    return <Text>Utilizador não encontrado.</Text>;
+    return <ErrorAlert message="Usuário não encontrado." />;
   }
 
   // Check for Google Calendar connection status from URL parameters
@@ -27,16 +27,11 @@ export default async function SettingsPage() {
     !!user.googleCalendarTokens?.accessToken;
 
   return (
-    <div>
-      <Text variant="title" size="2xl" weight="bold" className="mb-6">
-        Configurações
-      </Text>
-      <SettingsForm
-        currentLanguage={user.interfaceLanguage}
-        currentTheme={user.theme || "light"}
-        googleCalendarConnected={googleCalendarConnected}
-        googleCalendarDefaultTimes={user.googleCalendarDefaultTimes}
-      />
-    </div>
+    <SettingsForm
+      currentLanguage={user.interfaceLanguage}
+      currentTheme={user.theme || "dark"}
+      googleCalendarConnected={googleCalendarConnected}
+      googleCalendarDefaultTimes={user.googleCalendarDefaultTimes}
+    />
   );
 }

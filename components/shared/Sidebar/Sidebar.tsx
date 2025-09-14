@@ -143,13 +143,20 @@ const MobileNavItem: React.FC<MobileNavItemProps> = ({
     <Link
       href={item.href}
       className={twMerge(
-        "relative flex items-center justify-center p-2 rounded-lg text-paragraph hover:bg-surface-hover transition-colors duration-200",
-        isActive && "bg-surface-hover text-title shadow-sm"
+        "relative flex items-center justify-center transition-colors duration-200",
+        isActive
+          ? "bg-primary/20 dark:bg-primary/30 rounded-full px-4 py-2 gap-2"
+          : "p-2 text-paragraph hover:text-primary"
       )}
     >
       <div className="w-6 h-6 flex items-center justify-center">
         {item.icon}
       </div>
+      {isActive && (
+        <span className="text-sm font-medium text-primary dark:text-white/90 whitespace-nowrap">
+          {item.label}
+        </span>
+      )}
       {notificationCount && notificationCount > 0 && (
         <NotificationBadge count={notificationCount} />
       )}
@@ -460,8 +467,8 @@ const Sidebar: React.FC<SidebarProps> = ({
       </aside>
 
       {/* Mobile Bottom Navbar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-container border-t border-surface-2 px-2 py-1 z-50 shadow-lg">
-        <div className="flex items-center justify-around">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-container border-t border-surface-2 px-4 py-2 z-50 shadow-lg">
+        <div className="flex items-center justify-between">
           {items
             .filter((item) => !item.subItems)
             .slice(0, 4)
@@ -472,7 +479,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           {/* More/Notifications button */}
           <button
             onClick={() => setIsMobileMenuOpen(true)}
-            className="relative flex items-center justify-center p-3 rounded-lg text-paragraph hover:bg-surface-hover transition-colors duration-200"
+            className="relative flex items-center justify-center p-2 text-paragraph hover:text-primary transition-colors duration-200"
           >
             <div className="w-6 h-6 flex items-center justify-center">
               <HamburgerMenu className="w-6 h-6" />

@@ -9,7 +9,6 @@ import ProgressStatusCard from "@/components/student/ProgressStatusCard";
 import UserProfileHeader from "@/components/shared/ProfilePersonal/UserProfileHeader";
 import UserProfileSkeleton from "@/components/shared/ProgressSkeletons/UserProfileSkeleton";
 import { StudentPaymentStatusCard } from "@/components/student/StudentPaymentStatusCard";
-import { useEffect, useState } from "react";
 import Badges from "@/components/placement/Badges/Badges";
 import { determineCEFRLevel } from "@/lib/utils";
 import { usePlacementTests } from "@/hooks/usePlacementTests";
@@ -17,7 +16,7 @@ import AchievementList from "@/components/student/AchievementList";
 
 export default function MeuPerfil() {
   const { user, isLoading } = useCurrentUser();
-  const { tests, isLoading: isTestsLoading } = usePlacementTests();
+  const { tests } = usePlacementTests();
 
   const handleLogout = () => {
     signOut({ callbackUrl: "/" });
@@ -74,7 +73,10 @@ export default function MeuPerfil() {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4, delay: 0.3 }}
       >
-        <Badges level={determineCEFRLevel(tests[0]?.totalScore || 0)} />
+        <Badges
+          level={determineCEFRLevel(tests[0]?.totalScore || 0)}
+          isLoading={isLoading}
+        />
       </SubContainer>
 
       <SubContainer

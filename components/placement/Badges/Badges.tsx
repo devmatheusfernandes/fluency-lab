@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import "../../placement/Placement.css";
+import BadgesSkeleton from "@/components/shared/ProgressSkeletons/BadgesSkeleton";
 
 // Images
 import SabrinaSatoImage from "../../../public/images/badges/sabrinasato.png";
@@ -70,7 +71,13 @@ const badgesData = [
   },
 ];
 
-export default function Badges({ level }: { level: number }) {
+export default function Badges({
+  level,
+  isLoading = false,
+}: {
+  level: number;
+  isLoading?: boolean;
+}) {
   const [modalOpen, setModalOpen] = useState(false);
 
   // Garante que o nível esteja dentro dos limites do array
@@ -89,6 +96,10 @@ export default function Badges({ level }: { level: number }) {
 
   const openModal = () => setModalOpen(true);
   const closeModal = () => setModalOpen(false);
+
+  if (isLoading) {
+    return <BadgesSkeleton />;
+  }
 
   return (
     <div className="flex flex-col items-center justify-center">

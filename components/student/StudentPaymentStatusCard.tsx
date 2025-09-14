@@ -160,60 +160,55 @@ export function StudentPaymentStatusCard({
             <div className="flex items-center gap-2">
               <SkeletonLoader
                 variant="circle"
-                className="w-5 h-5 rounded-full"
+                className="skeleton-base w-5 h-5 rounded-full"
               />
               <SkeletonLoader
                 variant="text"
                 lines={1}
-                className="h-6 w-48 rounded"
+                className="skeleton-base h-6 w-48 rounded"
               />
             </div>
-            <SkeletonLoader
-              variant="text"
-              lines={1}
-              className="h-6 w-20 rounded-full"
-            />
           </div>
           <SkeletonLoader
             variant="text"
             lines={1}
-            className="h-4 w-32 rounded mx-auto"
+            className="skeleton-base h-4 w-32 rounded mx-auto"
           />
           <SkeletonLoader variant="rect" className="h-32 rounded" />
           <div className="flex justify-between">
             <SkeletonLoader
               variant="text"
               lines={1}
-              className="h-4 w-20 rounded"
+              className="skeleton-base h-4 w-20 rounded"
             />
             <SkeletonLoader
               variant="text"
               lines={1}
-              className="h-4 w-16 rounded"
-            />
-          </div>
-          <div className="flex justify-between">
-            <SkeletonLoader
-              variant="text"
-              lines={1}
-              className="h-4 w-32 rounded"
-            />
-            <SkeletonLoader
-              variant="text"
-              lines={1}
-              className="h-4 w-24 rounded"
+              className="skeleton-base h-4 w-16 rounded"
             />
           </div>
           <div className="flex justify-between">
             <SkeletonLoader
               variant="text"
               lines={1}
-              className="h-4 w-28 rounded"
+              className="skeleton-base h-4 w-32 rounded"
             />
             <SkeletonLoader
               variant="text"
               lines={1}
-              className="h-4 w-20 rounded"
+              className="skeleton-base h-4 w-24 rounded"
+            />
+          </div>
+          <div className="flex justify-between">
+            <SkeletonLoader
+              variant="text"
+              lines={1}
+              className="skeleton-base h-4 w-28 rounded"
+            />
+            <SkeletonLoader
+              variant="text"
+              lines={1}
+              className="skeleton-base h-4 w-20 rounded"
             />
           </div>
         </div>
@@ -310,7 +305,7 @@ export function StudentPaymentStatusCard({
                   )}
 
                   {/* PIX Code */}
-                  <div className="bg-card flex flex-row justify-between p-3 rounded-lg">
+                  <div className="flex flex-row justify-between p-3 rounded-lg">
                     <div className="flex justify-between items-center">
                       {paymentStatus.pixExpiresAt && (
                         <span className="text-xs text-paragraph">
@@ -326,7 +321,7 @@ export function StudentPaymentStatusCard({
                     </code>
                     <Button
                       size="sm"
-                      variant="primary"
+                      variant="glass"
                       onClick={copyPixCode}
                       className="flex items-center gap-1"
                     >

@@ -38,8 +38,6 @@ interface NotebooksCardProps {
   loading?: boolean; // Added loading prop
 }
 
-
-
 // PDF Content Component for printing
 const NotebookPDFContent = React.forwardRef<
   HTMLDivElement,

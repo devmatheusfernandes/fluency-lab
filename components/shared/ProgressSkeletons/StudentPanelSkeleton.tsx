@@ -1,5 +1,4 @@
 import React from "react";
-import { Container } from "@/components/ui/Container";
 import { SubContainer } from "@/components/ui/SubContainer";
 import SkeletonLoader from "@/components/shared/Skeleton/SkeletonLoader";
 

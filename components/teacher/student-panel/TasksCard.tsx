@@ -9,7 +9,6 @@ import {
   AddSquare,
   TrashBinMinimalistic,
   Refresh,
-  Calendar,
 } from "@solar-icons/react/ssr";
 import { Checkbox } from "@/components/ui/Checkbox";
 import {
@@ -268,7 +267,7 @@ export default function TasksCard({
         {/* Progress bar at the top */}
         <div className="absolute top-0 left-0 right-0 h-3 bg-slate-700 dark:bg-slate-950 overflow-hidden rounded-t-xl">
           <motion.div
-            className="h-full bg-success-light"
+            className="h-full bg-emerald-600"
             initial={{ width: 0 }}
             animate={{ width: `${completionPercentage}%` }}
             transition={{ duration: 0.5, ease: "easeOut" }}

@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import AchievementCard from "./AchievementCard";
-import { StudentAchievement } from "@/types/users/achievements";
 import { useAchievements } from "@/hooks/useAchievements";
 import { useRouter } from "next/navigation";
 import SkeletonLoader from "@/components/shared/Skeleton/SkeletonLoader";
@@ -33,47 +32,30 @@ const AchievementList: React.FC<AchievementListProps> = ({ userId, limit }) => {
 
   if (loading) {
     return (
-      <div className="space-y-3">
-        {/* Only show "Ver todas" button when limit is applied */}
-        {limit && (
-          <div className="flex justify-between items-center">
-            <SkeletonLoader variant="text" lines={1} className="h-6 w-32" />
-            <SkeletonLoader variant="text" lines={1} className="h-4 w-16" />
-          </div>
-        )}
-
-        <div className="flex flex-wrap gap-2">
-          <SkeletonLoader variant="rect" className="h-10 w-24 rounded-xl" />
-          <SkeletonLoader variant="rect" className="h-10 w-24 rounded-xl" />
-          <SkeletonLoader variant="rect" className="h-10 w-24 rounded-xl" />
-        </div>
-
+      <div className="">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {Array.from({ length: limit || 6 }).map((_, index) => (
-            <div
-              key={index}
-              className="border rounded-2xl p-5 bg-subcontainer border-gray-200 dark:bg-gray-800 dark:border-gray-700"
-            >
+            <div key={index} className="skeleton-base rounded-2xl p-5">
               <div className="flex items-start gap-4">
                 <SkeletonLoader
                   variant="rect"
-                  className="w-14 h-14 rounded-lg"
+                  className="skeleton-sub w-14 h-14 rounded-lg"
                 />
                 <div className="flex-1 min-w-0 space-y-2">
                   <SkeletonLoader
                     variant="text"
                     lines={1}
-                    className="h-5 w-3/4"
+                    className="skeleton-sub h-5 w-3/4"
                   />
                   <SkeletonLoader
                     variant="text"
                     lines={1}
-                    className="h-4 w-full"
+                    className="skeleton-sub h-4 w-full"
                   />
                   <SkeletonLoader
                     variant="text"
                     lines={1}
-                    className="h-3 w-1/2"
+                    className="skeleton-sub h-3 w-1/2"
                   />
                 </div>
               </div>
@@ -149,7 +131,7 @@ const AchievementList: React.FC<AchievementListProps> = ({ userId, limit }) => {
         </div>
       )}
 
-      {displayedAchievements.length === 0 ? (
+      {loading && displayedAchievements.length === 0 ? (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

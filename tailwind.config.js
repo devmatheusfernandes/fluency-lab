@@ -16,6 +16,9 @@ module.exports = {
       spacing: designTokens.spacing,
       borderRadius: designTokens.borders.borderRadius,
       boxShadow: designTokens.shadows,
+      animation: {
+        shimmer: "var(--animate-shimmer)",
+      },
     },
   },
   plugins: [],

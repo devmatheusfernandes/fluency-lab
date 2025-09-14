@@ -29,7 +29,12 @@ export default function NextClassCard({ className = "" }: NextClassCardProps) {
 
     // Filter only scheduled classes and sort by date
     const scheduledClasses = myClasses
-      .filter((cls) => cls.status === "scheduled")
+      .filter(
+        (cls) =>
+          cls.status === "scheduled" ||
+          cls.status === "rescheduled" ||
+          !cls.status.includes("canceled")
+      )
       .sort(
         (a, b) =>
           new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime()
@@ -102,20 +107,20 @@ export default function NextClassCard({ className = "" }: NextClassCardProps) {
           <SkeletonLoader
             variant="text"
             lines={1}
-            className="h-5 w-24 rounded"
+            className="skeleton-base h-5 w-24 rounded"
           />
           <SkeletonLoader variant="rect" className="w-10 h-10 rounded-xl" />
         </div>
-        <div className="mt-2 space-y-2">
+        <div className="flex flex-col mt-2 space-y-2">
           <SkeletonLoader
             variant="text"
             lines={1}
-            className="h-4 w-32 rounded"
+            className="skeleton-base h-4 w-32 rounded"
           />
           <SkeletonLoader
             variant="text"
             lines={1}
-            className="h-4 w-24 rounded"
+            className="skeleton-base h-4 w-24 rounded"
           />
         </div>
       </SkeletonLoader>

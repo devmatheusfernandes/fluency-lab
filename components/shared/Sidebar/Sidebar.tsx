@@ -107,7 +107,8 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ item, isCollapsed }) => {
       href={item.href}
       className={twMerge(
         "flex items-center h-12 px-3 py-3 rounded-lg text-paragraph hover:text-primary hover:bg-primary/15 transition-all ease-in-out duration-300",
-        isActive && "bg-primary/25 text-primary-text font-semibold",
+        isActive &&
+          "bg-primary/35 dark:bg-primary/45 text-primary dark:text-white/90 font-semibold",
         isCollapsed && "justify-center px-3"
       )}
     >

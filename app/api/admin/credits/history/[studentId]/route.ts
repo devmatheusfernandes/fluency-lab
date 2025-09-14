@@ -18,9 +18,10 @@ export async function GET(
 
   // Check permissions
   const userPermissions = session.user.permissions || [];
+  const { studentId } = await params;
   const canViewCredits = userPermissions.includes('credits.view.all') || 
                         userPermissions.includes('credits.view.assigned') ||
-                        (userPermissions.includes('credits.view.self') && session.user.id === params.studentId);
+                        (userPermissions.includes('credits.view.self') && session.user.id === studentId);
 
   if (!canViewCredits) {
     return NextResponse.json({ error: 'Permissão insuficiente para visualizar histórico de créditos' }, { status: 403 });

@@ -8,6 +8,7 @@ export default function SigninForm() {
   const { isLoading, error, isAuthenticated } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [localError, setLocalError] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -34,19 +35,24 @@ export default function SigninForm() {
       if (result?.error) {
         // Check if 2FA is required
         if (result.error === "2FA_REQUIRED") {
-          // Store email and password securely for the next step
-          // In a real implementation, you would use a more secure method
-          sessionStorage.setItem("2fa_email", email);
-          sessionStorage.setItem("2fa_password", password);
-
-          // Redirect to 2FA verification page
-          router.push(
-            `/signin/2fa?callbackUrl=${encodeURIComponent(callbackUrl)}`
-          );
+          // Store credentials securely using server action
+          try {
+            const { storeTwoFactorData } = await import('@/lib/auth/twoFactorStorage');
+            await storeTwoFactorData(email, password);
+            
+            // Redirect to 2FA verification page
+            router.push(
+              `/signin/2fa?callbackUrl=${encodeURIComponent(callbackUrl)}`
+            );
+          } catch (error) {
+             console.error('Erro ao armazenar dados do 2FA:', error);
+             setLocalError('Erro interno. Tente novamente.');
+           }
         } else {
-          // Handle other errors
-          console.error("Sign in error:", result.error);
-        }
+           // Handle other errors
+           console.error("Sign in error:", result.error);
+           setLocalError('Credenciais inválidas.');
+         }
       } else if (result?.ok) {
         // Successful login without 2FA
         router.push(callbackUrl);

@@ -75,7 +75,7 @@ export default function AddUserModal({
             <ModalField label="Nome Completo" required>
               <ModalInput
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => setName((e.target as HTMLInputElement).value)}
                 placeholder="e.g., João Silva"
                 required
               />
@@ -84,7 +84,7 @@ export default function AddUserModal({
               <ModalInput
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => setEmail((e.target as HTMLInputElement).value)}
                 placeholder="e.g., joao.silva@email.com"
                 required
               />

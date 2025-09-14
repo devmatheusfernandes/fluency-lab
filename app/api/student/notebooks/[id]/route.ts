@@ -18,7 +18,8 @@ export async function GET(
 
   try {
     const studentId = session.user.id;
-    const notebookId = params.id;
+    const { id } = await params;
+  const notebookId = id;
     
     // Fetch specific notebook from Firestore
     const notebookRef = adminDb.doc(`users/${studentId}/Notebooks/${notebookId}`);

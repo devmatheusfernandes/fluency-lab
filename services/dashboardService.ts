@@ -1,12 +1,15 @@
 // services/dashboardService.ts
 
-import { UserAdminRepository } from "@/repositories/user.admin.repository";
-import { ClassRepository } from "@/repositories/classRepository";
-// import { PaymentRepository } from "@/repositories/paymentRepository"; // A ser criado no futuro
+import { 
+  userAdminRepository,
+  classRepository
+  // paymentRepository // A ser usado no futuro
+} from "@/repositories";
 
-const userAdminRepo = new UserAdminRepository();
-const classRepo = new ClassRepository();
-// const paymentRepo = new PaymentRepository();
+// Usando instâncias singleton centralizadas
+const userAdminRepo = userAdminRepository;
+const classRepo = classRepository;
+// const paymentRepo = paymentRepository;
 
 export class DashboardService {
   async getDashboardData() {

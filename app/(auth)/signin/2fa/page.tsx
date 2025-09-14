@@ -12,35 +12,50 @@ export default function TwoFactorVerificationPage() {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
 
   // Get the callback URL from query parameters
   const callbackUrl = searchParams.get("callbackUrl") || "/hub";
 
-  // Get email and password from session storage
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
+  // Load stored credentials securely
   useEffect(() => {
-    // Retrieve email and password from session storage
-    const storedEmail = sessionStorage.getItem("2fa_email") || "";
-    const storedPassword = sessionStorage.getItem("2fa_password") || "";
+    const loadStoredData = async () => {
+      try {
+        const { getTwoFactorData } = await import(
+          "@/lib/auth/twoFactorStorage"
+        );
+        const data = await getTwoFactorData();
+        if (data) {
+          setEmail(data.email);
+          setPassword(data.password);
+        } else {
+          // No valid data found, redirect to signin
+          router.push("/signin");
+        }
+      } catch (error) {
+        console.error("Erro ao carregar dados do 2FA:", error);
+        router.push("/signin");
+      }
+    };
 
-    setEmail(storedEmail);
-    setPassword(storedPassword);
-
-    // If we don't have the email/password, redirect back to signin
-    if (!storedEmail || !storedPassword) {
-      router.push("/signin");
-    }
-    // NOTE: We don't remove the credentials here anymore, they will be removed after successful verification
+    loadStoredData();
   }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
+
+    if (!email || !password) {
+      setError(
+        "Dados de autenticação não encontrados. Tente fazer login novamente."
+      );
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const result = await signIn("credentials", {
@@ -52,43 +67,53 @@ export default function TwoFactorVerificationPage() {
 
       if (result?.error) {
         if (result.error === "Invalid 2FA code") {
-          setError("Invalid authentication code. Please try again.");
+          setError("Código 2FA inválido. Tente novamente.");
         } else {
-          setError("An error occurred. Please try again.");
+          setError("Erro na verificação. Tente novamente.");
         }
       } else if (result?.ok) {
-        // Clear the stored credentials after successful verification
-        sessionStorage.removeItem("2fa_email");
-        sessionStorage.removeItem("2fa_password");
+        // Clear stored credentials on successful verification
+        try {
+          const { clearTwoFactorData } = await import(
+            "@/lib/auth/twoFactorStorage"
+          );
+          await clearTwoFactorData();
+        } catch (error) {
+          console.error("Erro ao limpar dados do 2FA:", error);
+        }
 
         // Redirect to the intended destination
         router.push(callbackUrl);
         router.refresh();
       }
     } catch (err) {
-      setError("An unexpected error occurred. Please try again.");
+      console.error("2FA verification error:", err);
+      setError("Erro na verificação. Tente novamente.");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-surface-1 p-4">
-      <Card className="w-full max-w-md space-y-6 p-8">
-        <div className="text-center">
-          <Text variant="title" size="2xl" weight="bold">
-            Two-Factor Authentication
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <Card className="w-full max-w-md p-6">
+        <div className="text-center mb-6">
+          <Text variant="title" size="xl" weight="bold">
+            Verificação em Duas Etapas
           </Text>
-          <Text variant="placeholder" className="mt-2">
-            Enter the 6-digit code from your authenticator app
+          <Text className="mt-2 text-gray-600">
+            Digite o código de 6 dígitos do seu aplicativo autenticador
           </Text>
+          {email && (
+            <Text className="mt-1 text-sm text-gray-500">
+              Fazendo login como: {email}
+            </Text>
+          )}
         </div>
 
         {error && (
-          <div className="rounded-lg bg-red-100 p-3 border border-red-200">
-            <Text className="text-red-800" size="sm">
-              {error}
-            </Text>
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            {error}
           </div>
         )}
 
@@ -102,12 +127,10 @@ export default function TwoFactorVerificationPage() {
               }
               placeholder="000000"
               maxLength={6}
-              className="text-center text-2xl tracking-widest"
+              className="text-center text-lg tracking-widest"
+              required
               autoFocus
             />
-            <Text variant="placeholder" size="sm" className="mt-2 text-center">
-              Enter your backup code if you can't access your authenticator app
-            </Text>
           </div>
 
           <Button
@@ -115,22 +138,28 @@ export default function TwoFactorVerificationPage() {
             className="w-full"
             disabled={isLoading || code.length !== 6}
           >
-            {isLoading ? "Verifying..." : "Verify"}
+            {isLoading ? "Verificando..." : "Verificar"}
           </Button>
         </form>
 
-        <div className="text-center">
+        <div className="text-center mt-4">
           <Button
             variant="link"
-            onClick={() => {
+            onClick={async () => {
               // Clear stored credentials when using a different account
-              sessionStorage.removeItem("2fa_email");
-              sessionStorage.removeItem("2fa_password");
+              try {
+                const { clearTwoFactorData } = await import(
+                  "@/lib/auth/twoFactorStorage"
+                );
+                await clearTwoFactorData();
+              } catch (error) {
+                console.error("Erro ao limpar dados do 2FA:", error);
+              }
               router.push("/signin");
             }}
             className="text-sm"
           >
-            Use a different account
+            Usar uma conta diferente
           </Button>
         </div>
       </Card>

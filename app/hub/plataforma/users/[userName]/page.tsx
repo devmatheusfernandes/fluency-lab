@@ -3,13 +3,13 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { UserService } from "@/services/userService";
-import { UserAdminRepository } from "@/repositories/user.admin.repository"; // Importa o repositório
+import { userAdminRepository } from "@/repositories"; // Importa instância singleton
 import { redirect } from "next/navigation";
 import { Text } from "@/components/ui/Text";
 import UserDetailsClient from "@/components/admin/UseDetailsClient"; // Verifique o caminho
 
 const userService = new UserService();
-const userAdminRepo = new UserAdminRepository(); // Cria a instância
+const userAdminRepo = userAdminRepository; // Usa instância singleton
 
 // As props da página agora incluem 'params' e 'searchParams'
 interface UserDetailsPageProps {

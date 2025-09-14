@@ -12,7 +12,6 @@ import {
   Calendar,
 } from "@solar-icons/react/ssr";
 import { Checkbox } from "@/components/ui/Checkbox";
-import SkeletonLoader from "@/components/shared/Skeleton/SkeletonLoader";
 import {
   Modal,
   ModalContent,
@@ -263,29 +262,11 @@ export default function TasksCard({
     setIsDeleteModalOpen(false);
   };
 
-  // Render a skeleton task
-  const renderSkeletonTask = (key: string) => (
-    <div
-      key={key}
-      className="flex items-center p-3 rounded-lg border border-input/50"
-    >
-      <SkeletonLoader variant="circle" className="mr-3 h-5 w-5" />
-      <div className="flex-1">
-        <SkeletonLoader
-          variant="text"
-          lines={1}
-          className="h-4 rounded w-full"
-        />
-      </div>
-      <SkeletonLoader variant="circle" className="ml-2 h-5 w-5" />
-    </div>
-  );
-
   return (
     <>
       <SubContainer className="h-[50vh] sm:h-full flex flex-col relative overflow-hidden">
         {/* Progress bar at the top */}
-        <div className="absolute top-0 left-0 right-0 h-3 bg-input/60 dark:bg-slate-950 overflow-hidden rounded-t-xl">
+        <div className="absolute top-0 left-0 right-0 h-3 bg-slate-700 dark:bg-slate-950 overflow-hidden rounded-t-xl">
           <motion.div
             className="h-full bg-success-light"
             initial={{ width: 0 }}
@@ -304,7 +285,7 @@ export default function TasksCard({
                 whileTap={{ scale: 0.95 }}
                 onClick={onSyncWithGoogleCalendar}
                 disabled={isSyncingWithGoogleCalendar}
-                className="flex items-center gap-1 px-3 py-1 bg-primary text-primary-text rounded-lg text-sm font-medium disabled:opacity-50"
+                className="flex items-center gap-1 px-3 py-2 bg-primary text-primary-text rounded-lg text-sm font-medium disabled:opacity-50"
               >
                 <Refresh
                   weight="BoldDuotone"
@@ -315,9 +296,6 @@ export default function TasksCard({
                   : "Sincronizar"}
               </motion.button>
             )}
-            <div className="text-sm text-paragraph/40">
-              {localTasks.length} tarefa(s) • {completionPercentage}% concluído
-            </div>
           </div>
         </div>
 
@@ -381,9 +359,6 @@ export default function TasksCard({
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           <div className="space-y-2">
             <AnimatePresence>
-              {/* Render skeleton tasks first */}
-              {pendingTasks.map((id) => renderSkeletonTask(id))}
-
               {/* Render actual tasks */}
               {localTasks.map((task) => (
                 <motion.div

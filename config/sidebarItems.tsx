@@ -113,23 +113,23 @@ const studentItems: SidebarItemType[] = [
     icon: <Notebook weight="BoldDuotone" />,
   },
   {
-    href: "/hub/plataforma/student/my-classes",
+    href: "/hub/plataforma/student/pratica",
     label: "Prática",
     icon: <Gameboy weight="BoldDuotone" />,
   },
   {
-    href: "/hub/plataforma/profile",
+    href: "/hub/plataforma/student/my-class",
     label: "Calendário",
     icon: <Calendar weight="BoldDuotone" />,
   },
   {
-    href: "/hub/plataforma/student/schedule",
+    href: "/hub/plataforma/courses",
     label: "Cursos",
     icon: <MonitorSmartphone weight="BoldDuotone" />,
   },
   {
-    href: "/hub/plataforma/student/my-classes",
-    label: "Configuração",
+    href: "/hub/plataforma/settings",
+    label: "Configurações",
     icon: <SettingsMinimalistic weight="BoldDuotone" />,
   },
 ];

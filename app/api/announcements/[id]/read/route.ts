@@ -15,7 +15,8 @@ export async function POST(request: Request, { params }: { params: { id: string 
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    await announcementService.markAnnouncementAsRead(params.id, session.user.id);
+    const { id } = await params;
+    await announcementService.markAnnouncementAsRead(id, session.user.id);
 
     return NextResponse.json({ message: 'Announcement marked as read' });
   } catch (error: any) {

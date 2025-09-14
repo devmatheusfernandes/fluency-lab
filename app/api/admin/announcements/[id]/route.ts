@@ -20,7 +20,8 @@ export async function GET(request: Request, { params }: { params: { id: string }
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const announcement = await announcementService.getAnnouncementById(params.id);
+    const { id } = await params;
+  const announcement = await announcementService.getAnnouncementById(id);
     if (!announcement) {
       return NextResponse.json({ error: 'Announcement not found' }, { status: 404 });
     }
@@ -45,7 +46,8 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     }
 
     const body = await request.json();
-    await announcementService.updateAnnouncement(params.id, body);
+    const { id } = await params;
+    await announcementService.updateAnnouncement(id, body);
 
     return NextResponse.json({ message: 'Announcement updated successfully' });
   } catch (error) {
@@ -66,7 +68,8 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    await announcementService.deleteAnnouncement(params.id);
+    const { id } = await params;
+    await announcementService.deleteAnnouncement(id);
 
     return NextResponse.json({ message: 'Announcement deleted successfully' });
   } catch (error) {

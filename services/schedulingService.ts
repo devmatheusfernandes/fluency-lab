@@ -1673,7 +1673,7 @@ export class SchedulingService {
    */
   async updateClassStatus(
     classId: string,
-    newStatus: ClassStatus,
+    newStatus: ClassStatus | undefined,
     feedback: string | undefined,
     currentUserId: string
   ): Promise<StudentClass> {
@@ -1690,12 +1690,15 @@ export class SchedulingService {
       throw new Error("Acesso não autorizado para modificar esta aula.");
     }
     
-    const updateData: Partial<StudentClass> = { status: newStatus };
+    const updateData: Partial<StudentClass> = {};
+    if (newStatus) {
+      updateData.status = newStatus;
+      if (newStatus === ClassStatus.COMPLETED) {
+        updateData.completedAt = new Date();
+      }
+    }
     if (feedback) {
       updateData.feedback = feedback;
-    }
-    if (newStatus === ClassStatus.COMPLETED) {
-      updateData.completedAt = new Date();
     }
 
     await classRepository.update(classId, updateData);
@@ -1906,6 +1909,154 @@ export class SchedulingService {
     } catch (error) {
       console.error('Erro ao buscar aulas do professor:', error);
       throw new Error('Falha ao buscar aulas do professor');
+    }
+  }
+
+  // === MÉTODOS DE VALIDAÇÃO DE OWNERSHIP E CONTEXTO ===
+
+  /**
+   * Verifica se um estudante é dono de uma aula específica
+   * @param studentId ID do estudante
+   * @param classId ID da aula
+   * @returns true se o estudante é dono da aula
+   */
+  async isStudentOwnerOfClass(studentId: string, classId: string): Promise<boolean> {
+    try {
+      const classData = await classRepository.findClassById(classId);
+      return classData?.studentId === studentId;
+    } catch (error) {
+      console.error('Erro ao verificar ownership da aula:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Verifica se um professor leciona uma aula específica
+   * @param teacherId ID do professor
+   * @param classId ID da aula
+   * @returns true se o professor leciona a aula
+   */
+  async isTeacherOfClass(teacherId: string, classId: string): Promise<boolean> {
+    try {
+      const classData = await classRepository.findClassById(classId);
+      return classData?.teacherId === teacherId;
+    } catch (error) {
+      console.error('Erro ao verificar contexto do professor:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Verifica se uma aula pode ser cancelada (prazo mínimo)
+   * @param classId ID da aula
+   * @returns true se a aula pode ser cancelada
+   */
+  async canCancelClass(classId: string): Promise<boolean> {
+    try {
+      const classData = await classRepository.findClassById(classId);
+      if (!classData) return false;
+
+      // Verifica se a aula está em status que permite cancelamento
+      if (classData.status !== ClassStatus.SCHEDULED) {
+        return false;
+      }
+
+      // Busca configurações do professor para verificar prazo de cancelamento
+      const teacher = classData.teacherId 
+        ? await userAdminRepository.findUserById(classData.teacherId)
+        : null;
+      const settings = teacher?.schedulingSettings || {};
+      const cancellationHours = settings.cancellationPolicyHours || 24;
+
+      const now = new Date();
+      const scheduledAt = new Date(classData.scheduledAt);
+      const timeDifference = scheduledAt.getTime() - now.getTime();
+      const hoursUntilClass = timeDifference / (1000 * 60 * 60);
+
+      return hoursUntilClass >= cancellationHours;
+    } catch (error) {
+      console.error('Erro ao verificar se aula pode ser cancelada:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Obtém a contagem de reagendamentos do estudante no mês atual
+   * @param studentId ID do estudante
+   * @returns número de reagendamentos no mês
+   */
+  async getMonthlyRescheduleCount(studentId: string): Promise<number> {
+    try {
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+
+      // Busca aulas reagendadas pelo estudante no mês atual
+      const query = adminDb.collection('classes')
+        .where('studentId', '==', studentId)
+        .where('rescheduledAt', '>=', startOfMonth)
+        .where('rescheduledAt', '<=', endOfMonth);
+
+      const snapshot = await query.get();
+      return snapshot.size;
+    } catch (error) {
+      console.error('Erro ao contar reagendamentos mensais:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Verifica se uma aula pode ser reagendada (prazo mínimo e outras validações)
+   * @param classId ID da aula
+   * @param newDateTime Nova data/hora proposta
+   * @returns true se a aula pode ser reagendada
+   */
+  async canRescheduleClass(classId: string, newDateTime: Date): Promise<boolean> {
+    try {
+      const classData = await classRepository.findClassById(classId);
+      if (!classData) return false;
+
+      // Verifica se a aula está em status que permite reagendamento
+      if (
+        classData.status !== ClassStatus.SCHEDULED &&
+        classData.status !== ClassStatus.NO_SHOW &&
+        classData.status !== ClassStatus.CANCELED_TEACHER_MAKEUP
+      ) {
+        return false;
+      }
+
+      // Verifica se é uma aula de crédito que não pode ser reagendada
+      if (classData.creditId && classData.isReschedulable === false && classData.creditType !== 'teacher-cancellation') {
+        return false;
+      }
+
+      // Busca configurações do professor para verificar prazos
+      const teacher = classData.teacherId 
+        ? await userAdminRepository.findUserById(classData.teacherId)
+        : null;
+      const settings = teacher?.schedulingSettings || {};
+      
+      // Verifica prazo mínimo para reagendamento
+      const leadTimeHours = settings.bookingLeadTimeHours || 24;
+      const now = new Date();
+      const earliestRescheduleTime = new Date(now.getTime() + leadTimeHours * 60 * 60 * 1000);
+
+      if (newDateTime < earliestRescheduleTime) {
+        return false;
+      }
+
+      // Verifica horizonte de reagendamento
+      const horizonDays = settings.bookingHorizonDays || 30;
+      const latestRescheduleDate = new Date(now.getTime() + horizonDays * 24 * 60 * 60 * 1000);
+
+      if (newDateTime > latestRescheduleDate) {
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Erro ao verificar se aula pode ser reagendada:', error);
+      return false;
     }
   }
 

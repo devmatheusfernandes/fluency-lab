@@ -1,5 +1,4 @@
 import LogoutButton from "@/components/auth/LogoutButton";
-import TeacherAvailabilityManager from "@/components/teacher/TeacherAvailabilityManager";
 
 export default function TeacherDashboardPage() {
   return (

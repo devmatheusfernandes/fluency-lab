@@ -23,6 +23,24 @@ const nextConfig: NextConfig = {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=()",
           },
+          {
+            key: "Content-Security-Policy",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://checkout.stripe.com https://www.mercadopago.com https://secure.mlstatic.com https://www.google.com https://www.gstatic.com",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "font-src 'self' https://fonts.gstatic.com",
+              "img-src 'self' data: blob: https: http:",
+              "media-src 'self' blob:",
+              "connect-src 'self' https://api.stripe.com https://api.mercadopago.com https://www.google-analytics.com https://firestore.googleapis.com https://firebase.googleapis.com wss:",
+              "frame-src 'self' https://js.stripe.com https://checkout.stripe.com https://www.mercadopago.com https://www.google.com",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "form-action 'self' https://checkout.stripe.com https://www.mercadopago.com",
+              "frame-ancestors 'self'",
+              "upgrade-insecure-requests"
+            ].join("; ")
+          },
         ],
       },
       {

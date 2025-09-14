@@ -301,3 +301,86 @@ export const userCreationRateLimiter = (request: NextRequest, userId: string) =>
   const key = `user_creation:${userId}:${clientIp}`;
   return rateLimiter.checkRateLimit(key, 'user_creation');
 };
+
+// ============================================================================
+// RATE LIMITERS ESPECÍFICOS POR ENDPOINT
+// ============================================================================
+
+/**
+ * Rate limiter para cancelamento de estudantes
+ */
+export const studentCancellationRateLimiter = (request: NextRequest, userId: string) => {
+  const rateLimiter = RateLimiter.getInstance();
+  const clientIp = getClientIP(request);
+  const key = `student_cancellation:${userId}:${clientIp}`;
+  return rateLimiter.checkRateLimit(key, 'student_cancellation');
+};
+
+/**
+ * Rate limiter para cancelamento de professores
+ */
+export const teacherCancellationRateLimiter = (request: NextRequest, userId: string) => {
+  const rateLimiter = RateLimiter.getInstance();
+  const clientIp = getClientIP(request);
+  const key = `teacher_cancellation:${userId}:${clientIp}`;
+  return rateLimiter.checkRateLimit(key, 'teacher_cancellation');
+};
+
+/**
+ * Rate limiter para reagendamento de estudantes
+ */
+export const studentRescheduleRateLimiter = (request: NextRequest, userId: string) => {
+  const rateLimiter = RateLimiter.getInstance();
+  const clientIp = getClientIP(request);
+  const key = `student_reschedule:${userId}:${clientIp}`;
+  return rateLimiter.checkRateLimit(key, 'student_reschedule');
+};
+
+/**
+ * Rate limiter para reagendamento de professores
+ */
+export const teacherRescheduleRateLimiter = (request: NextRequest, userId: string) => {
+  const rateLimiter = RateLimiter.getInstance();
+  const clientIp = getClientIP(request);
+  const key = `teacher_reschedule:${userId}:${clientIp}`;
+  return rateLimiter.checkRateLimit(key, 'teacher_reschedule');
+};
+
+/**
+ * Rate limiter para reagendamento de administradores
+ */
+export const adminRescheduleRateLimiter = (request: NextRequest, userId: string) => {
+  const rateLimiter = RateLimiter.getInstance();
+  const clientIp = getClientIP(request);
+  const key = `admin_reschedule:${userId}:${clientIp}`;
+  return rateLimiter.checkRateLimit(key, 'admin_reschedule');
+};
+
+/**
+ * Rate limiter inteligente que escolhe o tipo correto baseado no role e operação
+ */
+export const smartRateLimiter = (
+  request: NextRequest, 
+  userId: string, 
+  userRole: string, 
+  operation: 'cancellation' | 'reschedule'
+) => {
+  if (operation === 'cancellation') {
+    if (userRole === 'STUDENT') {
+      return studentCancellationRateLimiter(request, userId);
+    } else if (['TEACHER', 'ADMIN', 'MANAGER'].includes(userRole)) {
+      return teacherCancellationRateLimiter(request, userId);
+    }
+  } else if (operation === 'reschedule') {
+    if (userRole === 'STUDENT') {
+      return studentRescheduleRateLimiter(request, userId);
+    } else if (userRole === 'TEACHER') {
+      return teacherRescheduleRateLimiter(request, userId);
+    } else if (['ADMIN', 'MANAGER'].includes(userRole)) {
+      return adminRescheduleRateLimiter(request, userId);
+    }
+  }
+  
+  // Fallback para rate limiter geral
+  return generalRateLimiter(request);
+};

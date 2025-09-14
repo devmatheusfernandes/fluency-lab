@@ -1,11 +1,12 @@
 import ClassScheduler from "@/components/occasional-student/ClassScheduler"; // Seu novo caminho
-import { UserAdminRepository } from "@/repositories/user.admin.repository";
+import { userAdminRepository } from "@/repositories";
 import { User } from "@/types/users/users";
 import { safeDateToISO } from "@/lib/utils";
 import { TeacherService } from "@/services/teacherService";
 import { useStudent } from "@/hooks/useStudent";
 
-const userAdminRepo = new UserAdminRepository();
+// Usando instância singleton centralizada
+const userAdminRepo = userAdminRepository;
 const teacherService = new TeacherService();
 
 const serializeTeacher = (

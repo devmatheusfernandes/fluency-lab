@@ -53,10 +53,7 @@ const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
   lines = 1,
 }) => {
   // Base classes for all skeletons
-  const baseClasses = twMerge(
-    "bg-background dark:bg-container/80 rounded",
-    animated && "animate-pulse"
-  );
+  const baseClasses = twMerge("rounded", animated && "animate-pulse");
 
   // Size classes
   const sizeClasses = {

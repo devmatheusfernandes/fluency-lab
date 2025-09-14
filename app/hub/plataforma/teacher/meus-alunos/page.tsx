@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import StudentCard from "@/components/teacher/StudentCard";
-import StudentCardSkeleton from "@/components/teacher/StudentCardSkeleton";
+import StudentCardSkeleton from "@/components/shared/ProgressSkeletons/StudentCardSkeleton";
 import { Container } from "@/components/ui/Container";
 import { SearchBar } from "@/components/ui/SearchBar";
 import { NoResults } from "@/components/ui/NoResults/NoResults"; // Import the new component

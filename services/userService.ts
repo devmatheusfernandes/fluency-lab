@@ -1,10 +1,12 @@
 // services/userService.ts
 
 import { adminAuth } from "@/lib/firebase/admin";
-import { ClassRepository } from "@/repositories/classRepository";
-import { PaymentRepository } from "@/repositories/paymentRepository";
-import { UserAdminRepository } from "@/repositories/user.admin.repository";
-import { userRepository } from "@/repositories/userRepository";
+import { 
+  userRepository,
+  userAdminRepository,
+  classRepository,
+  paymentRepository
+} from "@/repositories";
 import { StudentClass } from "@/types/classes/class";
 import { Payment } from "@/types/financial/payments";
 import { FullUserDetails } from "@/types/users/user-details";
@@ -12,9 +14,10 @@ import { User } from "@/types/users/users";
 import { FieldValue } from "firebase-admin/firestore";
 import { AuditService } from "@/services/auditService";
 
-const userAdminRepo = new UserAdminRepository();
-const classRepo = new ClassRepository();
-const paymentRepo = new PaymentRepository();
+// Usando instâncias singleton centralizadas
+const userAdminRepo = userAdminRepository;
+const classRepo = classRepository;
+const paymentRepo = paymentRepository;
 
 export class UserService {
   /**

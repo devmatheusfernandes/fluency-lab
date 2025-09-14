@@ -41,6 +41,7 @@
     "firebase-admin": "^13.4.0",
     "framer-motion": "^12.23.12",
     "googleapis": "^159.0.0",
+    "isomorphic-dompurify": "^2.26.0",
     "jsonwebtoken": "^9.0.2",
     "jspdf": "^3.0.2",
     "lottie": "^0.0.1",
@@ -61,7 +62,8 @@
     "sonner": "^2.0.7",
     "stripe": "^18.4.0",
     "tailwind-merge": "^3.3.1",
-    "yjs": "^13.6.27"
+    "yjs": "^13.6.27",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

@@ -17,29 +17,44 @@ async function updateClassStatusHandler(
   { params, authContext }: { params?: { classId: string }; authContext: any }
 ) {
   try {
-    if (!params?.classId) {
+    console.log('=== DEBUG updateClassStatusHandler ===' );
+    console.log('params:', params);
+    
+    const resolvedParams = await params;
+    console.log('resolvedParams:', resolvedParams);
+    
+    if (!resolvedParams?.classId) {
+      console.log('ERROR: classId não encontrado');
       return NextResponse.json(
         { error: 'ID da aula é obrigatório.' },
         { status: 400 }
       );
     }
-    const { classId } = params;
-    const { status, feedback } = await request.json();
+    const { classId } = resolvedParams;
+    console.log('classId extraído:', classId);
+    
+    const requestBody = await request.json();
+    console.log('requestBody:', requestBody);
+    
+    const { status, feedback } = requestBody;
 
-    if (!status) {
+    // Validar se pelo menos um campo foi fornecido
+    if (!status && !feedback) {
       return NextResponse.json(
-        { error: 'Status é obrigatório.' },
+        { error: 'Status ou feedback é obrigatório.' },
         { status: 400 }
       );
     }
 
-    // Validate status values
-    const validStatuses = ['scheduled', 'completed', 'cancelled', 'no_show'];
-    if (!validStatuses.includes(status)) {
-      return NextResponse.json(
-        { error: 'Status inválido.' },
-        { status: 400 }
-      );
+    // Validate status values if provided
+    if (status) {
+      const validStatuses = ['scheduled', 'completed', 'cancelled', 'no_show'];
+      if (!validStatuses.includes(status)) {
+        return NextResponse.json(
+          { error: 'Status inválido.' },
+          { status: 400 }
+        );
+      }
     }
 
     // O middleware já validou:
@@ -50,7 +65,7 @@ async function updateClassStatusHandler(
     
     const result = await schedulingService.updateClassStatus(
       classId,
-      status,
+      status || undefined,
       feedback,
       authContext.userId
     );

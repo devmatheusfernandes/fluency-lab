@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import { ClassRepository } from '@/repositories/classRepository'; // Fixed import
+import { classRepository } from '@/repositories'; // Usando instância singleton
 import { ClassTemplateDay, ClassStatus } from '@/types/classes/class'; // Added imports
 
-const classRepository = new ClassRepository(); // Create instance
+// Usando instância singleton centralizada
 
 // POST: Exclui aulas de um aluno com base em opções de data
 export async function POST(

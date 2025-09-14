@@ -4,30 +4,45 @@ import { getServerSession } from 'next-auth';
 import { adminDb, adminAuth } from '@/lib/firebase/admin';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { UserRoles } from '@/types/users/userRoles';
+import { withValidation } from '@/lib/validation';
+import { z } from 'zod';
 
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+// Schema de validação para dados de onboarding
+const onboardingSchema = z.object({
+  nickname: z.string().min(2).max(50).optional(),
+  interfaceLanguage: z.enum(['pt', 'en', 'es']).optional(),
+  theme: z.enum(['light', 'dark', 'system']).optional(),
+  emailVerified: z.boolean().optional(),
+  contractLengthMonths: z.number().int().min(1).max(24).optional(),
+  contractSigned: z.boolean().optional(),
+  paymentMethod: z.string().max(50).optional(),
+  paymentCompleted: z.boolean().optional(),
+  subscriptionId: z.string().max(100).optional()
+});
 
-    const body = await request.json();
-    const {
-      nickname,
-      interfaceLanguage,
-      theme,
-      emailVerified,
-      contractLengthMonths,
-      contractSigned,
-      paymentMethod,
-      paymentCompleted,
-      subscriptionId
-    } = body;
+export const POST = withValidation(
+  async (request: NextRequest, validatedData: { body: z.infer<typeof onboardingSchema> }) => {
+    try {
+      const session = await getServerSession(authOptions);
+      
+      if (!session?.user?.id) {
+        return NextResponse.json(
+          { error: 'Unauthorized' },
+          { status: 401 }
+        );
+      }
+
+      const {
+        nickname,
+        interfaceLanguage,
+        theme,
+        emailVerified,
+        contractLengthMonths,
+        contractSigned,
+        paymentMethod,
+        paymentCompleted,
+        subscriptionId
+      } = validatedData.body;
 
     // Update user document with onboarding completion data
     const userRef = adminDb.collection('users').doc(session.user.id);
@@ -78,11 +93,17 @@ export async function POST(request: NextRequest) {
       }
     });
 
-  } catch (error) {
-    console.error('Error completing onboarding:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+      return NextResponse.json(
+        { error: 'Internal server error' },
+        { status: 500 }
+      );
+    }
+  },
+  {
+    bodySchema: onboardingSchema,
+    logAttacks: true,
+    blockAttacks: true
   }
-}
+);

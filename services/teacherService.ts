@@ -1,11 +1,13 @@
 import { adminDb } from "@/lib/firebase/admin";
-import { ClassRepository } from "@/repositories/classRepository";
-import { UserAdminRepository } from "@/repositories/user.admin.repository";
+import { 
+  userAdminRepository,
+  classRepository
+} from "@/repositories";
 import { PopulatedStudentClass, StudentClass } from "@/types/classes/class";
 import { AvailabilityType } from "@/types/time/availability";
 
-const userAdminRepo = new UserAdminRepository();
-const classRepository = new ClassRepository();
+// Usando instâncias singleton centralizadas
+const userAdminRepo = userAdminRepository;
 
 
 export class TeacherService {

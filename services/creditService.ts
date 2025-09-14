@@ -10,13 +10,15 @@ import {
   UseCreditRequest,
   CreditTransaction 
 } from '@/types/credits/regularClassCredits';
+import { userAdminRepository } from '@/repositories';
 import { UserAdminRepository } from '@/repositories/user.admin.repository';
 
 export class CreditService {
   private userRepository: UserAdminRepository;
 
   constructor() {
-    this.userRepository = new UserAdminRepository();
+    // Usando instância singleton centralizada
+    this.userRepository = userAdminRepository;
   }
 
   /**

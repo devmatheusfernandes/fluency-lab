@@ -11,9 +11,49 @@
   }
 }
 
-.card-base {
-  @apply duration-150 ease-in-out transition-all rounded-lg border border-gray-200/50 dark:border-gray-700/50 bg-gray-300/80 dark:bg-gray-900/35 hover:border-gray-300 dark:hover:border-gray-600;
+.sidebar-base {
+  @apply bg-slate-200 dark:bg-slate-950;
 }
+
+.container-base {
+  @apply bg-slate-400/30 dark:bg-slate-900;
+}
+
+.subcontainer-base {
+  @apply bg-slate-400/20 dark:bg-slate-800;
+}
+
+/*CARDS SÃO COMPONENTES QUE FICAM DENTRO DE SUBCONTAINERS QUE PODEM FUNCIONAR COMO CARDS NORMAIS COM GRAFICOS E INFORMAÇOES
+E TAMBÉM PODEM FUNCIONAR COMO ITENS DENTRO DE SUBCONTAINERS*/
+.card-base {
+  @apply duration-150 ease-in-out transition-all rounded-lg 
+        border border-slate-200/50 dark:border-slate-700/50 
+        bg-white/15 dark:bg-slate-900/35  
+        hover:border-slate-300 dark:hover:border-slate-600;
+}
+
+.skeleton-base {
+  @apply bg-slate-400/60 dark:bg-slate-700;
+}
+
+.skeleton-sub {
+  @apply bg-white/20 dark:bg-slate-800;
+}
+
+.input-base {
+  @apply duration-150 ease-in-out transition-all rounded-lg 
+        border border-slate-200/50 dark:border-slate-700/50 
+        bg-white/20 dark:bg-slate-900/35 
+        hover:border-slate-500/30 dark:hover:border-slate-600
+        placeholder:text-gray-500 dark:placeholder:text-gray-400 
+        hover:bg-white/5 dark:hover:bg-gray-800 
+        focus:bg-white dark:focus:bg-gray-800 
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 dark:focus-visible:ring-blue-400/20 
+        disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-gray-50 dark:disabled:bg-gray-900 
+        shadow-sm hover:shadow-md;
+}
+
+
 
 @theme {
   /* Light Theme Colors */

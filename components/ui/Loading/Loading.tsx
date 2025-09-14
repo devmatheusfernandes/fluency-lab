@@ -87,7 +87,7 @@ const Loading = React.forwardRef<HTMLDivElement, LoadingProps>(
           <div
             key={i}
             className={twMerge(
-              "bg-surface-2 rounded animate-pulse",
+              "skeleton-base rounded animate-pulse",
               size === "sm"
                 ? "w-2 h-2"
                 : size === "base"

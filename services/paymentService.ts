@@ -19,6 +19,7 @@ interface FulfillPaymentParams {
   userId: string;
   stripeCustomerId: string;
   credits: number;
+  stripePaymentIntentId: string;
 }
 
 export class PaymentService {
@@ -103,7 +104,7 @@ export class PaymentService {
   }
 
   async fulfillOneTimePayment(params: FulfillPaymentParams) {
-    const { userId, stripeCustomerId, credits } = params;
+    const { userId, stripeCustomerId, credits, stripePaymentIntentId } = params;
 
     console.log(`Registrando compra de ${credits} créditos para o usuário: ${userId}`);
 
@@ -123,7 +124,8 @@ export class PaymentService {
       'payment',
       {
         credits,
-        stripeCustomerId
+        stripeCustomerId,
+        stripePaymentIntentId
       }
     );
   }

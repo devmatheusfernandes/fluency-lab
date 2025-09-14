@@ -4,16 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useParams, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-
-interface Notebook {
-  studentName: string;
-  id: string;
-  title: string;
-  description: string;
-  createdAt: any;
-  student: string;
-  content: any;
-}
+import { Notebook } from "@/types/notebooks/notebooks";
 
 export default function CadernoID() {
   const { data: session } = useSession();

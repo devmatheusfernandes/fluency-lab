@@ -164,7 +164,12 @@ export type RateLimitOperationType =
   | 'login'
   | 'general'
   | 'admin_operation'
-  | 'user_creation';
+  | 'user_creation'
+  | 'student_cancellation'
+  | 'teacher_cancellation'
+  | 'student_reschedule'
+  | 'teacher_reschedule'
+  | 'admin_reschedule';
 
 // ============================================================================
 // INTERFACES PARA MIDDLEWARE
@@ -382,5 +387,11 @@ export const DEFAULT_RATE_LIMITS: Record<RateLimitOperationType, { requests: num
   login: { requests: 10, windowMs: 15 * 60 * 1000 }, // 10/15min
   general: { requests: 100, windowMs: 60 * 1000 }, // 100/min
   admin_operation: { requests: 50, windowMs: 60 * 60 * 1000 }, // 50/hora
-  user_creation: { requests: 20, windowMs: 60 * 60 * 1000 } // 20/hora
+  user_creation: { requests: 20, windowMs: 60 * 60 * 1000 }, // 20/hora
+  // Configurações específicas por endpoint
+  student_cancellation: { requests: 5, windowMs: 60 * 60 * 1000 }, // 5 cancelamentos por hora
+  teacher_cancellation: { requests: 20, windowMs: 60 * 60 * 1000 }, // 20 cancelamentos por hora para professores
+  student_reschedule: { requests: 10, windowMs: 60 * 60 * 1000 }, // 10 reagendamentos por hora
+  teacher_reschedule: { requests: 30, windowMs: 60 * 60 * 1000 }, // 30 reagendamentos por hora para professores
+  admin_reschedule: { requests: 100, windowMs: 60 * 60 * 1000 } // 100 reagendamentos por hora para admins
 } as const;

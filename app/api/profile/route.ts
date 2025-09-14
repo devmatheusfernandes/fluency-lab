@@ -7,6 +7,27 @@ import { UserService } from '../../../services/userService';
 const userService = new UserService();
 
 /**
+ * Função para validar quais campos de perfil cada role pode modificar
+ */
+function getAllowedProfileFieldsForRole(role: string): string[] {
+  const baseFields = ['name', 'phone', 'avatar', 'bio', 'preferences'];
+  
+  switch (role) {
+    case 'admin':
+      return ['*']; // Admin pode modificar todos os campos
+    case 'manager':
+      return [...baseFields, 'department', 'permissions'];
+    case 'teacher':
+      return [...baseFields, 'specialties', 'experience', 'certifications'];
+    case 'student':
+    case 'occasional_student':
+      return baseFields;
+    default:
+      return baseFields;
+  }
+}
+
+/**
  * Endpoint para atualização de perfil do usuário
  * 
  * Aplicação do novo sistema de autorização:
@@ -23,14 +44,38 @@ async function updateProfileHandler(
   try {
     const updateData = await request.json();
     
-    // Validate that sensitive fields are not being updated
-    const restrictedFields = ['id', 'email', 'role', 'createdAt', 'updatedAt'];
+    // Validar campos que cada role pode modificar
+    const allowedFieldsByRole = getAllowedProfileFieldsForRole(authContext.userRole);
+    const requestedFields = Object.keys(updateData);
+    
+    // Se não é admin, verificar campos não permitidos
+    if (!allowedFieldsByRole.includes('*')) {
+      const unauthorizedFields = requestedFields.filter(field => !allowedFieldsByRole.includes(field));
+      
+      if (unauthorizedFields.length > 0) {
+        return NextResponse.json(
+          { error: `Campos não permitidos para seu perfil: ${unauthorizedFields.join(', ')}` },
+          { status: 403 }
+        );
+      }
+    }
+    
+    // Impedir modificação de campos sensíveis (exceto para admins)
+    const restrictedFields = ['id', 'email', 'createdAt', 'updatedAt'];
     const hasRestrictedFields = restrictedFields.some(field => field in updateData);
     
     if (hasRestrictedFields) {
       return NextResponse.json(
         { error: 'Não é possível atualizar campos restritos.' },
         { status: 400 }
+      );
+    }
+    
+    // Impedir modificação de role próprio (exceto para admins)
+    if ('role' in updateData && authContext.userRole !== 'admin') {
+      return NextResponse.json(
+        { error: 'Você não pode alterar seu próprio perfil de acesso.' },
+        { status: 403 }
       );
     }
 

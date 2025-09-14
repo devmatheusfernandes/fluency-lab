@@ -17,13 +17,14 @@ export async function PUT(
     return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 });
   }
 
-  if (session.user.id !== params.id) {
+  const { id } = await params;
+    if (session.user.id !== id) {
     return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 });
   }
 
   try {
     const achievementData: StudentAchievement = await request.json();
-    await achievementService.updateStudentAchievements(params.id, [achievementData]);
+    await achievementService.updateStudentAchievements(id, [achievementData]);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

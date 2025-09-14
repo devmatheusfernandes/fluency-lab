@@ -19,7 +19,7 @@ const SearchBar = React.forwardRef<HTMLInputElement, SearchBarProps>(
         )}
       >
         <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-          <MinimalisticMagnifer className="h-5 w-5 z-50 text-secondary/50 " />
+          <MinimalisticMagnifer className="h-5 w-5 z-50 text-primary/50 dark:text-primary" />
         </div>
         <Input
           type="search"

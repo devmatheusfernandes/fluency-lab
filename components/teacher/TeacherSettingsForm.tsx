@@ -259,7 +259,7 @@ export default function TeacherSettingsForm({
                 Restaurar Padrões
               </Button>
 
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Button type="button" variant="warning" disabled={!hasChanges}>
                   Cancelar
                 </Button>

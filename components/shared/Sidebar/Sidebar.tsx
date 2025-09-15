@@ -5,17 +5,7 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { twMerge } from "tailwind-merge";
-import {
-  AltArrowUp,
-  ArrowDown,
-  ArrowUp,
-  CloseCircle,
-  HamburgerMenu,
-  ListArrowUp,
-  ListArrowUpMinimalistic,
-  MentionSquare,
-  MenuDotsCircle,
-} from "@solar-icons/react/ssr";
+import { ArrowDown, CloseCircle, ListArrowUp } from "@solar-icons/react/ssr";
 import { useSidebar } from "@/context/SidebarContext";
 import { UserCard, UserData } from "../UserCard/UserCard";
 import {
@@ -249,7 +239,10 @@ const MobileBottomDrawer: React.FC<MobileBottomDrawerProps> = ({
               onClick={onClose}
               className="p-2 rounded-lg hover:bg-surface-hover transition-colors"
             >
-              <CloseCircle className="w-5 h-5 text-paragraph" />
+              <CloseCircle
+                weight="BoldDuotone"
+                className="w-5 h-5 text-paragraph"
+              />
             </button>
           </div>
           {user && activeTab === "menu" && (

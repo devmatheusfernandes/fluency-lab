@@ -176,7 +176,7 @@ export default async function TeacherSettingsPage() {
               </div>
             </div>
           </div>
-          <div className="p-0">
+          <div className="p-0 ">
             <TeacherSettingsClient
               initialEvents={serializedEvents}
               initialClasses={serializedClasses}

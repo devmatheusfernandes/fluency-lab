@@ -51,13 +51,12 @@ export default function TeacherSettingsClient({
   initialEvents,
   initialClasses,
   initialScheduleData,
-  teacherId,
 }: TeacherSettingsClientProps) {
   const [events, setEvents] = useState(initialEvents);
   const [classes, setClasses] = useState(initialClasses);
-  const [scheduleData, setScheduleData] = useState(initialScheduleData);
+  const [setScheduleData] = useState(initialScheduleData);
   const [isLoading, setIsLoading] = useState(false);
-  const { deleteAvailability, getScheduleData } = useTeacher();
+  const { deleteAvailability } = useTeacher();
 
   const handleRefresh = useCallback(async () => {
     setIsLoading(true);

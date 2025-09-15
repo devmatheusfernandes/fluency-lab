@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSettings } from "@/hooks/useSettings";
 import { useTheme } from "@/context/ThemeContext";
 import { Card } from "@/components/ui/Card";
@@ -29,7 +29,6 @@ interface SettingsFormProps {
 
 export default function SettingsForm({
   currentLanguage,
-  currentTheme,
   googleCalendarConnected = false,
   googleCalendarDefaultTimes = {},
 }: SettingsFormProps) {

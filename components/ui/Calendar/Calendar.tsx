@@ -216,27 +216,58 @@ export const Calendar: React.FC<CalendarProps> = ({
     isTimeline: boolean = false
   ) => {
     const baseClasses = twMerge(
-      "px-3 py-2 rounded-xl text-sm cursor-pointer transition-all duration-200 hover:shadow-md border",
+      "px-3 py-2 rounded-xl text-sm cursor-pointer transition-all duration-200 hover:shadow-md border overflow-hidden",
       getEventColorClasses(event.color)
     );
+
+    // Calculate proportional positioning for timeline view
+    let positionStyle = {};
+    if (isTimeline && event.startTime && event.endTime) {
+      const [startHour, startMinute] = event.startTime.split(":").map(Number);
+      const [endHour, endMinute] = event.endTime.split(":").map(Number);
+
+      // Convert to minutes from 8:00 AM (start of day view)
+      const dayStartHour = 8;
+      const startMinutesFromDayStart =
+        (startHour - dayStartHour) * 60 + startMinute;
+      const endMinutesFromDayStart = (endHour - dayStartHour) * 60 + endMinute;
+
+      // Determine hour block height based on context (mobile vs desktop)
+      const hourBlockHeight = isMobile ? 60 : 80; // min-h-[60px] for mobile, min-h-[80px] for desktop
+      const topPosition = (startMinutesFromDayStart / 60) * hourBlockHeight;
+      const eventDuration = endMinutesFromDayStart - startMinutesFromDayStart;
+      const eventHeight = Math.max((eventDuration / 60) * hourBlockHeight, 24); // Minimum 24px height
+
+      const horizontalPadding = isMobile ? 12 : 16; // p-3 for mobile, p-4 for desktop
+
+      positionStyle = {
+        position: "absolute" as const,
+        top: `${topPosition}px`,
+        height: `${eventHeight}px`,
+        left: `${horizontalPadding}px`,
+        right: `${horizontalPadding}px`,
+        zIndex: 10,
+      };
+    }
 
     return (
       <div
         key={event.id}
         className={baseClasses}
+        style={positionStyle}
         onClick={(e) => {
           e.stopPropagation();
           onEventClick?.(event);
         }}
       >
-        <div className="font-medium mb-1">{event.title}</div>
+        <div className="font-medium truncate">{event.title}</div>
         {event.startTime && event.endTime && (
-          <div className="text-xs opacity-70 mb-1">
+          <div className="text-xs opacity-70 truncate">
             {event.startTime} - {event.endTime}
           </div>
         )}
         {(event.studentInfo?.studentName || event.person) && (
-          <div className="text-xs opacity-70">
+          <div className="text-xs opacity-70 truncate">
             {event.studentInfo?.studentName || event.person}
           </div>
         )}
@@ -250,16 +281,11 @@ export const Calendar: React.FC<CalendarProps> = ({
 
     return (
       <div className="bg-slate-100 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-        {/* Timeline view similar to the image */}
-        <div className="divide-y divide-gray-100 dark:divide-slate-700">
-          {hours.map((hour) => {
-            const hourEvents = dayEvents.filter((event) => {
-              if (!event.startTime) return false;
-              const eventHour = parseInt(event.startTime.split(":")[0]);
-              return eventHour === hour;
-            });
-
-            return (
+        {/* Timeline view with proportional positioning */}
+        <div className="relative">
+          {/* Hour grid background */}
+          <div className="divide-y divide-gray-100 dark:divide-slate-700">
+            {hours.map((hour) => (
               <div key={hour} className="flex min-h-[60px]">
                 {/* Time column */}
                 <div className="w-16 flex-shrink-0 p-3 bg-slate-200 dark:bg-slate-800 border-r border-gray-100 dark:border-slate-700">
@@ -271,19 +297,24 @@ export const Calendar: React.FC<CalendarProps> = ({
                   </Text>
                 </div>
 
-                {/* Events column */}
-                <div className="flex-1 p-3 space-y-2">
-                  {hourEvents.length === 0 ? (
-                    <div className="h-full flex items-center">
-                      <div className="w-full border-b border-dashed border-gray-200 dark:border-slate-600"></div>
-                    </div>
-                  ) : (
-                    hourEvents.map((event) => renderEventBadge(event))
-                  )}
+                {/* Events column - now just background */}
+                <div className="flex-1 p-3">
+                  <div className="h-full flex items-center">
+                    <div className="w-full border-b border-dashed border-gray-200 dark:border-slate-600"></div>
+                  </div>
                 </div>
               </div>
-            );
-          })}
+            ))}
+          </div>
+
+          {/* Absolutely positioned events */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="ml-16 relative h-full pointer-events-auto">
+              {dayEvents
+                .filter((event) => event.startTime && event.endTime)
+                .map((event) => renderEventBadge(event, false, true))}
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -334,8 +365,8 @@ export const Calendar: React.FC<CalendarProps> = ({
                     size={isMobile ? "sm" : "base"}
                     className={twMerge(
                       "font-bold transition-colors",
-                      isCurrentDay && "text-emerald-700 dark:text-emerald-400",
-                      isSelected && "text-blue-700 dark:text-blue-400",
+                      isCurrentDay && "text-secondary dark:text-secondary",
+                      isSelected && "text-primary dark:text-primary",
                       !isCurrentDay &&
                         !isSelected &&
                         "text-slate-900 dark:text-slate-100"
@@ -350,7 +381,7 @@ export const Calendar: React.FC<CalendarProps> = ({
                       className={twMerge(
                         "opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110",
                         isMobile ? "h-6 w-6 p-1" : "h-7 w-7 p-1.5",
-                        "text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/30"
+                        "text-primary hover:text-primary hover:bg-primary/10 dark:text-primary dark:hover:text-primary dark:hover:bg-primary/10"
                       )}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -358,6 +389,7 @@ export const Calendar: React.FC<CalendarProps> = ({
                       }}
                     >
                       <AddCircle
+                        weight="BoldDuotone"
                         className={twMerge(isMobile ? "h-4 w-4" : "h-4 w-4")}
                       />
                     </Button>
@@ -591,15 +623,10 @@ export const Calendar: React.FC<CalendarProps> = ({
           </Text>
         </div>
 
-        <div className="max-h-[600px] overflow-y-auto">
-          {hours.map((hour) => {
-            const hourEvents = dayEvents.filter(
-              (event) =>
-                event.startTime &&
-                parseInt(event.startTime.split(":")[0]) === hour
-            );
-
-            return (
+        <div className="max-h-[600px] overflow-y-auto relative">
+          {/* Hour grid background */}
+          <div>
+            {hours.map((hour) => (
               <div
                 key={hour}
                 className="flex border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
@@ -613,7 +640,6 @@ export const Calendar: React.FC<CalendarProps> = ({
                   </Text>
                 </div>
                 <div className="flex-1 p-4 relative min-h-[80px] group">
-                  {hourEvents.map((event) => renderEventBadge(event))}
                   {onAddEvent && (
                     <Button
                       size="icon"
@@ -630,8 +656,17 @@ export const Calendar: React.FC<CalendarProps> = ({
                   )}
                 </div>
               </div>
-            );
-          })}
+            ))}
+          </div>
+
+          {/* Absolutely positioned events */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="ml-24 relative h-full pointer-events-auto">
+              {dayEvents
+                .filter((event) => event.startTime && event.endTime)
+                .map((event) => renderEventBadge(event, false, true))}
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -720,8 +755,8 @@ export const Calendar: React.FC<CalendarProps> = ({
               })}
             </div>
 
-            {/* Today button */}
-            <div className="flex justify-center">
+            {/* Today and Add Event buttons */}
+            <div className="flex justify-center gap-3">
               <Button
                 variant="outline"
                 size="sm"
@@ -730,6 +765,16 @@ export const Calendar: React.FC<CalendarProps> = ({
               >
                 Hoje
               </Button>
+              {onAddEvent && (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => onAddEvent(currentDate)}
+                  className="px-6 py-2 rounded-full"
+                >
+                  Adicionar Evento
+                </Button>
+              )}
             </div>
           </div>
         ) : (

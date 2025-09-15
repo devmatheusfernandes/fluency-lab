@@ -11,6 +11,7 @@ import {
   ModalBody,
   ModalFooter,
   ModalClose,
+  ModalPrimaryButton,
 } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -25,6 +26,7 @@ import {
 import { Checkbox } from "@/components/ui/Checkbox";
 import { toast } from "sonner";
 import { AvailabilityType } from "@/types/time/availability";
+import { Loading } from "../ui/Loading";
 
 interface AvailabilitySlotModalProps {
   isOpen: boolean;
@@ -261,12 +263,9 @@ export default function AvailabilitySlotModal({
             )}
           </ModalBody>
           <ModalFooter>
-            <ModalClose asChild>
-              <Button variant="secondary">Cancelar</Button>
-            </ModalClose>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Adicionando..." : "Adicionar Horário"}
-            </Button>
+            <ModalPrimaryButton type="submit" disabled={isLoading}>
+              {isLoading ? <Loading size="sm" /> : "Adicionar Horário"}
+            </ModalPrimaryButton>
           </ModalFooter>
         </form>
       </ModalContent>

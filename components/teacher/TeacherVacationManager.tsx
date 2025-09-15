@@ -10,6 +10,7 @@ import { Calendar } from "@solar-icons/react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import TeacherVacationList from "./TeacherVacationList";
 import DatePicker from "../ui/DatePicker/DatePicker";
+import { Loading } from "../ui/Loading";
 
 export default function TeacherVacationManager() {
   const { requestVacation, isLoading, vacations, fetchMyVacations } =
@@ -44,13 +45,13 @@ export default function TeacherVacationManager() {
   const exceedsLimit = vacationDays > (remainingDays || 0);
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="mt-4 mx-auto space-y-8">
       {/* Vacation Status Card */}
-      <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800">
+      <Card className="bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800">
         <div className="p-6">
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center gap-4 mb-6">
             <div className="p-3 bg-blue-100 dark:bg-blue-900/40 rounded-xl">
-              <Calendar className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+              <Calendar className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
               <Text
@@ -65,7 +66,7 @@ export default function TeacherVacationManager() {
             </div>
           </div>
 
-          <div className="bg-white/80 dark:bg-slate-900/50 rounded-xl p-4 border border-blue-200 dark:border-blue-700">
+          <div className="bg-white/30 dark:bg-slate-900/50 rounded-xl p-4 border border-blue-200 dark:border-blue-700">
             <div className="flex items-center justify-between">
               <Text
                 size="lg"
@@ -84,16 +85,26 @@ export default function TeacherVacationManager() {
       </Card>
 
       {/* Vacation Request Form */}
-      <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm">
-        <Header
-          heading="Solicitar Férias"
-          icon={
-            <Calendar className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
-          }
-        />
+      <Card>
+        <div className="flex items-center gap-3 ml-6 mt-4">
+          <div className="p-2 bg-primary/10 dark:bg-slate-800 rounded-lg">
+            <Calendar className="w-6 h-6 text-slate-600 dark:text-slate-400" />
+          </div>
+          <div>
+            <Text
+              size="lg"
+              className="font-bold text-slate-900 dark:text-slate-100"
+            >
+              Solicitar Férias
+            </Text>
+            <Text size="sm" className="text-slate-600 dark:text-slate-400">
+              Suas solicitações anteriores e atuais
+            </Text>
+          </div>
+        </div>
 
         <div className="p-6 space-y-6">
-          <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+          <div className="bg-slate-200/10 dark:bg-slate-800 rounded-xl p-4 border border-slate-300 dark:border-slate-700">
             <Text
               variant="subtitle"
               className="text-slate-700 dark:text-slate-300 leading-relaxed"
@@ -105,39 +116,42 @@ export default function TeacherVacationManager() {
           </div>
 
           {/* Date Selection */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-                Data de Início
-              </label>
-              <DatePicker
-                value={startDate}
-                onChange={(date) => setStartDate(date)}
-                placeholder="Selecione a data de início"
-                minDate={new Date()}
-                disabled={isLoading}
-                size="default"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-                Data de Término
-              </label>
-              <DatePicker
-                value={endDate}
-                onChange={(date) => setEndDate(date)}
-                placeholder="Selecione a data de término"
-                minDate={startDate || new Date()}
-                disabled={isLoading}
-                size="default"
-              />
-            </div>
+          <div className="flex flex-row gap-2">
+            <DatePicker
+              value={startDate}
+              onChange={(date) => setStartDate(date)}
+              placeholder="Selecione a data de início"
+              minDate={new Date()}
+              disabled={isLoading}
+              size="default"
+            />
+            <DatePicker
+              value={endDate}
+              onChange={(date) => setEndDate(date)}
+              placeholder="Selecione a data de término"
+              minDate={startDate || new Date()}
+              disabled={isLoading}
+              size="default"
+            />
+            <Button
+              onClick={handleRequestVacation}
+              disabled={isLoading || !isValidPeriod || exceedsLimit}
+              variant="primary"
+            >
+              {isLoading ? (
+                <Loading size="sm" />
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  Solicitar Férias
+                </div>
+              )}
+            </Button>
           </div>
 
           {/* Vacation Summary */}
           {isValidPeriod && (
-            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl p-4 border border-emerald-200 dark:border-emerald-700">
+            <div className="bg-gradient-to-r from-emerald-100 to-teal-100 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl p-4 border border-emerald-200 dark:border-emerald-700">
               <div className="flex items-center justify-between">
                 <div>
                   <Text
@@ -197,27 +211,6 @@ export default function TeacherVacationManager() {
               </div>
             </div>
           )}
-
-          {/* Action Button */}
-          <div className="flex justify-end pt-4 border-t border-slate-200 dark:border-slate-700">
-            <Button
-              onClick={handleRequestVacation}
-              disabled={isLoading || !isValidPeriod || exceedsLimit}
-              className="min-w-[200px] bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-700 shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  Processando...
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  Solicitar Férias
-                </div>
-              )}
-            </Button>
-          </div>
         </div>
       </Card>
 
@@ -225,7 +218,7 @@ export default function TeacherVacationManager() {
       <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm">
         <div className="p-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
+            <div className="p-2 bg-white/10 dark:bg-slate-800 rounded-lg">
               <Calendar className="w-6 h-6 text-slate-600 dark:text-slate-400" />
             </div>
             <div>

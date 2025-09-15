@@ -37,7 +37,7 @@ const SelectTrigger = React.forwardRef<
 >(({ className, hasError = false, size = "base", children, ...props }, ref) => {
   // Modern base classes with glass morphism and enhanced styling
   const baseClasses =
-    "flex w-full items-center justify-between card-base backdrop-blur-sm  text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-white dark:hover:bg-gray-800 focus:border-blue-500 dark:focus:border-blue-400 focus:bg-white dark:focus:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 dark:focus-visible:ring-blue-400/20 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 ease-in-out shadow-sm hover:shadow-md";
+    "flex w-full items-center justify-between input-base text-gray-900 dark:text-white transition-all duration-200 ease-in-out";
 
   // Size classes with improved spacing
   const sizeClasses = {

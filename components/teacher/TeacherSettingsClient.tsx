@@ -107,11 +107,13 @@ export default function TeacherSettingsClient({
   }, []);
 
   return (
-    <ClientCalendar
-      events={events}
-      allClasses={classes}
-      onRefresh={handleRefresh}
-      onDeleteAvailability={deleteAvailability}
-    />
+    <div className="w-full mt-4">
+      <ClientCalendar
+        events={events}
+        allClasses={classes}
+        onRefresh={handleRefresh}
+        onDeleteAvailability={deleteAvailability}
+      />
+    </div>
   );
 }

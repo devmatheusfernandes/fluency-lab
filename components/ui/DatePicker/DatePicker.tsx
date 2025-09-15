@@ -31,21 +31,21 @@ export default function DatePicker({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const months = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
+    "Janeiro",
+    "Fevereiro",
+    "Março",
+    "Abril",
+    "Maio",
+    "Junho",
+    "Julho",
+    "Agosto",
+    "Setembro",
+    "Outubro",
+    "Novembro",
+    "Dezembro",
   ];
 
-  const weekdays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+  const weekdays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
   const sizeClasses = {
     sm: {
@@ -257,7 +257,7 @@ export default function DatePicker({
             {/* Header with Close Button */}
             <div className="flex items-center justify-between px-6 pb-4">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                Select Date
+                Selecione a data
               </h3>
               <button
                 onClick={handleClose}
@@ -394,7 +394,7 @@ export default function DatePicker({
                          hover:border-blue-300/70 dark:hover:border-blue-500/70
                          active:scale-95 touch-manipulation"
               >
-                Today
+                Hoje
               </button>
               <button
                 type="button"
@@ -407,7 +407,7 @@ export default function DatePicker({
                          hover:border-gray-300/70 dark:hover:border-gray-500/70
                          active:scale-95 touch-manipulation"
               >
-                Cancel
+                Cancelar
               </button>
             </div>
           </div>

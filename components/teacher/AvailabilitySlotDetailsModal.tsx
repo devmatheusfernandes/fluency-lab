@@ -16,7 +16,6 @@ import { Card } from "@/components/ui/Card";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarEvent } from "@/types/calendar/calendar";
-import { AvailabilityType } from "@/types/time/availability";
 import { useState } from "react";
 
 interface AvailabilitySlotDetailsModalProps {

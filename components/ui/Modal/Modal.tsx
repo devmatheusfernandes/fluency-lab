@@ -5,7 +5,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { twMerge } from "tailwind-merge";
 import { VisuallyHidden } from "../VisuallyHidden";
 import { Input } from "../Input";
-import { CloseSquare, CloseCircle } from "@solar-icons/react/ssr";
+import { CloseCircle } from "@solar-icons/react/ssr";
 import Image from "next/image";
 import { motion, AnimatePresence, HTMLMotionProps } from "framer-motion";
 import { defaultIcons } from "./modalIcons";
@@ -66,7 +66,7 @@ const ModalContent = React.forwardRef<
             <Dialog.Content
               className={twMerge(
                 `relative w-full max-w-lg mx-4 mb-4 sm:mb-6
-                bg-white/95 dark:bg-gray-900/95 
+                bg-white/75 dark:bg-gray-900/95 
                 backdrop-blur-xl
                 rounded-2xl shadow-2xl
                 border border-gray-200/50 dark:border-gray-700/50

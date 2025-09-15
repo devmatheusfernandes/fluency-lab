@@ -60,17 +60,6 @@ export default function TeacherSettingsForm({
       max: 168, // 1 week
     },
     {
-      key: "cancellationPolicyHours",
-      label: "Política de Cancelamento",
-      description: "Prazo limite para cancelamento com reembolso integral",
-      placeholder: "24",
-      defaultValue: 24,
-      icon: <RefreshCircle className="w-5 h-5" />,
-      unit: "horas",
-      min: 1,
-      max: 72,
-    },
-    {
       key: "bookingHorizonDays",
       label: "Horizonte de Agendamento",
       description: "Quantos dias no futuro os alunos podem agendar",
@@ -122,29 +111,7 @@ export default function TeacherSettingsForm({
     JSON.stringify(settings) !== JSON.stringify(currentSettings);
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header Card */}
-      <Card className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border-indigo-200 dark:border-indigo-800">
-        <div className="p-6">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-indigo-100 dark:bg-indigo-900/40 rounded-xl">
-              <Settings className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
-            </div>
-            <div>
-              <Text
-                size="xl"
-                className="font-bold text-indigo-900 dark:text-indigo-100"
-              >
-                Configurações de Agendamento
-              </Text>
-              <Text size="sm" className="text-indigo-600 dark:text-indigo-300">
-                Personalize as regras para agendamento das suas aulas
-              </Text>
-            </div>
-          </div>
-        </div>
-      </Card>
-
+    <div className="mx-auto space-y-6 mt-4">
       {/* Settings Form */}
       <Card className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm">
         <form onSubmit={handleSubmit} className="p-6">
@@ -179,7 +146,7 @@ export default function TeacherSettingsForm({
             )}
 
             {/* Settings Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
               {settingFields.map((field) => {
                 const currentValue = settings?.[field.key];
                 const isDefault =
@@ -189,11 +156,11 @@ export default function TeacherSettingsForm({
                 return (
                   <div
                     key={field.key}
-                    className="space-y-4 p-6 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700"
+                    className="space-y-4 p-6 bg-slate-300 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700"
                   >
                     {/* Field Header */}
                     <div className="flex items-start gap-3">
-                      <div className="p-2 bg-white dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600">
+                      <div className="p-2 bg-white/10 dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600">
                         <div className="text-slate-600 dark:text-slate-400">
                           {field.icon}
                         </div>
@@ -207,7 +174,7 @@ export default function TeacherSettingsForm({
                             {field.label}
                           </Text>
                           {isDefault && (
-                            <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium rounded-md">
+                            <span className="px-2 py-1 bg-primary/10 dark:bg-blue-900/30 text-primary dark:text-blue-300 text-xs font-medium rounded-md">
                               Padrão
                             </span>
                           )}
@@ -284,29 +251,23 @@ export default function TeacherSettingsForm({
             <div className="flex flex-col sm:flex-row gap-4 justify-between items-center pt-6 border-t border-slate-200 dark:border-slate-700">
               <Button
                 type="button"
-                variant="ghost"
+                variant="info"
                 onClick={resetToDefaults}
                 disabled={isLoading}
-                className="text-slate-600 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 <RefreshCircle className="w-4 h-4 mr-2" />
                 Restaurar Padrões
               </Button>
 
               <div className="flex gap-3">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  disabled={!hasChanges}
-                  className="min-w-[120px] bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 border-slate-300 dark:border-slate-600"
-                >
+                <Button type="button" variant="warning" disabled={!hasChanges}>
                   Cancelar
                 </Button>
 
                 <Button
                   type="submit"
                   disabled={isLoading || !hasChanges}
-                  className="min-w-[160px] bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-700 shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50"
+                  variant="primary"
                 >
                   {isLoading ? (
                     <div className="flex items-center gap-2">
@@ -343,11 +304,11 @@ export default function TeacherSettingsForm({
       </Card>
 
       {/* Help Card */}
-      <Card className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+      <Card className="bg-slate-300 dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
         <div className="p-6">
           <div className="flex items-start gap-4">
-            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-              <Settings className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Settings className="w-5 h-5 text-primary dark:text-blue-400" />
             </div>
             <div>
               <Text
@@ -360,10 +321,6 @@ export default function TeacherSettingsForm({
                 <Text size="sm" className="text-slate-600 dark:text-slate-400">
                   • <strong>Antecedência mínima:</strong> Tempo que os alunos
                   devem respeitar antes de agendar
-                </Text>
-                <Text size="sm" className="text-slate-600 dark:text-slate-400">
-                  • <strong>Política de cancelamento:</strong> Prazo para
-                  cancelar sem penalidades
                 </Text>
                 <Text size="sm" className="text-slate-600 dark:text-slate-400">
                   • <strong>Horizonte de agendamento:</strong> Até quando no

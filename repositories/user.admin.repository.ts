@@ -145,10 +145,16 @@ export class UserAdminRepository {
       query = query.where('isActive', '==', filters.isActive);
     }
 
-    const snapshot = await query.orderBy('createdAt', 'desc').get();
+    // Only add orderBy if no filters are applied to avoid index requirements
+    const hasFilters = filters?.role || filters?.isActive !== undefined;
+    if (!hasFilters) {
+      query = query.orderBy('createdAt', 'desc');
+    }
+
+    const snapshot = await query.get();
     if (snapshot.empty) return [];
 
-    return snapshot.docs.map(doc => {
+    let users = snapshot.docs.map(doc => {
       const data = doc.data();
       const serializedData = serializeTimestamps(data);
       
@@ -157,6 +163,17 @@ export class UserAdminRepository {
         ...serializedData,
       } as unknown as User;
     });
+
+    // Sort in memory if we have filters
+    if (hasFilters) {
+      users.sort((a, b) => {
+        const dateA = new Date(a.createdAt).getTime();
+        const dateB = new Date(b.createdAt).getTime();
+        return dateB - dateA; // desc order
+      });
+    }
+
+    return users;
   }
 
   /**

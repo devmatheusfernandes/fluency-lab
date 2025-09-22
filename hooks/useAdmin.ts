@@ -9,6 +9,13 @@ interface CreateUserPayload {
   name: string;
   email: string;
   role: UserRoles;
+  birthDate?: Date;
+  guardian?: {
+    name: string;
+    email: string;
+    phoneNumber?: string;
+    relationship?: string;
+  };
 }
 
 export const useAdmin = () => {
@@ -27,10 +34,10 @@ export const useAdmin = () => {
         body: JSON.stringify(payload),
       });
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Falha ao criar utilizador.');
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Falha ao criar utilizador.');
       
-      setSuccessMessage(`Utilizador para '${data.user.email}' criado com sucesso! Um e-mail de boas-vindas foi enviado.`);
+      setSuccessMessage(`Utilizador para '${result.data.email}' criado com sucesso! Um e-mail de boas-vindas foi enviado.`);
       return true; // Retorna sucesso
     } catch (err: any) {
       setError(err.message);

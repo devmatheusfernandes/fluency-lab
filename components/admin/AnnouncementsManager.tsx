@@ -192,7 +192,6 @@ export function AnnouncementsManager() {
     [UserRoles.STUDENT]: "Estudante",
     [UserRoles.TEACHER]: "Professor",
     [UserRoles.GUARDED_STUDENT]: "Estudante Tutelado",
-    [UserRoles.OCCASIONAL_STUDENT]: "Estudante Ocasional",
     [UserRoles.MATERIAL_MANAGER]: "Gerente de Material",
   };
 

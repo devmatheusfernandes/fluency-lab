@@ -32,15 +32,23 @@ export class AuditService {
     userAgent?: string
   ): Promise<void> {
     try {
-      const auditLog: AuditLog = {
+      const auditLog: any = {
         userId,
         action,
         resource,
-        details,
         timestamp: new Date(),
-        ip,
-        userAgent
       };
+
+      // Only add optional fields if they have values
+      if (details !== undefined) {
+        auditLog.details = details;
+      }
+      if (ip !== undefined) {
+        auditLog.ip = ip;
+      }
+      if (userAgent !== undefined) {
+        auditLog.userAgent = userAgent;
+      }
 
       await adminDb.collection(this.collectionName).add(auditLog);
       
@@ -139,13 +147,15 @@ export class AuditService {
 
   /**
    * Log a user action - convenience method for user-related actions
-   * @param params - Object containing userId, action, targetUserId, and details
+   * @param params - Object containing userId, action, targetUserId, details, ip, and userAgent
    */
   static async logUserAction(params: {
     userId: string;
     action: string;
     targetUserId?: string;
     details?: any;
+    ip?: string;
+    userAgent?: string;
   }): Promise<void> {
     await this.logEvent(
       params.userId,
@@ -154,7 +164,9 @@ export class AuditService {
       {
         ...params.details,
         targetUserId: params.targetUserId
-      }
+      },
+      params.ip,
+      params.userAgent
     );
   }
 }

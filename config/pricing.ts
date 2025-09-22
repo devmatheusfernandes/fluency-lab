@@ -14,7 +14,7 @@ export const SUBSCRIPTION_PRICING = {
     planId: 'regular_student_monthly'
   },
   GUARDED_STUDENT: {
-    amount: 39900, // R$ 399,00 em centavos  
+    amount: 29900, // R$ 299,00 em centavos - Igualado com estudante regular
     currency: 'BRL',
     description: 'Mensalidade Estudante Acompanhado',
     planId: 'guarded_student_monthly'

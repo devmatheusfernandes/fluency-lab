@@ -163,9 +163,6 @@ export default function AvailabilitySlotModal({
                   <SelectOption value={AvailabilityType.REGULAR}>
                     Regular (Aulas fixas)
                   </SelectOption>
-                  <SelectOption value={AvailabilityType.OCCASIONAL}>
-                    Ocasional (Aulas avulsas)
-                  </SelectOption>
                   <SelectOption value={AvailabilityType.MAKEUP}>
                     Reposição (Aulas de reposição)
                   </SelectOption>

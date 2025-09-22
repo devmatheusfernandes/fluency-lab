@@ -25,8 +25,8 @@ export const useUsers = () => {
       const response = await fetch(`/api/admin/users?${params.toString()}`);
       if (!response.ok) throw new Error("Falha ao buscar usuários.");
       
-      const data = await response.json();
-      setUsers(data);
+      const result = await response.json();
+      setUsers(result.data || []);
     } catch (err: any) {
       setError(err.message);
     } finally {

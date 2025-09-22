@@ -60,20 +60,22 @@ export class SchedulingService {
         return (
           slot.startTime < existing.endTime && slot.endTime > existing.startTime
         );
-      } 
+      }
       // If one or both slots are not repeating, check for exact date conflicts
       else if (!slot.repeating && !existing.repeating) {
         // Check if they're on the same date
         const existingDate = new Date(existing.startDate);
         const newDate = new Date(slot.startDate);
-        
+
         // Compare year, month, and day
-        if (existingDate.getFullYear() !== newDate.getFullYear() ||
-            existingDate.getMonth() !== newDate.getMonth() ||
-            existingDate.getDate() !== newDate.getDate()) {
+        if (
+          existingDate.getFullYear() !== newDate.getFullYear() ||
+          existingDate.getMonth() !== newDate.getMonth() ||
+          existingDate.getDate() !== newDate.getDate()
+        ) {
           return false;
         }
-        
+
         // Verifica se há sobreposição de horários (newStart < oldEnd AND newEnd > oldStart)
         return (
           slot.startTime < existing.endTime && slot.endTime > existing.startTime
@@ -103,22 +105,24 @@ export class SchedulingService {
     let populatedBookedClasses = bookedClasses;
     if (bookedClasses.length > 0) {
       // Get unique student IDs from booked classes
-      const studentIds = [...new Set(bookedClasses.map(cls => cls.studentId))];
-      
+      const studentIds = [
+        ...new Set(bookedClasses.map((cls) => cls.studentId)),
+      ];
+
       // Fetch student information in batch
       const students = await userAdminRepository.findUsersByIds(studentIds);
-      
+
       // Create a map for efficient lookup
-      const studentMap = new Map(students.map(s => [s.id, s]));
-      
+      const studentMap = new Map(students.map((s) => [s.id, s]));
+
       // Enhance booked classes with student information
-      populatedBookedClasses = bookedClasses.map(cls => {
+      populatedBookedClasses = bookedClasses.map((cls) => {
         const student = studentMap.get(cls.studentId);
         return {
           ...cls,
           studentName: student?.name,
           studentAvatarUrl: student?.avatarUrl,
-        } as any; 
+        } as any;
       });
     }
 
@@ -162,10 +166,10 @@ export class SchedulingService {
       }
     } else if (deleteType === "single") {
       // Combine the occurrence date with the slot's start time for proper exception creation
-      const [hours, minutes] = slot.startTime.split(':').map(Number);
+      const [hours, minutes] = slot.startTime.split(":").map(Number);
       const exceptionDate = new Date(occurrenceDate);
       exceptionDate.setHours(hours, minutes, 0, 0);
-      
+
       await availabilityRepository.createException(
         slotId,
         teacherId,
@@ -231,22 +235,6 @@ export class SchedulingService {
         throw new Error("Desculpe, este horário já foi agendado.");
       }
 
-      // Regra 5: Limite de Aulas Avulsas por Dia (DENTRO da transação)
-      const maxClasses = settings.maxOccasionalClassesPerDay;
-      if (maxClasses && maxClasses > 0) {
-        const dailyClassCount =
-          await classRepository.countClassesOnDateForTeacher(
-            transaction,
-            teacherId,
-            scheduledAt
-          );
-        if (dailyClassCount >= maxClasses) {
-          throw new Error(
-            "Este professor atingiu o limite de aulas para este dia. Por favor, escolha outra data."
-          );
-        }
-      }
-
       // Se todas as validações passaram, cria a aula
       const newClassData: Omit<StudentClass, "id"> = {
         studentId,
@@ -258,12 +246,15 @@ export class SchedulingService {
         createdAt: new Date(),
         updatedAt: new Date(),
         createdBy: studentId,
-        language: "", //IMPLEMENTAR DEPOIS O OCCASIONAL PODER ESCOLHER UM IDIOMA
-        classType: "occasional",
+        language: "",
+        classType: "makeup",
       };
       if (classTopic) newClassData.notes = classTopic;
 
-      const newClassId = await classRepository.createWithTransaction(transaction, newClassData);
+      const newClassId = await classRepository.createWithTransaction(
+        transaction,
+        newClassData
+      );
       transaction.update(studentRef, {
         classCredits: FieldValue.increment(-1),
       });
@@ -279,55 +270,71 @@ export class SchedulingService {
   }
 
   // 👇 MÉTODO APRIMORADO PARA CANCELAMENTO COM SUGESTÃO DE REAGENDAMENTO
-  async cancelClassByStudent(studentId: string, classId: string, paramScheduledAt?: Date) {
-    console.log(`[cancelClassByStudent] Starting cancellation for class ${classId} by student ${studentId}`);
-    
+  async cancelClassByStudent(
+    studentId: string,
+    classId: string,
+    paramScheduledAt?: Date
+  ) {
+    console.log(
+      `[cancelClassByStudent] Starting cancellation for class ${classId} by student ${studentId}`
+    );
+
     // If scheduledAt is provided, find the specific class instance
     let classData: StudentClass;
     let actualClassId: string; // Track the correct class ID to use
-    
+
     if (paramScheduledAt) {
       // Find the specific class instance by ID and scheduled date
-      const classesSnapshot = await adminDb.collection("classes")
+      const classesSnapshot = await adminDb
+        .collection("classes")
         .where("studentId", "==", studentId)
         .where("status", "==", "scheduled")
         .get();
-      
-      const matchingClass = classesSnapshot.docs.find(doc => {
+
+      const matchingClass = classesSnapshot.docs.find((doc) => {
         const data = doc.data();
         const docScheduledAt = (data.scheduledAt as any).toDate();
         // Check if this is the exact class by ID and scheduledAt
         // OR if this is a rescheduled class from the original classId
-        const isExactMatch = doc.id === classId && 
-                            Math.abs(docScheduledAt.getTime() - paramScheduledAt.getTime()) < 60000;
-        const isRescheduledFromOriginal = data.rescheduledFrom?.originalClassId === classId &&
-                                         Math.abs(docScheduledAt.getTime() - paramScheduledAt.getTime()) < 60000;
-        
+        const isExactMatch =
+          doc.id === classId &&
+          Math.abs(docScheduledAt.getTime() - paramScheduledAt.getTime()) <
+            60000;
+        const isRescheduledFromOriginal =
+          data.rescheduledFrom?.originalClassId === classId &&
+          Math.abs(docScheduledAt.getTime() - paramScheduledAt.getTime()) <
+            60000;
+
         return isExactMatch || isRescheduledFromOriginal;
       });
-      
+
       if (!matchingClass) {
-        throw new Error("Aula específica não encontrada ou não pertence a este aluno.");
+        throw new Error(
+          "Aula específica não encontrada ou não pertence a este aluno."
+        );
       }
-      
+
       actualClassId = matchingClass.id; // Use the ID of the found class
-      classData = { id: matchingClass.id, ...matchingClass.data() } as StudentClass;
+      classData = {
+        id: matchingClass.id,
+        ...matchingClass.data(),
+      } as StudentClass;
     } else {
       // Fallback to original method
       actualClassId = classId; // Use the original ID when no specific search
       const classRef = adminDb.collection("classes").doc(classId);
       const classDoc = await classRef.get();
-      
+
       if (!classDoc.exists || classDoc.data()?.studentId !== studentId) {
         throw new Error("Aula não encontrada ou não pertence a este aluno.");
       }
-      
+
       classData = classDoc.data() as StudentClass;
     }
-    
+
     // Define classRef using the correct class ID
     const classRef = adminDb.collection("classes").doc(actualClassId);
-    
+
     console.log(`[cancelClassByStudent] Class data retrieved:`, {
       classId,
       scheduledAt: classData.scheduledAt,
@@ -335,10 +342,10 @@ export class SchedulingService {
       studentId: classData.studentId,
       teacherId: classData.teacherId,
       language: classData.language,
-      classType: classData.classType
+      classType: classData.classType,
     });
-    const teacher = classData.teacherId 
-      ? await userAdminRepository.findUserById(classData.teacherId) 
+    const teacher = classData.teacherId
+      ? await userAdminRepository.findUserById(classData.teacherId)
       : null;
     const settings = teacher?.schedulingSettings || {};
 
@@ -368,31 +375,34 @@ export class SchedulingService {
 
       // --- ENVIAR NOTIFICAÇÕES POR E-MAIL ---
       try {
-        const promises = [
-          userAdminRepository.findUserById(studentId)
-        ];
-        
+        const promises = [userAdminRepository.findUserById(studentId)];
+
         if (classData.teacherId) {
           promises.push(userAdminRepository.findUserById(classData.teacherId));
         }
-        
+
         const results = await Promise.all(promises);
         const student = results[0];
         const teacher = classData.teacherId ? results[1] : null;
 
         if (student && teacher) {
-          const formatDate = (date: Date) => date.toLocaleDateString('pt-BR');
-          const formatTime = (date: Date) => date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-          const className = `${classData.language} - ${classData.classType === 'regular' ? 'Aula Regular' : 'Aula Avulsa'}`;
-          const platformLink = process.env.NEXT_PUBLIC_APP_URL || 'https://app.fluencylab.com';
-          
+          const formatDate = (date: Date) => date.toLocaleDateString("pt-BR");
+          const formatTime = (date: Date) =>
+            date.toLocaleTimeString("pt-BR", {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+          const className = `${classData.language} - ${classData.classType === "regular" ? "Aula Regular" : "Aula Avulsa"}`;
+          const platformLink =
+            process.env.NEXT_PUBLIC_APP_URL || "https://app.fluencylab.com";
+
           console.log(`[cancelClassByStudent] Email data being sent:`, {
             scheduledAt: classScheduledAt,
             formattedDate: formatDate(classScheduledAt),
             formattedTime: formatTime(classScheduledAt),
             className,
             studentEmail: student.email,
-            teacherEmail: teacher.email
+            teacherEmail: teacher.email,
           });
 
           // Enviar e-mail para o estudante
@@ -405,7 +415,7 @@ export class SchedulingService {
             scheduledTime: formatTime(classScheduledAt),
             canceledBy: student.name,
             creditRefunded: false,
-            platformLink: `${platformLink}/hub/plataforma/student/my-class`
+            platformLink: `${platformLink}/hub/plataforma/student/my-class`,
           });
 
           // Enviar e-mail para o professor
@@ -418,13 +428,15 @@ export class SchedulingService {
             scheduledTime: formatTime(classScheduledAt),
             canceledBy: student.name,
             platformLink: `${platformLink}/hub/plataforma/teacher/my-classes`,
-            classId: classId
+            classId: classId,
           });
 
-          console.log(`E-mails de cancelamento enviados para estudante (${student.email}) e professor (${teacher.email})`);
+          console.log(
+            `E-mails de cancelamento enviados para estudante (${student.email}) e professor (${teacher.email})`
+          );
         }
       } catch (emailError) {
-        console.error('Erro ao enviar e-mails de cancelamento:', emailError);
+        console.error("Erro ao enviar e-mails de cancelamento:", emailError);
         // Não falha a operação se o e-mail falhar, apenas loga o erro
       }
 
@@ -432,7 +444,7 @@ export class SchedulingService {
         success: true,
         message: "Aula cancelada com sucesso! O horário está livre novamente.",
         suggestReschedule: false,
-        rescheduleInfo: null
+        rescheduleInfo: null,
       };
     } else {
       // Se cancelou em cima da hora, não devolve o crédito e não libera o horário
@@ -440,23 +452,26 @@ export class SchedulingService {
 
       // --- ENVIAR NOTIFICAÇÕES POR E-MAIL (sem devolução de crédito) ---
       try {
-        const promises = [
-          userAdminRepository.findUserById(studentId)
-        ];
-        
+        const promises = [userAdminRepository.findUserById(studentId)];
+
         if (classData.teacherId) {
           promises.push(userAdminRepository.findUserById(classData.teacherId));
         }
-        
+
         const results = await Promise.all(promises);
         const student = results[0];
         const teacher = classData.teacherId ? results[1] : null;
 
         if (student && teacher) {
-          const formatDate = (date: Date) => date.toLocaleDateString('pt-BR');
-          const formatTime = (date: Date) => date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-          const className = `${classData.language} - ${classData.classType === 'regular' ? 'Aula Regular' : 'Aula Avulsa'}`;
-          const platformLink = process.env.NEXT_PUBLIC_APP_URL || 'https://app.fluencylab.com';
+          const formatDate = (date: Date) => date.toLocaleDateString("pt-BR");
+          const formatTime = (date: Date) =>
+            date.toLocaleTimeString("pt-BR", {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+          const className = `${classData.language} - ${classData.classType === "regular" ? "Aula Regular" : "Aula Avulsa"}`;
+          const platformLink =
+            process.env.NEXT_PUBLIC_APP_URL || "https://app.fluencylab.com";
 
           // Enviar e-mail para o estudante
           await emailService.sendClassCanceledEmail({
@@ -469,7 +484,7 @@ export class SchedulingService {
             canceledBy: student.name,
             reason: "Cancelamento fora do prazo permitido",
             creditRefunded: false,
-            platformLink: `${platformLink}/hub/plataforma/student/my-class`
+            platformLink: `${platformLink}/hub/plataforma/student/my-class`,
           });
 
           // Enviar e-mail para o professor
@@ -483,26 +498,29 @@ export class SchedulingService {
             canceledBy: student.name,
             reason: "Cancelamento fora do prazo permitido",
             platformLink: `${platformLink}/hub/plataforma/teacher/my-classes`,
-            classId: classId
+            classId: classId,
           });
 
-          console.log(`E-mails de cancelamento (sem crédito) enviados para estudante (${student.email}) e professor (${teacher.email})`);
+          console.log(
+            `E-mails de cancelamento (sem crédito) enviados para estudante (${student.email}) e professor (${teacher.email})`
+          );
         }
       } catch (emailError) {
-        console.error('Erro ao enviar e-mails de cancelamento:', emailError);
+        console.error("Erro ao enviar e-mails de cancelamento:", emailError);
         // Não falha a operação se o e-mail falhar, apenas loga o erro
       }
 
       return {
         success: true,
-        message: "Aula cancelada. O cancelamento fora do prazo não devolve o crédito.",
+        message:
+          "Aula cancelada. O cancelamento fora do prazo não devolve o crédito.",
         suggestReschedule: false,
-        rescheduleInfo: null
+        rescheduleInfo: null,
       };
     }
   }
 
-    /**
+  /**
    * Cancela uma aula pelo professor, marcando-a como makeup class se permitir reagendamento.
    * @param teacherId O ID do professor que está cancelando.
    * @param classId O ID da aula a ser cancelada.
@@ -510,13 +528,15 @@ export class SchedulingService {
    * @param allowMakeup Se deve permitir que o aluno reagende como makeup class.
    */
   async cancelClassByTeacher(
-    teacherId: string, 
-    classId: string, 
-    reason?: string, 
+    teacherId: string,
+    classId: string,
+    reason?: string,
     allowMakeup: boolean = true
   ) {
-    console.log(`[cancelClassByTeacher] Starting cancellation process for class ${classId} by teacher ${teacherId}`);
-    
+    console.log(
+      `[cancelClassByTeacher] Starting cancellation process for class ${classId} by teacher ${teacherId}`
+    );
+
     const classRef = adminDb.collection("classes").doc(classId);
 
     const classDoc = await classRef.get();
@@ -526,24 +546,26 @@ export class SchedulingService {
 
     const classData = classDoc.data() as StudentClass;
     const teacherClassScheduledAt = (classData.scheduledAt as any).toDate();
-    
-    console.log(`[cancelClassByTeacher] Class data retrieved:`, { 
-      classId, 
-      studentId: classData.studentId, 
+
+    console.log(`[cancelClassByTeacher] Class data retrieved:`, {
+      classId,
+      studentId: classData.studentId,
       teacherId: classData.teacherId,
-      scheduledAt: teacherClassScheduledAt 
+      scheduledAt: teacherClassScheduledAt,
     });
 
     // Determinar o status baseado na permissão de makeup
-    const newStatus = allowMakeup ? ClassStatus.CANCELED_TEACHER_MAKEUP : ClassStatus.CANCELED_TEACHER;
+    const newStatus = allowMakeup
+      ? ClassStatus.CANCELED_TEACHER_MAKEUP
+      : ClassStatus.CANCELED_TEACHER;
     console.log(`[cancelClassByTeacher] New status will be: ${newStatus}`);
-    
+
     // Atualizar a aula
-    await classRef.update({ 
+    await classRef.update({
       status: newStatus,
       canceledAt: new Date(),
       canceledBy: "teacher",
-      reason: reason
+      reason: reason,
     });
     console.log(`[cancelClassByTeacher] Class status updated in database`);
 
@@ -559,20 +581,27 @@ export class SchedulingService {
     // Se for cancelamento com reposição, conceder crédito automático ao aluno
     if (newStatus === ClassStatus.CANCELED_TEACHER_MAKEUP) {
       try {
-        console.log(`[cancelClassByTeacher] Granting makeup credit to student ${classData.studentId}`);
+        console.log(
+          `[cancelClassByTeacher] Granting makeup credit to student ${classData.studentId}`
+        );
         // Conceder crédito de reposição ao aluno
         const creditService = new CreditService();
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 45); // 45 dias de expiração
-        
-        await creditService.grantCredits({
-          studentId: classData.studentId,
-          type: RegularCreditType.TEACHER_CANCELLATION, // Usar o novo tipo de crédito para cancelamentos do professor
-          amount: 1,
-          expiresAt: expiresAt,
-          reason: `Crédito de reposição por cancelamento do professor em ${new Date().toLocaleDateString('pt-BR')}`
-        }, teacherId); // teacherId como quem concedeu o crédito
-        console.log(`[cancelClassByTeacher] Makeup credit granted successfully`);
+
+        await creditService.grantCredits(
+          {
+            studentId: classData.studentId,
+            type: RegularCreditType.TEACHER_CANCELLATION, // Usar o novo tipo de crédito para cancelamentos do professor
+            amount: 1,
+            expiresAt: expiresAt,
+            reason: `Crédito de reposição por cancelamento do professor em ${new Date().toLocaleDateString("pt-BR")}`,
+          },
+          teacherId
+        ); // teacherId como quem concedeu o crédito
+        console.log(
+          `[cancelClassByTeacher] Makeup credit granted successfully`
+        );
       } catch (error) {
         console.error("Erro ao conceder crédito de reposição:", error);
         // Não falha a operação se o crédito falhar, apenas loga o erro
@@ -581,29 +610,38 @@ export class SchedulingService {
 
     // --- ENVIAR NOTIFICAÇÕES POR E-MAIL ---
     try {
-      console.log(`[cancelClassByTeacher] Fetching user data for email notifications`);
+      console.log(
+        `[cancelClassByTeacher] Fetching user data for email notifications`
+      );
       const [student, teacher] = await Promise.all([
         userAdminRepository.findUserById(classData.studentId),
-        userAdminRepository.findUserById(teacherId)
+        userAdminRepository.findUserById(teacherId),
       ]);
-      
-      console.log(`[cancelClassByTeacher] User data fetched:`, { 
-        student: student ? `${student.name} (${student.email})` : 'not found',
-        teacher: teacher ? `${teacher.name} (${teacher.email})` : 'not found'
+
+      console.log(`[cancelClassByTeacher] User data fetched:`, {
+        student: student ? `${student.name} (${student.email})` : "not found",
+        teacher: teacher ? `${teacher.name} (${teacher.email})` : "not found",
       });
 
       if (student && teacher) {
-        const formatDate = (date: Date) => date.toLocaleDateString('pt-BR');
-        const formatTime = (date: Date) => date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        const className = `${classData.language} - ${classData.classType === 'regular' ? 'Aula Regular' : 'Aula Avulsa'}`;
-        const platformLink = process.env.NEXT_PUBLIC_APP_URL || 'https://app.fluencylab.com';
+        const formatDate = (date: Date) => date.toLocaleDateString("pt-BR");
+        const formatTime = (date: Date) =>
+          date.toLocaleTimeString("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        const className = `${classData.language} - ${classData.classType === "regular" ? "Aula Regular" : "Aula Avulsa"}`;
+        const platformLink =
+          process.env.NEXT_PUBLIC_APP_URL || "https://app.fluencylab.com";
 
         const emailReason = reason || "Cancelamento pelo professor";
-        const makeupMessage = allowMakeup 
+        const makeupMessage = allowMakeup
           ? " Você pode reagendar esta aula como reposição sem usar seus reagendamentos mensais. Um crédito foi concedido para uso em até 45 dias."
           : "";
 
-        console.log(`[cancelClassByTeacher] Sending emails to student and teacher`);
+        console.log(
+          `[cancelClassByTeacher] Sending emails to student and teacher`
+        );
         // Enviar e-mail para o estudante
         await emailService.sendClassCanceledEmail({
           email: student.email,
@@ -615,8 +653,9 @@ export class SchedulingService {
           canceledBy: teacher.name,
           reason: emailReason + makeupMessage,
           creditRefunded: true, // Professor cancellations always refund
-          makeupCreditGranted: newStatus === ClassStatus.CANCELED_TEACHER_MAKEUP, // Add this parameter
-          platformLink: `${platformLink}/hub/plataforma/student/my-class`
+          makeupCreditGranted:
+            newStatus === ClassStatus.CANCELED_TEACHER_MAKEUP, // Add this parameter
+          platformLink: `${platformLink}/hub/plataforma/student/my-class`,
         });
 
         // Enviar e-mail para o professor (confirmação)
@@ -629,28 +668,38 @@ export class SchedulingService {
           scheduledTime: formatTime(teacherClassScheduledAt),
           canceledBy: teacher.name,
           reason: emailReason,
-          makeupCreditGranted: newStatus === ClassStatus.CANCELED_TEACHER_MAKEUP, // Add this parameter
+          makeupCreditGranted:
+            newStatus === ClassStatus.CANCELED_TEACHER_MAKEUP, // Add this parameter
           platformLink: `${platformLink}/hub/plataforma/teacher/my-classes`,
-          classId: classId
+          classId: classId,
         });
-        
-        console.log(`[cancelClassByTeacher] E-mails de cancelamento enviados para estudante (${student.email}) e professor (${teacher.email})`);
+
+        console.log(
+          `[cancelClassByTeacher] E-mails de cancelamento enviados para estudante (${student.email}) e professor (${teacher.email})`
+        );
       } else {
-        console.log(`[cancelClassByTeacher] Could not send emails - missing user data`, { 
-          studentExists: !!student, 
-          teacherExists: !!teacher 
-        });
+        console.log(
+          `[cancelClassByTeacher] Could not send emails - missing user data`,
+          {
+            studentExists: !!student,
+            teacherExists: !!teacher,
+          }
+        );
       }
     } catch (error) {
-      console.error("[cancelClassByTeacher] Erro ao enviar e-mails de cancelamento:", error);
+      console.error(
+        "[cancelClassByTeacher] Erro ao enviar e-mails de cancelamento:",
+        error
+      );
       // Não falha a operação se o e-mail falhar, apenas loga o erro
     }
 
     return {
       success: true,
-      message: "Aula cancelada. O cancelamento fora do prazo não devolve o crédito.",
+      message:
+        "Aula cancelada. O cancelamento fora do prazo não devolve o crédito.",
       suggestReschedule: false,
-      rescheduleInfo: null
+      rescheduleInfo: null,
     };
   }
 
@@ -660,35 +709,50 @@ export class SchedulingService {
    * @param teacherId - ID do professor
    * @returns Promise<boolean> - true se convertido com sucesso
    */
-  async convertCanceledClassToAvailableSlot(classId: string, teacherId: string): Promise<boolean> {
+  async convertCanceledClassToAvailableSlot(
+    classId: string,
+    teacherId: string
+  ): Promise<boolean> {
     try {
       // Buscar a aula cancelada/reagendada
-      const classDoc = await adminDb.collection('classes').doc(classId).get();
-      
+      const classDoc = await adminDb.collection("classes").doc(classId).get();
+
       if (!classDoc.exists) {
-        throw new Error('Aula não encontrada');
+        throw new Error("Aula não encontrada");
       }
 
       const classData = classDoc.data();
-      
+
       // Verificar se a aula está cancelada ou reagendada
-      if (!classData || (classData.status !== 'canceled-student' && classData.status !== 'rescheduled')) {
-        throw new Error('Apenas aulas canceladas ou reagendadas podem ser convertidas em slots livres');
+      if (
+        !classData ||
+        (classData.status !== "canceled-student" &&
+          classData.status !== "rescheduled")
+      ) {
+        throw new Error(
+          "Apenas aulas canceladas ou reagendadas podem ser convertidas em slots livres"
+        );
       }
 
       // Verificar se o professor é o dono da aula
       if (classData.teacherId !== teacherId) {
-        throw new Error('Apenas o professor da aula pode converter em slot livre');
+        throw new Error(
+          "Apenas o professor da aula pode converter em slot livre"
+        );
       }
 
       // Criar um novo slot disponível baseado na aula cancelada
-      const scheduledAt = classData.scheduledAt.toDate ? classData.scheduledAt.toDate() : new Date(classData.scheduledAt);
-      const endTime = new Date(scheduledAt.getTime() + (classData.durationMinutes * 60000));
-      
+      const scheduledAt = classData.scheduledAt.toDate
+        ? classData.scheduledAt.toDate()
+        : new Date(classData.scheduledAt);
+      const endTime = new Date(
+        scheduledAt.getTime() + classData.durationMinutes * 60000
+      );
+
       // Converter Date para string no formato HH:MM
       const startTimeString = scheduledAt.toTimeString().slice(0, 5); // HH:MM
       const endTimeString = endTime.toTimeString().slice(0, 5); // HH:MM
-      
+
       const availableSlot = {
         teacherId: teacherId,
         startTime: startTimeString,
@@ -696,34 +760,38 @@ export class SchedulingService {
         startDate: scheduledAt,
         isAvailable: true,
         createdAt: new Date(),
-        createdFrom: 'canceled_class',
+        createdFrom: "canceled_class",
         originalClassId: classId,
         duration: 45,
-        type: 'makeup',
-        title: 'Aula que foi cancelada'
+        type: "makeup",
+        title: "Aula que foi cancelada",
       };
 
       // Adicionar o slot à coleção de slots disponíveis
-      await adminDb.collection('availabilities').add(availableSlot);
+      await adminDb.collection("availabilities").add(availableSlot);
 
       // Mover a aula para a coleção de histórico antes de removê-la
       const historyData = {
         ...classData,
         convertedToSlotAt: new Date(),
         convertedBy: teacherId,
-        originalId: classId
+        originalId: classId,
       };
-      
-      await adminDb.collection('canceled_classes_history').doc(classId).set(historyData);
-      
+
+      await adminDb
+        .collection("canceled_classes_history")
+        .doc(classId)
+        .set(historyData);
+
       // Remover a aula da coleção principal para evitar conflitos de agendamento
-      await adminDb.collection('classes').doc(classId).delete();
+      await adminDb.collection("classes").doc(classId).delete();
 
-      console.log(`Aula ${classId} convertida em slot disponível e movida para histórico com sucesso`);
+      console.log(
+        `Aula ${classId} convertida em slot disponível e movida para histórico com sucesso`
+      );
       return true;
-
     } catch (error) {
-      console.error('Erro ao converter aula em slot disponível:', error);
+      console.error("Erro ao converter aula em slot disponível:", error);
       throw error;
     }
   }
@@ -788,7 +856,7 @@ export class SchedulingService {
     return result;
   }
 
-/**
+  /**
    * Gera as aulas de um aluno para todo o período de contrato com base em seu template.
    * @param studentId - O ID do aluno.
    */
@@ -796,47 +864,58 @@ export class SchedulingService {
     // 1. Buscar os dados do aluno e do template
     const student = await userRepository.findById(studentId);
     const template = await classTemplateRepository.get(studentId);
-    const hasExistingClasses = await classRepository.hasFutureScheduledClasses(studentId);
+    const hasExistingClasses =
+      await classRepository.hasFutureScheduledClasses(studentId);
     if (hasExistingClasses) {
-      throw new Error("Este aluno já possui aulas futuras geradas. Para alterar o cronograma, modifique o template e salve as alterações. As aulas serão ajustadas automaticamente.");
+      throw new Error(
+        "Este aluno já possui aulas futuras geradas. Para alterar o cronograma, modifique o template e salve as alterações. As aulas serão ajustadas automaticamente."
+      );
     }
     // 2. Validar se os dados necessários existem
     if (!student) {
       throw new Error(`Aluno com ID ${studentId} não encontrado.`);
     }
     if (!student.contractStartDate || !student.contractLengthMonths) {
-      throw new Error(`O aluno ${studentId} não possui data de início ou duração de contrato definidas.`);
+      throw new Error(
+        `O aluno ${studentId} não possui data de início ou duração de contrato definidas.`
+      );
     }
-    
+
     // Validar se contractStartDate é uma data válida
     const contractStartDate = new Date(student.contractStartDate);
     if (isNaN(contractStartDate.getTime())) {
-      throw new Error(`A data de início do contrato para o aluno ${studentId} é inválida.`);
+      throw new Error(
+        `A data de início do contrato para o aluno ${studentId} é inválida.`
+      );
     }
-    
+
     if (!template || !template.days || template.days.length === 0) {
-      throw new Error(`Nenhum template de horário encontrado para o aluno ${studentId}.`);
+      throw new Error(
+        `Nenhum template de horário encontrado para o aluno ${studentId}.`
+      );
     }
 
     // 3. Calcular o período de geração das aulas de forma segura
-    const startDateString = contractStartDate.toISOString().split('T')[0];
-    const [year, month, day] = startDateString.split('-').map(Number);
+    const startDateString = contractStartDate.toISOString().split("T")[0];
+    const [year, month, day] = startDateString.split("-").map(Number);
     const startDate = new Date(year, month - 1, day);
     const endDate = new Date(startDate);
     endDate.setMonth(endDate.getMonth() + student.contractLengthMonths);
 
     // 4. Gerar as instâncias de aula
-    const classesToCreate: Omit<StudentClass, 'id'>[] = [];
+    const classesToCreate: Omit<StudentClass, "id">[] = [];
     const currentDate = new Date(startDate);
 
     while (currentDate <= endDate) {
       const dayIndex = currentDate.getDay();
       const dayName = daysOfWeek[dayIndex];
-      const templateDaysForCurrentDay = template.days.filter(d => d.day === dayName);
+      const templateDaysForCurrentDay = template.days.filter(
+        (d) => d.day === dayName
+      );
 
       for (const templateDay of templateDaysForCurrentDay) {
-        const [hour, minute] = templateDay.hour.split(':').map(Number);
-        
+        const [hour, minute] = templateDay.hour.split(":").map(Number);
+
         const classScheduledAt = new Date(currentDate);
         classScheduledAt.setHours(hour, minute, 0, 0);
 
@@ -846,17 +925,17 @@ export class SchedulingService {
         // O sistema agora irá gerar todas as aulas a partir da data de início do contrato,
         // independentemente de ser uma data no passado.
 
-        const newClass: Omit<StudentClass, 'id'> = {
+        const newClass: Omit<StudentClass, "id"> = {
           studentId: student.id,
           teacherId: templateDay.teacherId,
           language: templateDay.language,
           scheduledAt: classScheduledAt,
           durationMinutes: 50,
           status: ClassStatus.SCHEDULED,
-          createdBy: 'system',
-          classType: 'regular',
+          createdBy: "system",
+          classType: "regular",
           createdAt: new Date(),
-          updatedAt: new Date()
+          updatedAt: new Date(),
         };
         classesToCreate.push(newClass);
       }
@@ -879,7 +958,12 @@ export class SchedulingService {
   async canReschedule(
     studentId: string,
     classId?: string
-  ): Promise<{ allowed: boolean; count: number; limit: number; isTeacherMakeup?: boolean }> {
+  ): Promise<{
+    allowed: boolean;
+    count: number;
+    limit: number;
+    isTeacherMakeup?: boolean;
+  }> {
     const student = await userAdminRepository.findUserById(studentId);
     if (!student) {
       throw new Error("Aluno não encontrado para verificar reagendamentos.");
@@ -897,25 +981,34 @@ export class SchedulingService {
           const now = new Date();
           const currentMonth = now.getMonth();
           const currentYear = now.getFullYear();
-          
+
           // Teacher makeup classes can be rescheduled using credits without time restrictions
           // The credit system handles the expiration (45 days from cancellation)
           return {
             allowed: true,
             count: 0, // Makeup classes don't count against normal limit
             limit: 999, // Effectively unlimited for makeup
-            isTeacherMakeup: true
+            isTeacherMakeup: true,
           };
         }
 
         // Check if it's a credit-based class (bonus or late-students)
-        if (classData.creditId && classData.creditType && classData.creditType !== 'teacher-cancellation') {
-          throw new Error(`Aulas criadas com créditos de ${classData.creditType === 'bonus' ? 'bônus' : 'estudantes tardios'} não podem ser reagendadas.`);
+        if (
+          classData.creditId &&
+          classData.creditType &&
+          classData.creditType !== "teacher-cancellation"
+        ) {
+          throw new Error(
+            `Aulas criadas com créditos de ${classData.creditType === "bonus" ? "bônus" : "estudantes tardios"} não podem ser reagendadas.`
+          );
         }
 
         // Check if class is explicitly marked as non-reschedulable
         // Exception: teacher-cancellation credit classes can be canceled but not rescheduled
-        if (classData.isReschedulable === false && classData.creditType !== 'teacher-cancellation') {
+        if (
+          classData.isReschedulable === false &&
+          classData.creditType !== "teacher-cancellation"
+        ) {
           throw new Error("Esta aula não pode ser reagendada.");
         }
       }
@@ -964,7 +1057,7 @@ export class SchedulingService {
       status: originalClass?.status,
       creditType: originalClass?.creditType,
       isReschedulable: originalClass?.isReschedulable,
-      creditId: originalClass?.creditId
+      creditId: originalClass?.creditId,
     });
 
     // --- Validações Iniciais ---
@@ -991,7 +1084,7 @@ export class SchedulingService {
       noShowStatus: ClassStatus.NO_SHOW,
       teacherMakeupStatus: ClassStatus.CANCELED_TEACHER_MAKEUP,
       creditType: originalClass.creditType,
-      isReschedulable: originalClass.isReschedulable
+      isReschedulable: originalClass.isReschedulable,
     });
 
     if (
@@ -1006,9 +1099,13 @@ export class SchedulingService {
 
     // Check if it's a credit-based class that cannot be rescheduled
     // Exception: teacher-cancellation credit classes can be rescheduled despite isReschedulable: false
-    if (originalClass.creditId && originalClass.isReschedulable === false && originalClass.creditType !== 'teacher-cancellation') {
+    if (
+      originalClass.creditId &&
+      originalClass.isReschedulable === false &&
+      originalClass.creditType !== "teacher-cancellation"
+    ) {
       throw new Error(
-        `Aulas criadas com créditos de ${originalClass.creditType === 'bonus' ? 'bônus' : 'estudantes tardios'} não podem ser reagendadas.`
+        `Aulas criadas com créditos de ${originalClass.creditType === "bonus" ? "bônus" : "estudantes tardios"} não podem ser reagendadas.`
       );
     }
 
@@ -1072,17 +1169,18 @@ export class SchedulingService {
       }
 
       // Check if this is a makeup class (teacher cancellation) and find an available teacher cancellation credit
-      const isTeacherMakeup = originalClass.status === ClassStatus.CANCELED_TEACHER_MAKEUP;
+      const isTeacherMakeup =
+        originalClass.status === ClassStatus.CANCELED_TEACHER_MAKEUP;
       let creditToUse: any = null;
-      
+
       if (isTeacherMakeup && isStudentRescheduling) {
         // Find an available teacher cancellation credit for this student
         const creditService = new CreditService();
         creditToUse = await creditService.findAvailableCredit(
-          originalClass.studentId, 
+          originalClass.studentId,
           RegularCreditType.TEACHER_CANCELLATION
         );
-        
+
         if (!creditToUse) {
           throw new Error(
             "Você não possui créditos de reposição disponíveis para reagendar esta aula. Verifique se seus créditos ainda estão válidos."
@@ -1109,13 +1207,18 @@ export class SchedulingService {
         rescheduleReason: reason,
         availabilitySlotId: availabilitySlotId, // Associa ao slot de disponibilidade, se aplicável
         // If using a teacher cancellation credit, mark the new class with credit info
-        ...(isTeacherMakeup && creditToUse ? {
-          creditId: creditToUse.id,
-          creditType: "teacher-cancellation" as any,
-          isReschedulable: false // Teacher cancellation credits can only be used once
-        } : {})
+        ...(isTeacherMakeup && creditToUse
+          ? {
+              creditId: creditToUse.id,
+              creditType: "teacher-cancellation" as any,
+              isReschedulable: false, // Teacher cancellation credits can only be used once
+            }
+          : {}),
       };
-      const newClassId = await classRepository.createWithTransaction(transaction, newClassData);
+      const newClassId = await classRepository.createWithTransaction(
+        transaction,
+        newClassData
+      );
 
       // 3. Incrementar o contador de reagendamento do aluno (se aplicável)
       if (isStudentRescheduling && studentData) {
@@ -1149,22 +1252,29 @@ export class SchedulingService {
         );
       }
 
-      return { success: true, newClassData: { ...newClassData, id: newClassId }, creditToUse };
+      return {
+        success: true,
+        newClassData: { ...newClassData, id: newClassId },
+        creditToUse,
+      };
     });
 
     // After the transaction, if we used a teacher cancellation credit, mark it as used
     if (result.creditToUse) {
       try {
         const creditService = new CreditService();
-        
+
         // Use the newly created class ID directly
-        await creditService.useCredit({
-          studentId: originalClass.studentId,
-          creditId: result.creditToUse.id,
-          classId: result.newClassData.id
-        }, originalClass.studentId);
+        await creditService.useCredit(
+          {
+            studentId: originalClass.studentId,
+            creditId: result.creditToUse.id,
+            classId: result.newClassData.id,
+          },
+          originalClass.studentId
+        );
       } catch (error) {
-        console.error('Error using teacher cancellation credit:', error);
+        console.error("Error using teacher cancellation credit:", error);
         // Don't fail the entire operation if credit usage fails, but log it
       }
     }
@@ -1172,29 +1282,36 @@ export class SchedulingService {
     // --- ENVIAR NOTIFICAÇÕES POR E-MAIL APÓS SUCESSO ---
     try {
       const promises = [
-        userAdminRepository.findUserById(originalClass.studentId)
+        userAdminRepository.findUserById(originalClass.studentId),
       ];
-      
+
       if (originalClass.teacherId) {
-        promises.push(userAdminRepository.findUserById(originalClass.teacherId));
+        promises.push(
+          userAdminRepository.findUserById(originalClass.teacherId)
+        );
       }
-      
+
       const results = await Promise.all(promises);
       const student = results[0];
       const teacher = originalClass.teacherId ? results[1] : null;
 
       if (student && teacher) {
-        const formatDate = (date: Date) => date.toLocaleDateString('pt-BR');
-        const formatTime = (date: Date) => date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        const formatDate = (date: Date) => date.toLocaleDateString("pt-BR");
+        const formatTime = (date: Date) =>
+          date.toLocaleTimeString("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
         const getReschedulerName = () => {
           if (isStudentRescheduling) return student.name;
           if (isTeacherRescheduling) return teacher.name;
-          return 'Administração';
+          return "Administração";
         };
 
         const originalScheduledAt = new Date(originalClass.scheduledAt);
-        const className = `${originalClass.language} - ${originalClass.classType === 'regular' ? 'Aula Regular' : 'Aula Avulsa'}`;
-        const platformLink = process.env.NEXT_PUBLIC_APP_URL || 'https://app.fluencylab.com';
+        const className = `${originalClass.language} - ${originalClass.classType === "regular" ? "Aula Regular" : "Aula Avulsa"}`;
+        const platformLink =
+          process.env.NEXT_PUBLIC_APP_URL || "https://app.fluencylab.com";
 
         // Enviar e-mail para o estudante
         await emailService.sendClassRescheduledEmail({
@@ -1208,7 +1325,7 @@ export class SchedulingService {
           newTime: formatTime(newScheduledAt),
           reason,
           rescheduleBy: getReschedulerName(),
-          platformLink: `${platformLink}/hub/plataforma/student/my-class`
+          platformLink: `${platformLink}/hub/plataforma/student/my-class`,
         });
 
         // Enviar e-mail para o professor
@@ -1223,25 +1340,28 @@ export class SchedulingService {
           newTime: formatTime(newScheduledAt),
           reason,
           rescheduleBy: getReschedulerName(),
-          platformLink: `${platformLink}/hub/plataforma/teacher/my-classes`
+          platformLink: `${platformLink}/hub/plataforma/teacher/my-classes`,
         });
 
-        console.log(`E-mails de reagendamento enviados para estudante (${student.email}) e professor (${teacher.email})`);
+        console.log(
+          `E-mails de reagendamento enviados para estudante (${student.email}) e professor (${teacher.email})`
+        );
       }
     } catch (emailError) {
-      console.error('Erro ao enviar e-mails de reagendamento:', emailError);
+      console.error("Erro ao enviar e-mails de reagendamento:", emailError);
       // Não falha a operação se o e-mail falhar, apenas loga o erro
     }
 
     return result;
   }
 
-
   /**
    * Cria um período de férias para um professor, validando as regras de negócio
    * de forma consistente e atualizando o saldo de dias.
    */
-  async createTeacherVacation(vacationData: Omit<Vacation, 'id' | 'createdAt'>): Promise<Vacation> {
+  async createTeacherVacation(
+    vacationData: Omit<Vacation, "id" | "createdAt">
+  ): Promise<Vacation> {
     const { teacherId, startDate, endDate } = vacationData;
     const teacher = await userRepository.findById(teacherId);
 
@@ -1256,52 +1376,82 @@ export class SchedulingService {
     const earliestStartDate = new Date();
     earliestStartDate.setDate(now.getDate() + 40);
     if (startDate < earliestStartDate) {
-      throw new Error("As férias devem ser solicitadas com pelo menos 40 dias de antecedência.");
+      throw new Error(
+        "As férias devem ser solicitadas com pelo menos 40 dias de antecedência."
+      );
     }
 
     // Regra 2: Duração máxima de 14 dias
     const oneDay = 1000 * 60 * 60 * 24;
-    const durationInDays = Math.round((endDate.getTime() - startDate.getTime()) / oneDay) + 1;
+    const durationInDays =
+      Math.round((endDate.getTime() - startDate.getTime()) / oneDay) + 1;
     if (durationInDays > 14) {
-      throw new Error("O período de férias não pode exceder 14 dias consecutivos.");
+      throw new Error(
+        "O período de férias não pode exceder 14 dias consecutivos."
+      );
     }
 
     // Regra 3 (Corrigida): Validar contra o saldo guardado no perfil
     const currentRemainingDays = teacher.vacationDaysRemaining ?? 30;
     if (durationInDays > currentRemainingDays) {
-      throw new Error(`Este pedido de ${durationInDays} dias excede o seu saldo de ${currentRemainingDays} dias de férias restantes.`);
+      throw new Error(
+        `Este pedido de ${durationInDays} dias excede o seu saldo de ${currentRemainingDays} dias de férias restantes.`
+      );
     }
-    
+
     // A verificação redundante baseada em 'findByTeacherAndYear' foi removida.
 
     // --- BUSCAR AULAS AFETADAS ANTES DA TRANSAÇÃO ---
-    const affectedClasses = await classRepository.findClassesByTeacherInRange(teacherId, startDate, endDate);
-    const affectedStudentIds = [...new Set(affectedClasses.map(cls => cls.studentId))];
-    const affectedStudents = affectedStudentIds.length > 0 
-      ? await userAdminRepository.findUsersByIds(affectedStudentIds)
-      : [];
+    const affectedClasses = await classRepository.findClassesByTeacherInRange(
+      teacherId,
+      startDate,
+      endDate
+    );
+    const affectedStudentIds = [
+      ...new Set(affectedClasses.map((cls) => cls.studentId)),
+    ];
+    const affectedStudents =
+      affectedStudentIds.length > 0
+        ? await userAdminRepository.findUsersByIds(affectedStudentIds)
+        : [];
 
     await adminDb.runTransaction(async (transaction) => {
       // 1. Atualiza aulas e cria registo de férias
-      await classRepository.updateClassesStatusInRange(transaction, teacherId, startDate, endDate, ClassStatus.TEACHER_VACATION);
-      vacationRepository.createWithTransaction(transaction, { ...vacationData, createdAt: new Date() });
+      await classRepository.updateClassesStatusInRange(
+        transaction,
+        teacherId,
+        startDate,
+        endDate,
+        ClassStatus.TEACHER_VACATION
+      );
+      vacationRepository.createWithTransaction(transaction, {
+        ...vacationData,
+        createdAt: new Date(),
+      });
 
       // 2. Atualiza o saldo de férias do professor
       const newRemainingDays = currentRemainingDays - durationInDays;
-      const teacherRef = adminDb.collection('users').doc(teacherId);
-      transaction.update(teacherRef, { vacationDaysRemaining: newRemainingDays });
+      const teacherRef = adminDb.collection("users").doc(teacherId);
+      transaction.update(teacherRef, {
+        vacationDaysRemaining: newRemainingDays,
+      });
     });
 
     // --- ENVIAR NOTIFICAÇÕES POR E-MAIL APÓS SUCESSO ---
     if (affectedStudents.length > 0) {
       try {
-        const formatDate = (date: Date) => date.toLocaleDateString('pt-BR');
-        const formatTime = (date: Date) => date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        const platformLink = process.env.NEXT_PUBLIC_APP_URL || 'https://app.fluencylab.com';
+        const formatDate = (date: Date) => date.toLocaleDateString("pt-BR");
+        const formatTime = (date: Date) =>
+          date.toLocaleTimeString("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        const platformLink =
+          process.env.NEXT_PUBLIC_APP_URL || "https://app.fluencylab.com";
 
         // Agrupar aulas por estudante
         const classesByStudent = new Map<string, StudentClass[]>();
-        affectedClasses.forEach(cls => {
+        affectedClasses.forEach((cls) => {
           const existing = classesByStudent.get(cls.studentId) || [];
           existing.push(cls);
           classesByStudent.set(cls.studentId, existing);
@@ -1310,10 +1460,10 @@ export class SchedulingService {
         // Enviar e-mail para cada estudante afetado
         for (const student of affectedStudents) {
           const studentClasses = classesByStudent.get(student.id) || [];
-          const affectedClassesForEmail = studentClasses.map(cls => ({
+          const affectedClassesForEmail = studentClasses.map((cls) => ({
             date: formatDate(new Date(cls.scheduledAt)),
             time: formatTime(new Date(cls.scheduledAt)),
-            language: cls.language
+            language: cls.language,
           }));
 
           await emailService.sendTeacherVacationEmail({
@@ -1323,15 +1473,22 @@ export class SchedulingService {
             vacationStartDate: formatDate(startDate),
             vacationEndDate: formatDate(endDate),
             affectedClasses: affectedClassesForEmail,
-            platformLink: `${platformLink}/hub/plataforma/student/my-class`
+            platformLink: `${platformLink}/hub/plataforma/student/my-class`,
           });
 
-          console.log(`E-mail de férias do professor enviado para estudante ${student.name} (${student.email})`);
+          console.log(
+            `E-mail de férias do professor enviado para estudante ${student.name} (${student.email})`
+          );
         }
 
-        console.log(`Total de ${affectedStudents.length} estudantes notificados sobre as férias do professor ${teacher.name}`);
+        console.log(
+          `Total de ${affectedStudents.length} estudantes notificados sobre as férias do professor ${teacher.name}`
+        );
       } catch (emailError) {
-        console.error('Erro ao enviar e-mails de férias do professor:', emailError);
+        console.error(
+          "Erro ao enviar e-mails de férias do professor:",
+          emailError
+        );
         // Não falha a operação se o e-mail falhar, apenas loga o erro
       }
     }
@@ -1339,16 +1496,18 @@ export class SchedulingService {
     return { ...vacationData, createdAt: new Date() } as Vacation;
   }
 
-
-   /**
+  /**
    * Cancela um período de férias de um professor, restaurando o status das aulas afetadas
    * e reembolsando os dias de férias ao saldo do professor.
    */
-  async deleteTeacherVacation(vacationId: string, teacherId: string): Promise<void> {
+  async deleteTeacherVacation(
+    vacationId: string,
+    teacherId: string
+  ): Promise<void> {
     // Buscar o período de férias
     const vacation = await vacationRepository.findAllByTeacherId(teacherId);
-    const vacationData = vacation.find(v => v.id === vacationId);
-    
+    const vacationData = vacation.find((v) => v.id === vacationId);
+
     if (!vacationData) {
       throw new Error("Período de férias não encontrado.");
     }
@@ -1357,9 +1516,11 @@ export class SchedulingService {
     const now = new Date();
     const earliestCancelDate = new Date(vacationData.startDate);
     earliestCancelDate.setDate(earliestCancelDate.getDate() - 40);
-    
+
     if (now > earliestCancelDate) {
-      throw new Error("Período de férias não pode ser cancelado com menos de 40 dias de antecedência.");
+      throw new Error(
+        "Período de férias não pode ser cancelado com menos de 40 dias de antecedência."
+      );
     }
 
     const teacher = await userRepository.findById(teacherId);
@@ -1369,16 +1530,18 @@ export class SchedulingService {
 
     // Buscar aulas afetadas pelo período de férias
     const affectedClasses = await classRepository.findClassesByTeacherInRange(
-      teacherId, 
-      vacationData.startDate, 
+      teacherId,
+      vacationData.startDate,
       vacationData.endDate
     );
 
     // Calcular dias de férias a serem reembolsados
     const oneDay = 1000 * 60 * 60 * 24;
-    const durationInDays = Math.round(
-      (vacationData.endDate.getTime() - vacationData.startDate.getTime()) / oneDay
-    ) + 1;
+    const durationInDays =
+      Math.round(
+        (vacationData.endDate.getTime() - vacationData.startDate.getTime()) /
+          oneDay
+      ) + 1;
 
     const currentRemainingDays = teacher.vacationDaysRemaining ?? 30;
     const newRemainingDays = currentRemainingDays + durationInDays;
@@ -1386,36 +1549,46 @@ export class SchedulingService {
     await adminDb.runTransaction(async (transaction) => {
       // 1. Restaurar o status das aulas afetadas para SCHEDULED
       await classRepository.updateClassesStatusInRange(
-        transaction, 
-        teacherId, 
-        vacationData.startDate, 
-        vacationData.endDate, 
+        transaction,
+        teacherId,
+        vacationData.startDate,
+        vacationData.endDate,
         ClassStatus.SCHEDULED
       );
-      
+
       // 2. Excluir o registro de férias
       await vacationRepository.delete(vacationId);
-      
+
       // 3. Atualizar o saldo de férias do professor
-      const teacherRef = adminDb.collection('users').doc(teacherId);
-      transaction.update(teacherRef, { vacationDaysRemaining: newRemainingDays });
+      const teacherRef = adminDb.collection("users").doc(teacherId);
+      transaction.update(teacherRef, {
+        vacationDaysRemaining: newRemainingDays,
+      });
     });
 
     // --- ENVIAR NOTIFICAÇÕES POR E-MAIL APÓS SUCESSO ---
-    const affectedStudentIds = [...new Set(affectedClasses.map(cls => cls.studentId))];
-    const affectedStudents = affectedStudentIds.length > 0 
-      ? await userAdminRepository.findUsersByIds(affectedStudentIds)
-      : [];
+    const affectedStudentIds = [
+      ...new Set(affectedClasses.map((cls) => cls.studentId)),
+    ];
+    const affectedStudents =
+      affectedStudentIds.length > 0
+        ? await userAdminRepository.findUsersByIds(affectedStudentIds)
+        : [];
 
     if (affectedStudents.length > 0) {
       try {
-        const formatDate = (date: Date) => date.toLocaleDateString('pt-BR');
-        const formatTime = (date: Date) => date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        const platformLink = process.env.NEXT_PUBLIC_APP_URL || 'https://app.fluencylab.com';
+        const formatDate = (date: Date) => date.toLocaleDateString("pt-BR");
+        const formatTime = (date: Date) =>
+          date.toLocaleTimeString("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        const platformLink =
+          process.env.NEXT_PUBLIC_APP_URL || "https://app.fluencylab.com";
 
         // Agrupar aulas por estudante
         const classesByStudent = new Map<string, StudentClass[]>();
-        affectedClasses.forEach(cls => {
+        affectedClasses.forEach((cls) => {
           const existing = classesByStudent.get(cls.studentId) || [];
           existing.push(cls);
           classesByStudent.set(cls.studentId, existing);
@@ -1424,10 +1597,10 @@ export class SchedulingService {
         // Enviar e-mail para cada estudante afetado
         for (const student of affectedStudents) {
           const studentClasses = classesByStudent.get(student.id) || [];
-          const affectedClassesForEmail = studentClasses.map(cls => ({
+          const affectedClassesForEmail = studentClasses.map((cls) => ({
             date: formatDate(new Date(cls.scheduledAt)),
             time: formatTime(new Date(cls.scheduledAt)),
-            language: cls.language
+            language: cls.language,
           }));
 
           // Enviar e-mail de cancelamento de férias
@@ -1438,64 +1611,86 @@ export class SchedulingService {
             vacationStartDate: formatDate(vacationData.startDate),
             vacationEndDate: formatDate(vacationData.endDate),
             affectedClasses: affectedClassesForEmail,
-            platformLink: `${platformLink}/hub/plataforma/student/my-class`
+            platformLink: `${platformLink}/hub/plataforma/student/my-class`,
           });
 
-          console.log(`E-mail de cancelamento de férias do professor enviado para estudante ${student.name} (${student.email})`);
+          console.log(
+            `E-mail de cancelamento de férias do professor enviado para estudante ${student.name} (${student.email})`
+          );
         }
 
-        console.log(`Total de ${affectedStudents.length} estudantes notificados sobre o cancelamento das férias do professor ${teacher.name}`);
+        console.log(
+          `Total de ${affectedStudents.length} estudantes notificados sobre o cancelamento das férias do professor ${teacher.name}`
+        );
       } catch (emailError) {
-        console.error('Erro ao enviar e-mails de cancelamento de férias do professor:', emailError);
+        console.error(
+          "Erro ao enviar e-mails de cancelamento de férias do professor:",
+          emailError
+        );
         // Não falha a operação se o e-mail falhar, apenas loga o erro
       }
     }
 
-    console.log(`Período de férias cancelado com sucesso. ${durationInDays} dias reembolsados ao professor ${teacher.name}.`);
+    console.log(
+      `Período de férias cancelado com sucesso. ${durationInDays} dias reembolsados ao professor ${teacher.name}.`
+    );
   }
 
-  
   /**
    * Updates the teachersIds field for a student based on their class template
    * @param studentId The ID of the student
    * @param oldTemplate The old class template (before changes)
    * @param newTemplate The new class template (after changes)
    */
-  async updateStudentTeachersIds(studentId: string, oldTemplate: ClassTemplate | null, newTemplate: ClassTemplate): Promise<void> {
+  async updateStudentTeachersIds(
+    studentId: string,
+    oldTemplate: ClassTemplate | null,
+    newTemplate: ClassTemplate
+  ): Promise<void> {
     try {
       // Get unique teacher IDs from the old template
-      const oldTeacherIds = oldTemplate?.days?.map(entry => entry.teacherId) || [];
+      const oldTeacherIds =
+        oldTemplate?.days?.map((entry) => entry.teacherId) || [];
       const uniqueOldTeacherIds = [...new Set(oldTeacherIds)];
-      
+
       // Get unique teacher IDs from the new template
-      const newTeacherIds = newTemplate.days?.map(entry => entry.teacherId) || [];
+      const newTeacherIds =
+        newTemplate.days?.map((entry) => entry.teacherId) || [];
       const uniqueNewTeacherIds = [...new Set(newTeacherIds)];
-      
+
       // Find teachers that were removed (in old but not in new)
-      const removedTeacherIds = uniqueOldTeacherIds.filter(id => !uniqueNewTeacherIds.includes(id));
-      
+      const removedTeacherIds = uniqueOldTeacherIds.filter(
+        (id) => !uniqueNewTeacherIds.includes(id)
+      );
+
       // Find teachers that were added (in new but not in old)
-      const addedTeacherIds = uniqueNewTeacherIds.filter(id => !uniqueOldTeacherIds.includes(id));
-      
+      const addedTeacherIds = uniqueNewTeacherIds.filter(
+        (id) => !uniqueOldTeacherIds.includes(id)
+      );
+
       // Update the student's teachersIds field
       const student = await userAdminRepository.findUserById(studentId);
       if (!student) {
         throw new Error(`Student with ID ${studentId} not found`);
       }
-      
+
       // Get current teachersIds from student
       let currentTeachersIds = student.teachersIds || [];
-      
+
       // Remove teachers that are no longer in the schedule (only if they don't appear in any remaining entries)
       for (const removedTeacherId of removedTeacherIds) {
         // Check if this teacher still appears in the new template
-        const teacherStillInSchedule = newTemplate.days?.some(entry => entry.teacherId === removedTeacherId);
+        const teacherStillInSchedule = newTemplate.days?.some(
+          (entry) => entry.teacherId === removedTeacherId
+        );
         if (!teacherStillInSchedule) {
           // Remove this teacher from teachersIds
-          currentTeachersIds = currentTeachersIds.filter(id => id !== removedTeacherId);
+          currentTeachersIds = currentTeachersIds.filter(
+            (id) => id !== removedTeacherId
+          );
         }
       }
-      
+
       // Add new teachers to teachersIds
       for (const addedTeacherId of addedTeacherIds) {
         // Only add if not already in the list
@@ -1503,13 +1698,18 @@ export class SchedulingService {
           currentTeachersIds.push(addedTeacherId);
         }
       }
-      
+
       // Update the student document with the new teachersIds array
-      await userAdminRepository.update(studentId, { teachersIds: currentTeachersIds });
-      
+      await userAdminRepository.update(studentId, {
+        teachersIds: currentTeachersIds,
+      });
+
       console.log(`Successfully updated teachersIds for student ${studentId}`);
     } catch (error) {
-      console.error(`Error updating teachersIds for student ${studentId}:`, error);
+      console.error(
+        `Error updating teachersIds for student ${studentId}:`,
+        error
+      );
       throw error;
     }
   }
@@ -1520,32 +1720,48 @@ export class SchedulingService {
    * @param studentId O ID do aluno.
    * @param newTemplateData O novo objeto de template.
    */
-  async updateScheduleAndPruneClasses(studentId: string, newTemplateData: ClassTemplate): Promise<void> {
+  async updateScheduleAndPruneClasses(
+    studentId: string,
+    newTemplateData: ClassTemplate
+  ): Promise<void> {
     // 1. Buscar o template antigo para comparação
     const oldTemplate = await classTemplateRepository.get(studentId);
     const oldEntries = oldTemplate?.days || [];
     const newEntries = newTemplateData.days || [];
 
     // 2. Identificar quais entradas foram removidas
-    const removedEntries = oldEntries.filter(oldEntry => 
-      !newEntries.some(newEntry => 
-        oldEntry.day === newEntry.day &&
-        oldEntry.hour === newEntry.hour &&
-        oldEntry.teacherId === newEntry.teacherId
-      )
+    const removedEntries = oldEntries.filter(
+      (oldEntry) =>
+        !newEntries.some(
+          (newEntry) =>
+            oldEntry.day === newEntry.day &&
+            oldEntry.hour === newEntry.hour &&
+            oldEntry.teacherId === newEntry.teacherId
+        )
     );
 
     // 3. Executar a exclusão em cascata das aulas correspondentes
     if (removedEntries.length > 0) {
-      await classRepository.deleteFutureClassesByTemplate(studentId, removedEntries);
+      await classRepository.deleteFutureClassesByTemplate(
+        studentId,
+        removedEntries
+      );
     }
-    
+
     // 4. Update student's teachersIds field
-    await this.updateStudentTeachersIds(studentId, oldTemplate, newTemplateData);
-    
+    await this.updateStudentTeachersIds(
+      studentId,
+      oldTemplate,
+      newTemplateData
+    );
+
     // 5. Update classes in Firestore with new teacher information
-    await this.updateClassesWithNewTeacherInfo(studentId, oldTemplate, newTemplateData);
-    
+    await this.updateClassesWithNewTeacherInfo(
+      studentId,
+      oldTemplate,
+      newTemplateData
+    );
+
     // 6. Salvar o novo template
     await classTemplateRepository.upsert(studentId, newTemplateData);
   }
@@ -1556,87 +1772,111 @@ export class SchedulingService {
    * @param oldTemplate The old class template
    * @param newTemplate The new class template
    */
-  async updateClassesWithNewTeacherInfo(studentId: string, oldTemplate: ClassTemplate | null, newTemplate: ClassTemplate): Promise<void> {
+  async updateClassesWithNewTeacherInfo(
+    studentId: string,
+    oldTemplate: ClassTemplate | null,
+    newTemplate: ClassTemplate
+  ): Promise<void> {
     try {
       // Create a map of schedule changes: (day,hour) -> oldTeacherId,newTeacherId
-      const scheduleChanges = new Map<string, { oldTeacherId: string | null, newTeacherId: string | null }>();
-      
+      const scheduleChanges = new Map<
+        string,
+        { oldTeacherId: string | null; newTeacherId: string | null }
+      >();
+
       // Process old template entries
-      oldTemplate?.days?.forEach(entry => {
+      oldTemplate?.days?.forEach((entry) => {
         const key = `${entry.day}-${entry.hour}`;
         if (!scheduleChanges.has(key)) {
-          scheduleChanges.set(key, { oldTeacherId: entry.teacherId, newTeacherId: null });
+          scheduleChanges.set(key, {
+            oldTeacherId: entry.teacherId,
+            newTeacherId: null,
+          });
         }
       });
-      
+
       // Process new template entries
-      newTemplate.days?.forEach(entry => {
+      newTemplate.days?.forEach((entry) => {
         const key = `${entry.day}-${entry.hour}`;
         if (scheduleChanges.has(key)) {
           const change = scheduleChanges.get(key)!;
           change.newTeacherId = entry.teacherId;
         } else {
-          scheduleChanges.set(key, { oldTeacherId: null, newTeacherId: entry.teacherId });
+          scheduleChanges.set(key, {
+            oldTeacherId: null,
+            newTeacherId: entry.teacherId,
+          });
         }
       });
-      
+
       // Find entries where teacher changed
-      const changedEntries = Array.from(scheduleChanges.entries()).filter(([key, change]) => 
-        change.oldTeacherId !== change.newTeacherId
+      const changedEntries = Array.from(scheduleChanges.entries()).filter(
+        ([key, change]) => change.oldTeacherId !== change.newTeacherId
       );
-      
+
       if (changedEntries.length === 0) {
         return; // No changes to process
       }
-      
+
       // For each changed entry, update the corresponding classes
       for (const [key, change] of changedEntries) {
-        const [day, hour] = key.split('-');
-        
+        const [day, hour] = key.split("-");
+
         // Only process if teacher actually changed
-        if (change.oldTeacherId !== change.newTeacherId && change.newTeacherId) {
+        if (
+          change.oldTeacherId !== change.newTeacherId &&
+          change.newTeacherId
+        ) {
           // Find classes that match this schedule entry
           const now = new Date();
-          const classesQuery = adminDb.collection('classes')
-            .where('studentId', '==', studentId)
-            .where('status', '==', ClassStatus.SCHEDULED)
-            .where('scheduledAt', '>=', now);
-          
+          const classesQuery = adminDb
+            .collection("classes")
+            .where("studentId", "==", studentId)
+            .where("status", "==", ClassStatus.SCHEDULED)
+            .where("scheduledAt", ">=", now);
+
           const snapshot = await classesQuery.get();
-          
+
           // Update classes that match the day and hour
           const batch = adminDb.batch();
           let updateCount = 0;
-          
-          snapshot.docs.forEach(doc => {
+
+          snapshot.docs.forEach((doc) => {
             const classData = doc.data() as StudentClass;
-            const classDate = (classData.scheduledAt as unknown as Timestamp).toDate();
+            const classDate = (
+              classData.scheduledAt as unknown as Timestamp
+            ).toDate();
             const classDay = daysOfWeek[classDate.getDay()];
-            const classHour = `${String(classDate.getHours()).padStart(2, '0')}:${String(classDate.getMinutes()).padStart(2, '0')}`;
-            
+            const classHour = `${String(classDate.getHours()).padStart(2, "0")}:${String(classDate.getMinutes()).padStart(2, "0")}`;
+
             // If this class matches the schedule entry that changed
             if (classDay === day && classHour === hour) {
               batch.update(doc.ref, {
                 teacherId: change.newTeacherId,
-                updatedAt: Timestamp.now()
+                updatedAt: Timestamp.now(),
               });
               updateCount++;
             }
           });
-          
+
           if (updateCount > 0) {
             await batch.commit();
-            console.log(`Updated ${updateCount} classes for student ${studentId} with new teacher ${change.newTeacherId} for ${day} at ${hour}`);
+            console.log(
+              `Updated ${updateCount} classes for student ${studentId} with new teacher ${change.newTeacherId} for ${day} at ${hour}`
+            );
           }
         }
       }
     } catch (error) {
-      console.error(`Error updating classes with new teacher info for student ${studentId}:`, error);
+      console.error(
+        `Error updating classes with new teacher info for student ${studentId}:`,
+        error
+      );
       throw error;
     }
   }
 
-    /**
+  /**
    * Deleta completamente o template de um aluno e todas as suas aulas futuras agendadas.
    * @param studentId O ID do aluno.
    */
@@ -1646,19 +1886,28 @@ export class SchedulingService {
 
     // 1. Se houver entradas no template, deleta as aulas futuras correspondentes
     if (entriesToDelete.length > 0) {
-      await classRepository.deleteFutureClassesByTemplate(studentId, entriesToDelete);
+      await classRepository.deleteFutureClassesByTemplate(
+        studentId,
+        entriesToDelete
+      );
     }
-    
+
     // 2. Remove all teacher IDs from the student's teachersIds field
     if (templateToDelete && entriesToDelete.length > 0) {
-      const teacherIdsToRemove = [...new Set(entriesToDelete.map(entry => entry.teacherId))];
+      const teacherIdsToRemove = [
+        ...new Set(entriesToDelete.map((entry) => entry.teacherId)),
+      ];
       const student = await userAdminRepository.findUserById(studentId);
       if (student && student.teachersIds) {
-        const updatedTeachersIds = student.teachersIds.filter(id => !teacherIdsToRemove.includes(id));
-        await userAdminRepository.update(studentId, { teachersIds: updatedTeachersIds });
+        const updatedTeachersIds = student.teachersIds.filter(
+          (id) => !teacherIdsToRemove.includes(id)
+        );
+        await userAdminRepository.update(studentId, {
+          teachersIds: updatedTeachersIds,
+        });
       }
     }
-    
+
     // 3. Deleta o próprio documento do template
     await classTemplateRepository.delete(studentId);
   }
@@ -1684,12 +1933,13 @@ export class SchedulingService {
 
     const isTeacherOfClass = classToUpdate.teacherId === currentUserId;
     const sessionUser = await userRepository.findById(currentUserId);
-    const isAdmin = sessionUser?.role === 'admin' || sessionUser?.role === 'manager';
+    const isAdmin =
+      sessionUser?.role === "admin" || sessionUser?.role === "manager";
 
     if (!isTeacherOfClass && !isAdmin) {
       throw new Error("Acesso não autorizado para modificar esta aula.");
     }
-    
+
     const updateData: Partial<StudentClass> = {};
     if (newStatus) {
       updateData.status = newStatus;
@@ -1711,27 +1961,29 @@ export class SchedulingService {
    * @param teacherId O ID do professor.
    * @returns Uma lista de PopulatedStudentClass.
    */
-  async getPopulatedClassesForTeacher(teacherId: string): Promise<PopulatedStudentClass[]> {
+  async getPopulatedClassesForTeacher(
+    teacherId: string
+  ): Promise<PopulatedStudentClass[]> {
     // Confirme que esta linha chama o método correto: findAllClassesByTeacherId
     const classes = await classRepository.findAllClassesByTeacherId(teacherId);
-    
+
     if (classes.length === 0) return [];
 
     // 2. Coleta todos os IDs de alunos únicos da lista de aulas
-    const studentIds = [...new Set(classes.map(cls => cls.studentId))];
+    const studentIds = [...new Set(classes.map((cls) => cls.studentId))];
 
     // 3. Busca os dados de todos esses alunos de uma só vez
     const students = await userAdminRepo.findUsersByIds(studentIds);
-    
+
     // 4. Cria um "mapa" para facilitar a busca: studentId -> studentData
-    const studentMap = new Map(students.map(s => [s.id, s]));
+    const studentMap = new Map(students.map((s) => [s.id, s]));
 
     // 5. "Popula" cada aula com os dados do aluno correspondente
-    const populatedClasses = classes.map(cls => {
+    const populatedClasses = classes.map((cls) => {
       const student = studentMap.get(cls.studentId);
       return {
         ...cls,
-        studentName: student?.name || 'Aluno não encontrado',
+        studentName: student?.name || "Aluno não encontrado",
         studentAvatarUrl: student?.avatarUrl,
       };
     });
@@ -1739,35 +1991,41 @@ export class SchedulingService {
     return populatedClasses;
   }
 
-    /**
+  /**
    * Busca todas as aulas de um aluno (passadas e futuras) e as enriquece
    * com os dados do professor correspondente.
    * @param studentId O ID do aluno.
    * @returns Uma lista de PopulatedStudentClass.
    */
-  async getPopulatedClassesForStudent(studentId: string): Promise<PopulatedStudentClass[]> {
+  async getPopulatedClassesForStudent(
+    studentId: string
+  ): Promise<PopulatedStudentClass[]> {
     const classes = await classRepository.findAllClassesByStudentId(studentId);
     if (classes.length === 0) return [];
 
     // Filter out undefined teacherIds before creating the set
-    const teacherIds = [...new Set(classes.map(cls => cls.teacherId).filter(id => id !== undefined))];
+    const teacherIds = [
+      ...new Set(
+        classes.map((cls) => cls.teacherId).filter((id) => id !== undefined)
+      ),
+    ];
     const teachers = await userAdminRepo.findUsersByIds(teacherIds);
-    const teacherMap = new Map(teachers.map(t => [t.id, t]));
+    const teacherMap = new Map(teachers.map((t) => [t.id, t]));
 
-    const populatedClasses: PopulatedStudentClass[] = classes.map(cls => {
+    const populatedClasses: PopulatedStudentClass[] = classes.map((cls) => {
       // Handle case where teacherId might be undefined
       if (!cls.teacherId) {
         return {
           ...cls,
-          teacherName: 'Professor não atribuído',
+          teacherName: "Professor não atribuído",
           teacherAvatarUrl: undefined,
         };
       }
-      
+
       const teacher = teacherMap.get(cls.teacherId);
       return {
         ...cls,
-        teacherName: teacher?.name || 'Professor não encontrado',
+        teacherName: teacher?.name || "Professor não encontrado",
         teacherAvatarUrl: teacher?.avatarUrl,
       };
     });
@@ -1786,7 +2044,7 @@ export class SchedulingService {
       availabilityRepository.findByTeacherId(teacherId),
       availabilityRepository.findExceptionsByTeacherId(teacherId),
       userAdminRepo.findUserById(teacherId),
-      classRepository.findAllClassesByTeacherId(teacherId) // Busca todas as aulas para verificar conflitos
+      classRepository.findAllClassesByTeacherId(teacherId), // Busca todas as aulas para verificar conflitos
     ]);
 
     if (!teacher) {
@@ -1795,38 +2053,44 @@ export class SchedulingService {
 
     // Filtra para retornar apenas os horários que um aluno pode usar para reagendar
     const availableSlots = slots.filter(
-      slot => slot.type === AvailabilityType.MAKEUP || slot.type === AvailabilityType.OCCASIONAL
+      (slot) => slot.type === AvailabilityType.MAKEUP
     );
-    
-    console.log('[getTeacherAvailabilityForStudent] Debug:', {
+
+    console.log("[getTeacherAvailabilityForStudent] Debug:", {
       totalSlots: slots.length,
       availableSlotsAfterFilter: availableSlots.length,
-      slotTypes: slots.map(s => ({ id: s.id, type: s.type, title: s.title })),
-      filteredSlots: availableSlots.map(s => ({ id: s.id, type: s.type, title: s.title }))
+      slotTypes: slots.map((s) => ({ id: s.id, type: s.type, title: s.title })),
+      filteredSlots: availableSlots.map((s) => ({
+        id: s.id,
+        type: s.type,
+        title: s.title,
+      })),
     });
-    
-    return { 
-      slots: availableSlots, 
+
+    return {
+      slots: availableSlots,
       exceptions,
       bookedClasses,
-      settings: teacher.schedulingSettings 
+      settings: teacher.schedulingSettings,
     };
   }
 
   /**
    * Busca os horários de disponibilidade de um professor específicos para reagendamento,
-   * incluindo apenas slots do tipo MAKEUP e OCCASIONAL com debugging melhorado.
+   * incluindo apenas slots do tipo MAKEUP com debugging melhorado.
    * @param teacherId O ID do professor.
    * @returns Um objeto com os horários, exceções, aulas já agendadas e configurações.
    */
   async getTeacherAvailabilityForReschedule(teacherId: string) {
-    console.log(`[getTeacherAvailabilityForReschedule] Starting for teacher: ${teacherId}`);
-    
+    console.log(
+      `[getTeacherAvailabilityForReschedule] Starting for teacher: ${teacherId}`
+    );
+
     const [slots, exceptions, teacher, bookedClasses] = await Promise.all([
       availabilityRepository.findByTeacherId(teacherId),
       availabilityRepository.findExceptionsByTeacherId(teacherId),
       userAdminRepo.findUserById(teacherId),
-      classRepository.findAllClassesByTeacherId(teacherId)
+      classRepository.findAllClassesByTeacherId(teacherId),
     ]);
 
     console.log(`[getTeacherAvailabilityForReschedule] Raw data fetched:`, {
@@ -1834,7 +2098,11 @@ export class SchedulingService {
       exceptions: exceptions.length,
       bookedClasses: bookedClasses.length,
       teacherFound: !!teacher,
-      allSlotTypes: slots.map(s => ({ id: s.id, type: s.type, title: s.title }))
+      allSlotTypes: slots.map((s) => ({
+        id: s.id,
+        type: s.type,
+        title: s.title,
+      })),
     });
 
     if (!teacher) {
@@ -1842,29 +2110,30 @@ export class SchedulingService {
     }
 
     // Filter for reschedule-appropriate slots (temporarily showing all types for debugging)
-    const availableSlots = slots.filter(slot => {
-      // For now, include MAKEUP, OCCASIONAL, and REGULAR to see what we have
-      return slot.type === AvailabilityType.MAKEUP || 
-             slot.type === AvailabilityType.OCCASIONAL ||
-             slot.type === AvailabilityType.REGULAR ||
-             (slot.type as any) === 'makeup' || 
-             (slot.type as any) === 'occasional' ||
-             (slot.type as any) === 'regular';
+    const availableSlots = slots.filter((slot) => {
+      // For now, include MAKEUP, REGULAR to see what we have
+      return (
+        slot.type === AvailabilityType.MAKEUP || (slot.type as any) === "makeup"
+      );
     });
-    
+
     console.log(`[getTeacherAvailabilityForReschedule] Filtering results:`, {
       totalSlots: slots.length,
       availableSlotsAfterFilter: availableSlots.length,
-      allSlotTypes: slots.map(s => s.type),
-      filteredSlots: availableSlots.map(s => ({ id: s.id, type: s.type, title: s.title })),
-      filterCriteria: 'Temporarily including ALL types for debugging'
+      allSlotTypes: slots.map((s) => s.type),
+      filteredSlots: availableSlots.map((s) => ({
+        id: s.id,
+        type: s.type,
+        title: s.title,
+      })),
+      filterCriteria: "Temporarily including ALL types for debugging",
     });
-    
-    return { 
-      slots: availableSlots, 
+
+    return {
+      slots: availableSlots,
       exceptions,
       bookedClasses,
-      settings: teacher.schedulingSettings 
+      settings: teacher.schedulingSettings,
     };
   }
 
@@ -1873,42 +2142,46 @@ export class SchedulingService {
    * @param teacherId O ID do professor
    * @param filters Filtros opcionais (status, data, etc.)
    */
-  async getTeacherClasses(teacherId: string, filters?: {
-    status?: string;
-    startDate?: Date;
-    endDate?: Date;
-    limit?: number;
-  }): Promise<StudentClass[]> {
+  async getTeacherClasses(
+    teacherId: string,
+    filters?: {
+      status?: string;
+      startDate?: Date;
+      endDate?: Date;
+      limit?: number;
+    }
+  ): Promise<StudentClass[]> {
     try {
-      let query = adminDb.collection('classes')
-        .where('teacherId', '==', teacherId);
+      let query = adminDb
+        .collection("classes")
+        .where("teacherId", "==", teacherId);
 
       if (filters?.status) {
-        query = query.where('status', '==', filters.status);
+        query = query.where("status", "==", filters.status);
       }
 
       if (filters?.startDate) {
-        query = query.where('scheduledAt', '>=', filters.startDate);
+        query = query.where("scheduledAt", ">=", filters.startDate);
       }
 
       if (filters?.endDate) {
-        query = query.where('scheduledAt', '<=', filters.endDate);
+        query = query.where("scheduledAt", "<=", filters.endDate);
       }
 
-      query = query.orderBy('scheduledAt', 'desc');
+      query = query.orderBy("scheduledAt", "desc");
 
       if (filters?.limit) {
         query = query.limit(filters.limit);
       }
 
       const snapshot = await query.get();
-      return snapshot.docs.map(doc => ({
+      return snapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       })) as StudentClass[];
     } catch (error) {
-      console.error('Erro ao buscar aulas do professor:', error);
-      throw new Error('Falha ao buscar aulas do professor');
+      console.error("Erro ao buscar aulas do professor:", error);
+      throw new Error("Falha ao buscar aulas do professor");
     }
   }
 
@@ -1920,12 +2193,15 @@ export class SchedulingService {
    * @param classId ID da aula
    * @returns true se o estudante é dono da aula
    */
-  async isStudentOwnerOfClass(studentId: string, classId: string): Promise<boolean> {
+  async isStudentOwnerOfClass(
+    studentId: string,
+    classId: string
+  ): Promise<boolean> {
     try {
       const classData = await classRepository.findClassById(classId);
       return classData?.studentId === studentId;
     } catch (error) {
-      console.error('Erro ao verificar ownership da aula:', error);
+      console.error("Erro ao verificar ownership da aula:", error);
       return false;
     }
   }
@@ -1941,7 +2217,7 @@ export class SchedulingService {
       const classData = await classRepository.findClassById(classId);
       return classData?.teacherId === teacherId;
     } catch (error) {
-      console.error('Erro ao verificar contexto do professor:', error);
+      console.error("Erro ao verificar contexto do professor:", error);
       return false;
     }
   }
@@ -1962,7 +2238,7 @@ export class SchedulingService {
       }
 
       // Busca configurações do professor para verificar prazo de cancelamento
-      const teacher = classData.teacherId 
+      const teacher = classData.teacherId
         ? await userAdminRepository.findUserById(classData.teacherId)
         : null;
       const settings = teacher?.schedulingSettings || {};
@@ -1975,7 +2251,7 @@ export class SchedulingService {
 
       return hoursUntilClass >= cancellationHours;
     } catch (error) {
-      console.error('Erro ao verificar se aula pode ser cancelada:', error);
+      console.error("Erro ao verificar se aula pode ser cancelada:", error);
       return false;
     }
   }
@@ -1989,18 +2265,26 @@ export class SchedulingService {
     try {
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+      const endOfMonth = new Date(
+        now.getFullYear(),
+        now.getMonth() + 1,
+        0,
+        23,
+        59,
+        59
+      );
 
       // Busca aulas reagendadas pelo estudante no mês atual
-      const query = adminDb.collection('classes')
-        .where('studentId', '==', studentId)
-        .where('rescheduledAt', '>=', startOfMonth)
-        .where('rescheduledAt', '<=', endOfMonth);
+      const query = adminDb
+        .collection("classes")
+        .where("studentId", "==", studentId)
+        .where("rescheduledAt", ">=", startOfMonth)
+        .where("rescheduledAt", "<=", endOfMonth);
 
       const snapshot = await query.get();
       return snapshot.size;
     } catch (error) {
-      console.error('Erro ao contar reagendamentos mensais:', error);
+      console.error("Erro ao contar reagendamentos mensais:", error);
       return 0;
     }
   }
@@ -2011,7 +2295,10 @@ export class SchedulingService {
    * @param newDateTime Nova data/hora proposta
    * @returns true se a aula pode ser reagendada
    */
-  async canRescheduleClass(classId: string, newDateTime: Date): Promise<boolean> {
+  async canRescheduleClass(
+    classId: string,
+    newDateTime: Date
+  ): Promise<boolean> {
     try {
       const classData = await classRepository.findClassById(classId);
       if (!classData) return false;
@@ -2026,20 +2313,26 @@ export class SchedulingService {
       }
 
       // Verifica se é uma aula de crédito que não pode ser reagendada
-      if (classData.creditId && classData.isReschedulable === false && classData.creditType !== 'teacher-cancellation') {
+      if (
+        classData.creditId &&
+        classData.isReschedulable === false &&
+        classData.creditType !== "teacher-cancellation"
+      ) {
         return false;
       }
 
       // Busca configurações do professor para verificar prazos
-      const teacher = classData.teacherId 
+      const teacher = classData.teacherId
         ? await userAdminRepository.findUserById(classData.teacherId)
         : null;
       const settings = teacher?.schedulingSettings || {};
-      
+
       // Verifica prazo mínimo para reagendamento
       const leadTimeHours = settings.bookingLeadTimeHours || 24;
       const now = new Date();
-      const earliestRescheduleTime = new Date(now.getTime() + leadTimeHours * 60 * 60 * 1000);
+      const earliestRescheduleTime = new Date(
+        now.getTime() + leadTimeHours * 60 * 60 * 1000
+      );
 
       if (newDateTime < earliestRescheduleTime) {
         return false;
@@ -2047,7 +2340,9 @@ export class SchedulingService {
 
       // Verifica horizonte de reagendamento
       const horizonDays = settings.bookingHorizonDays || 30;
-      const latestRescheduleDate = new Date(now.getTime() + horizonDays * 24 * 60 * 60 * 1000);
+      const latestRescheduleDate = new Date(
+        now.getTime() + horizonDays * 24 * 60 * 60 * 1000
+      );
 
       if (newDateTime > latestRescheduleDate) {
         return false;
@@ -2055,7 +2350,7 @@ export class SchedulingService {
 
       return true;
     } catch (error) {
-      console.error('Erro ao verificar se aula pode ser reagendada:', error);
+      console.error("Erro ao verificar se aula pode ser reagendada:", error);
       return false;
     }
   }
@@ -2067,31 +2362,41 @@ export class SchedulingService {
    * @param reason Motivo do cancelamento
    * @param allowMakeup Se deve permitir reposição (apenas para cancelamentos do professor)
    */
-  async cancelClass(classId: string, canceledBy: 'student' | 'teacher' | 'admin', reason?: string, allowMakeup: boolean = true): Promise<void> {
+  async cancelClass(
+    classId: string,
+    canceledBy: "student" | "teacher" | "admin",
+    reason?: string,
+    allowMakeup: boolean = true
+  ): Promise<void> {
     try {
-      const classRef = adminDb.collection('classes').doc(classId);
+      const classRef = adminDb.collection("classes").doc(classId);
       const classDoc = await classRef.get();
-      
+
       if (!classDoc.exists) {
-        throw new Error('Aula não encontrada');
+        throw new Error("Aula não encontrada");
       }
 
       const classData = classDoc.data() as StudentClass;
-      
-      if (canceledBy === 'student') {
+
+      if (canceledBy === "student") {
         await this.cancelClassByStudent(classData.studentId, classId);
-      } else if (canceledBy === 'teacher') {
+      } else if (canceledBy === "teacher") {
         if (!classData.teacherId) {
-          throw new Error('Teacher ID is required for teacher cancellation');
+          throw new Error("Teacher ID is required for teacher cancellation");
         }
-        await this.cancelClassByTeacher(classData.teacherId, classId, reason, allowMakeup);
+        await this.cancelClassByTeacher(
+          classData.teacherId,
+          classId,
+          reason,
+          allowMakeup
+        );
       } else {
         // Cancelamento administrativo
         await classRef.update({
           status: ClassStatus.CANCELED_ADMIN,
           canceledAt: new Date(),
-          canceledBy: 'admin',
-          reason: reason || 'Cancelamento administrativo'
+          canceledBy: "admin",
+          reason: reason || "Cancelamento administrativo",
         });
 
         // Liberar horário se necessário
@@ -2103,7 +2408,7 @@ export class SchedulingService {
         }
       }
     } catch (error) {
-      console.error('Erro ao cancelar aula:', error);
+      console.error("Erro ao cancelar aula:", error);
       throw error;
     }
   }

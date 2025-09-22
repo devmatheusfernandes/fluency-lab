@@ -27,10 +27,9 @@ export interface CalendarEvent {
     studentAvatarUrl?: string;
   };
   // Class type for booked classes
-  classType?: "regular" | "occasional";
+  classType?: "regular" | "makeup";
   status?: ClassStatus;
   availabilityType?: AvailabilityType;
-
 }
 
 export type CalendarView = "month" | "week" | "day";

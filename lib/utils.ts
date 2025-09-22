@@ -1,9 +1,9 @@
 import { UserRoles } from "@/types/users/userRoles";
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 /**
@@ -15,28 +15,39 @@ export function serializeForClientComponent(obj: any): any {
   if (obj === null || obj === undefined) {
     return obj;
   }
-  
-  if (typeof obj === 'string' || typeof obj === 'number' || typeof obj === 'boolean') {
+
+  if (
+    typeof obj === "string" ||
+    typeof obj === "number" ||
+    typeof obj === "boolean"
+  ) {
     return obj;
   }
-  
+
   if (obj instanceof Date) {
     // Keep Date objects as they are for components that need them
     return obj;
   }
-  
+
   if (Array.isArray(obj)) {
-    return obj.map(item => serializeForClientComponent(item));
+    return obj.map((item) => serializeForClientComponent(item));
   }
-  
-  if (typeof obj === 'object') {
+
+  if (typeof obj === "object") {
     // Handle special objects like Firestore Timestamps
-    if (obj && typeof obj === 'object' && '_seconds' in obj && '_nanoseconds' in obj) {
+    if (
+      obj &&
+      typeof obj === "object" &&
+      "_seconds" in obj &&
+      "_nanoseconds" in obj
+    ) {
       // Convert Firestore Timestamp to Date object
-      const timestamp = new Date(obj._seconds * 1000 + obj._nanoseconds / 1000000);
+      const timestamp = new Date(
+        obj._seconds * 1000 + obj._nanoseconds / 1000000
+      );
       return timestamp;
     }
-    
+
     const serialized: any = {};
     for (const key in obj) {
       if (Object.prototype.hasOwnProperty.call(obj, key)) {
@@ -45,7 +56,7 @@ export function serializeForClientComponent(obj: any): any {
     }
     return serialized;
   }
-  
+
   return obj;
 }
 
@@ -56,7 +67,7 @@ export function serializeForClientComponent(obj: any): any {
  */
 export function safeDateToISO(dateValue: any): string | undefined {
   if (!dateValue) return undefined;
-  
+
   try {
     const date = new Date(dateValue);
     if (isNaN(date.getTime())) {
@@ -74,19 +85,19 @@ export function safeDateToISO(dateValue: any): string | undefined {
  * @returns Sanitized string
  */
 export function sanitizeInput(input: string): string {
-  if (!input) return '';
-  
+  if (!input) return "";
+
   // Remove HTML tags
-  let sanitized = input.replace(/<[^>]*>?/gm, '');
-  
+  let sanitized = input.replace(/<[^>]*>?/gm, "");
+
   // Escape special characters
   sanitized = sanitized
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;');
-    
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+
   return sanitized;
 }
 
@@ -97,17 +108,17 @@ export function sanitizeInput(input: string): string {
  */
 export function validateAndSanitizeEmail(email: string): string | null {
   if (!email) return null;
-  
+
   // Basic email validation regex
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  
+
   // Sanitize input
   const sanitized = sanitizeInput(email.trim().toLowerCase());
-  
+
   if (emailRegex.test(sanitized)) {
     return sanitized;
   }
-  
+
   return null;
 }
 
@@ -116,16 +127,22 @@ export function validateAndSanitizeEmail(email: string): string | null {
  * @param password - Password to validate
  * @returns Object with isValid flag and message
  */
-export function validatePassword(password: string): { isValid: boolean; message: string } {
+export function validatePassword(password: string): {
+  isValid: boolean;
+  message: string;
+} {
   if (!password) {
-    return { isValid: false, message: 'Password is required' };
+    return { isValid: false, message: "Password is required" };
   }
-  
+
   if (password.length < 6) {
-    return { isValid: false, message: 'Password must be at least 6 characters long' };
+    return {
+      isValid: false,
+      message: "Password must be at least 6 characters long",
+    };
   }
-  
-  return { isValid: true, message: 'Password is valid' };
+
+  return { isValid: true, message: "Password is valid" };
 }
 
 // Utility function to capitalize first letter
@@ -141,7 +158,6 @@ export const roleLabels: Record<UserRoles, string> = {
   [UserRoles.STUDENT]: "Estudante",
   [UserRoles.TEACHER]: "Professor",
   [UserRoles.GUARDED_STUDENT]: "Estudante Tutelado",
-  [UserRoles.OCCASIONAL_STUDENT]: "Estudante Ocasional",
   [UserRoles.MATERIAL_MANAGER]: "Gerente de Material",
 };
 
@@ -160,7 +176,7 @@ export const determineCEFRLevel = (score: number): number => {
  */
 export const createDateTimeKey = (date: Date, time: string): string => {
   const year = date.getFullYear();
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const day = date.getDate().toString().padStart(2, "0");
   return `${year}-${month}-${day}-${time}`;
 };

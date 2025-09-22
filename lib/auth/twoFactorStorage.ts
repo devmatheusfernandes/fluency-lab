@@ -8,13 +8,18 @@ import { encrypt, decrypt } from '@/lib/crypto/encryption';
  * Substitui o uso inseguro de sessionStorage por cookies criptografados
  */
 
-const TWO_FA_COOKIE_NAME = '__Secure-2fa-temp';
+const TWO_FA_COOKIE_NAME = process.env.NODE_ENV === 'production' ? '__Secure-2fa-temp' : '2fa-temp';
 const TWO_FA_EXPIRY = 10 * 60 * 1000; // 10 minutos
 
 interface TwoFactorData {
   email: string;
   password: string;
   timestamp: number;
+}
+
+interface TwoFactorCredentials {
+  email: string;
+  password: string;
 }
 
 /**
@@ -27,14 +32,13 @@ export async function storeTwoFactorData(email: string, password: string): Promi
     timestamp: Date.now()
   };
 
-  // Criptografa os dados sensíveis
   const encryptedData = await encrypt(JSON.stringify(data));
 
   // Armazena em cookie seguro
   (await cookies()).set(TWO_FA_COOKIE_NAME, encryptedData, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: 'lax',
     path: '/',
     maxAge: TWO_FA_EXPIRY / 1000 // 10 minutos
   });
@@ -43,7 +47,7 @@ export async function storeTwoFactorData(email: string, password: string): Promi
 /**
  * Recupera dados temporários do 2FA
  */
-export async function getTwoFactorData(): Promise<TwoFactorData | null> {
+export async function getTwoFactorData(): Promise<TwoFactorCredentials | null> {
   try {
     const cookieStore = await cookies();
     const encryptedData = cookieStore.get(TWO_FA_COOKIE_NAME)?.value;
@@ -52,20 +56,23 @@ export async function getTwoFactorData(): Promise<TwoFactorData | null> {
       return null;
     }
 
-    // Descriptografa os dados
     const decryptedData = await decrypt(encryptedData);
     const data: TwoFactorData = JSON.parse(decryptedData);
 
-    // Verifica se não expirou
-    if (Date.now() - data.timestamp > TWO_FA_EXPIRY) {
+    // Verifica se os dados não expiraram
+    const isExpired = Date.now() - data.timestamp > TWO_FA_EXPIRY;
+
+    if (isExpired) {
       await clearTwoFactorData();
       return null;
     }
 
-    return data;
+    return {
+      email: data.email,
+      password: data.password
+    };
   } catch (error) {
     console.error('Erro ao recuperar dados do 2FA:', error);
-    await clearTwoFactorData();
     return null;
   }
 }

@@ -14,7 +14,7 @@ export default async function HubLayout({
   children: React.ReactNode;
 }) {
   const session = await getServerSession(authOptions);
-  const userRole = session?.user?.role || UserRoles.OCCASIONAL_STUDENT;
+  const userRole = session?.user?.role || UserRoles.STUDENT;
   const items = sidebarItemsByRole[userRole] || [];
 
   return (

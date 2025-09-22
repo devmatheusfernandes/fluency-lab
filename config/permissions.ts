@@ -58,10 +58,4 @@ export const rolePermissionsMap: Record<UserRoles, UserPermission[]> = {
     "material.delete",
     "material.view",
   ],
-  // O estudante ocasional começa com permissões limitadas.
-  [UserRoles.OCCASIONAL_STUDENT]: [
-    "class.view",
-    "class.cancel.self",
-    "profile.update.self",
-  ],
 };

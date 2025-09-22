@@ -35,10 +35,19 @@ export default function SigninForm() {
       if (result?.error) {
         // Check if 2FA is required
         if (result.error === "2FA_REQUIRED") {
-          // Store credentials securely using server action
+          // Store credentials securely using server action and sessionStorage as fallback
           try {
+            // Try server-side storage first
             const { storeTwoFactorData } = await import('@/lib/auth/twoFactorStorage');
             await storeTwoFactorData(email, password);
+            
+            // Also store in sessionStorage as fallback
+            const tempData = {
+              email,
+              password,
+              timestamp: Date.now()
+            };
+            sessionStorage.setItem('temp-2fa-data', JSON.stringify(tempData));
             
             // Redirect to 2FA verification page
             router.push(
@@ -46,7 +55,21 @@ export default function SigninForm() {
             );
           } catch (error) {
              console.error('Erro ao armazenar dados do 2FA:', error);
-             setLocalError('Erro interno. Tente novamente.');
+              // Try fallback storage only
+              try {
+                const tempData = {
+                  email,
+                  password,
+                  timestamp: Date.now()
+                };
+                sessionStorage.setItem('temp-2fa-data', JSON.stringify(tempData));
+               router.push(
+                 `/signin/2fa?callbackUrl=${encodeURIComponent(callbackUrl)}`
+               );
+             } catch (fallbackError) {
+               console.error('Erro no fallback storage:', fallbackError);
+               setLocalError('Erro interno. Tente novamente.');
+             }
            }
         } else {
            // Handle other errors

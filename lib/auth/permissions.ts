@@ -1,14 +1,14 @@
 /**
  * Sistema de Verificação de Permissões
- * 
+ *
  * Este arquivo implementa as funções base para verificação de permissões,
  * ownership e contexto de autorização.
  */
 
-import { 
-  AuthContext, 
-  AuthorizationConfig, 
-  AuthorizationError, 
+import {
+  AuthContext,
+  AuthorizationConfig,
+  AuthorizationError,
   AuthorizationErrorType,
   ExtendedSession,
   OwnershipValidationResult,
@@ -16,11 +16,10 @@ import {
   ResourceType,
   UserPermission,
   UserRole,
-  ROLE_HIERARCHY,
   ROLE_PERMISSIONS,
   roleHasPermission,
-  isRoleHigherThan
-} from '../../types/auth';
+  isRoleHigherThan,
+} from "../../types/auth";
 
 // ============================================================================
 // CLASSE PRINCIPAL DE VERIFICAÇÃO DE PERMISSÕES
@@ -49,9 +48,10 @@ export class PermissionChecker {
     const authContext: AuthContext = {
       userId: session.user.id,
       userRole: session.user.role,
-      permissions: session.user.permissions || ROLE_PERMISSIONS[session.user.role],
+      permissions:
+        session.user.permissions || ROLE_PERMISSIONS[session.user.role],
       resourceId,
-      resourceType
+      resourceType,
     };
 
     // 1. Verificar roles obrigatórios
@@ -61,7 +61,10 @@ export class PermissionChecker {
 
     // 2. Verificar permissões obrigatórias
     if (config.requiredPermissions && config.requiredPermissions.length > 0) {
-      await this.checkRequiredPermissions(authContext, config.requiredPermissions);
+      await this.checkRequiredPermissions(
+        authContext,
+        config.requiredPermissions
+      );
     }
 
     // 3. Verificar ownership se necessário
@@ -79,8 +82,8 @@ export class PermissionChecker {
       const isValid = await config.customValidator(authContext);
       if (!isValid) {
         throw new AuthorizationError(
-          'CUSTOM_VALIDATION_FAILED',
-          'Validação customizada falhou',
+          "CUSTOM_VALIDATION_FAILED",
+          "Validação customizada falhou",
           403,
           { userId: authContext.userId, resourceId }
         );
@@ -94,26 +97,26 @@ export class PermissionChecker {
    * Verifica se o usuário tem um dos roles obrigatórios
    */
   private async checkRequiredRoles(
-    context: AuthContext, 
+    context: AuthContext,
     requiredRoles: UserRole[]
   ): Promise<void> {
     const hasRequiredRole = requiredRoles.includes(context.userRole);
-    
+
     if (!hasRequiredRole) {
       // Verificar se tem role superior na hierarquia
-      const hasHigherRole = requiredRoles.some(requiredRole => 
+      const hasHigherRole = requiredRoles.some((requiredRole) =>
         isRoleHigherThan(context.userRole, requiredRole)
       );
-      
+
       if (!hasHigherRole) {
         throw new AuthorizationError(
-          'INSUFFICIENT_ROLE',
-          `Role insuficiente. Requerido: ${requiredRoles.join(', ')}, Atual: ${context.userRole}`,
+          "INSUFFICIENT_ROLE",
+          `Role insuficiente. Requerido: ${requiredRoles.join(", ")}, Atual: ${context.userRole}`,
           403,
-          { 
-            userId: context.userId, 
-            userRole: context.userRole, 
-            requiredRoles 
+          {
+            userId: context.userId,
+            userRole: context.userRole,
+            requiredRoles,
           }
         );
       }
@@ -124,22 +127,22 @@ export class PermissionChecker {
    * Verifica se o usuário tem todas as permissões obrigatórias
    */
   private async checkRequiredPermissions(
-    context: AuthContext, 
+    context: AuthContext,
     requiredPermissions: UserPermission[]
   ): Promise<void> {
     const missingPermissions = requiredPermissions.filter(
-      permission => !context.permissions.includes(permission)
+      (permission) => !context.permissions.includes(permission)
     );
 
     if (missingPermissions.length > 0) {
       throw new AuthorizationError(
-        'MISSING_PERMISSION',
-        `Permissões insuficientes. Faltando: ${missingPermissions.join(', ')}`,
+        "MISSING_PERMISSION",
+        `Permissões insuficientes. Faltando: ${missingPermissions.join(", ")}`,
         403,
-        { 
-          userId: context.userId, 
+        {
+          userId: context.userId,
           missingPermissions,
-          userPermissions: context.permissions
+          userPermissions: context.permissions,
         }
       );
     }
@@ -154,7 +157,7 @@ export class PermissionChecker {
     resourceType: ResourceType
   ): Promise<void> {
     // Admins e managers têm acesso total
-    if (['admin', 'manager'].includes(context.userRole)) {
+    if (["admin", "manager"].includes(context.userRole)) {
       return;
     }
 
@@ -166,14 +169,14 @@ export class PermissionChecker {
 
     if (!ownershipResult.isOwner) {
       throw new AuthorizationError(
-        'OWNERSHIP_DENIED',
+        "OWNERSHIP_DENIED",
         `Usuário não é proprietário do recurso ${resourceType}:${resourceId}`,
         403,
-        { 
-          userId: context.userId, 
-          resourceId, 
+        {
+          userId: context.userId,
+          resourceId,
           resourceType,
-          reason: ownershipResult.reason
+          reason: ownershipResult.reason,
         }
       );
     }
@@ -188,7 +191,7 @@ export class PermissionChecker {
     resourceType: ResourceType
   ): Promise<void> {
     // Admins e managers têm acesso total
-    if (['admin', 'manager'].includes(context.userRole)) {
+    if (["admin", "manager"].includes(context.userRole)) {
       return;
     }
 
@@ -201,15 +204,15 @@ export class PermissionChecker {
 
     if (!contextResult.hasContext) {
       throw new AuthorizationError(
-        'CONTEXT_DENIED',
+        "CONTEXT_DENIED",
         `Usuário não tem contexto para acessar ${resourceType}:${resourceId}`,
         403,
-        { 
-          userId: context.userId, 
-          resourceId, 
+        {
+          userId: context.userId,
+          resourceId,
           resourceType,
           userRole: context.userRole,
-          reason: contextResult.reason
+          reason: contextResult.reason,
         }
       );
     }
@@ -226,14 +229,21 @@ export class PermissionChecker {
    * Verifica se usuário tem pelo menos uma das permissões
    */
   hasAnyPermission(userRole: UserRole, permissions: UserPermission[]): boolean {
-    return permissions.some(permission => this.hasPermission(userRole, permission));
+    return permissions.some((permission) =>
+      this.hasPermission(userRole, permission)
+    );
   }
 
   /**
    * Verifica se usuário tem todas as permissões
    */
-  hasAllPermissions(userRole: UserRole, permissions: UserPermission[]): boolean {
-    return permissions.every(permission => this.hasPermission(userRole, permission));
+  hasAllPermissions(
+    userRole: UserRole,
+    permissions: UserPermission[]
+  ): boolean {
+    return permissions.every((permission) =>
+      this.hasPermission(userRole, permission)
+    );
   }
 }
 
@@ -255,17 +265,17 @@ export class DefaultOwnershipValidator implements OwnershipValidator {
   ): Promise<OwnershipValidationResult> {
     try {
       switch (resourceType) {
-        case 'class':
+        case "class":
           return await this.validateClassOwnership(userId, resourceId);
-        case 'user':
+        case "user":
           return await this.validateUserOwnership(userId, resourceId);
-        case 'setting':
+        case "setting":
           return await this.validateSettingOwnership(userId, resourceId);
         default:
           return {
             isOwner: false,
             hasContext: false,
-            reason: `Tipo de recurso não suportado: ${resourceType}`
+            reason: `Tipo de recurso não suportado: ${resourceType}`,
           };
       }
     } catch (error) {
@@ -273,7 +283,7 @@ export class DefaultOwnershipValidator implements OwnershipValidator {
       return {
         isOwner: false,
         hasContext: false,
-        reason: `Erro interno na validação: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+        reason: `Erro interno na validação: ${error instanceof Error ? error.message : "Erro desconhecido"}`,
       };
     }
   }
@@ -289,13 +299,13 @@ export class DefaultOwnershipValidator implements OwnershipValidator {
   ): Promise<OwnershipValidationResult> {
     try {
       switch (resourceType) {
-        case 'class':
+        case "class":
           return await this.validateClassContext(userId, resourceId, userRole);
         default:
           return {
             isOwner: false,
             hasContext: false,
-            reason: `Validação de contexto não implementada para ${resourceType}`
+            reason: `Validação de contexto não implementada para ${resourceType}`,
           };
       }
     } catch (error) {
@@ -303,7 +313,7 @@ export class DefaultOwnershipValidator implements OwnershipValidator {
       return {
         isOwner: false,
         hasContext: false,
-        reason: `Erro interno na validação de contexto: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+        reason: `Erro interno na validação de contexto: ${error instanceof Error ? error.message : "Erro desconhecido"}`,
       };
     }
   }
@@ -317,7 +327,7 @@ export class DefaultOwnershipValidator implements OwnershipValidator {
   ): Promise<OwnershipValidationResult> {
     // TODO: Implementar consulta ao banco de dados
     // Por enquanto, retorna validação mock
-    
+
     // Simulação: verificar se userId é o studentId da aula
     // const classData = await schedulingService.getClassById(classId);
     // return {
@@ -325,12 +335,14 @@ export class DefaultOwnershipValidator implements OwnershipValidator {
     //   hasContext: false,
     //   reason: classData.studentId === userId ? 'Usuário é o estudante da aula' : 'Usuário não é o estudante da aula'
     // };
-    
-    console.warn('validateClassOwnership: Implementação mock - substituir por consulta real ao banco');
+
+    console.warn(
+      "validateClassOwnership: Implementação mock - substituir por consulta real ao banco"
+    );
     return {
       isOwner: true, // Mock: sempre retorna true para desenvolvimento
       hasContext: false,
-      reason: 'Mock implementation - sempre retorna true'
+      reason: "Mock implementation - sempre retorna true",
     };
   }
 
@@ -342,11 +354,11 @@ export class DefaultOwnershipValidator implements OwnershipValidator {
     classId: string,
     userRole: UserRole
   ): Promise<OwnershipValidationResult> {
-    if (userRole !== 'teacher') {
+    if (userRole !== "teacher") {
       return {
         isOwner: false,
         hasContext: false,
-        reason: 'Validação de contexto de aula apenas para professores'
+        reason: "Validação de contexto de aula apenas para professores",
       };
     }
 
@@ -357,12 +369,14 @@ export class DefaultOwnershipValidator implements OwnershipValidator {
     //   hasContext: classData.teacherId === userId,
     //   reason: classData.teacherId === userId ? 'Professor leciona esta aula' : 'Professor não leciona esta aula'
     // };
-    
-    console.warn('validateClassContext: Implementação mock - substituir por consulta real ao banco');
+
+    console.warn(
+      "validateClassContext: Implementação mock - substituir por consulta real ao banco"
+    );
     return {
       isOwner: false,
       hasContext: true, // Mock: sempre retorna true para desenvolvimento
-      reason: 'Mock implementation - sempre retorna true'
+      reason: "Mock implementation - sempre retorna true",
     };
   }
 
@@ -376,7 +390,10 @@ export class DefaultOwnershipValidator implements OwnershipValidator {
     return {
       isOwner: userId === targetUserId,
       hasContext: false,
-      reason: userId === targetUserId ? 'Usuário é o próprio' : 'Usuário não é o próprio'
+      reason:
+        userId === targetUserId
+          ? "Usuário é o próprio"
+          : "Usuário não é o próprio",
     };
   }
 
@@ -392,7 +409,7 @@ export class DefaultOwnershipValidator implements OwnershipValidator {
     return {
       isOwner: true,
       hasContext: false,
-      reason: 'Configurações são sempre do próprio usuário'
+      reason: "Configurações são sempre do próprio usuário",
     };
   }
 }
@@ -448,6 +465,6 @@ export function authErrorToResponse(error: AuthorizationError) {
     error: error.message,
     type: error.type,
     statusCode: error.statusCode,
-    ...(process.env.NODE_ENV === 'development' && { metadata: error.metadata })
+    ...(process.env.NODE_ENV === "development" && { metadata: error.metadata }),
   };
 }

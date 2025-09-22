@@ -164,6 +164,9 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
     try {
       setIsLoading(true);
 
+      console.log("🚀 Starting onboarding completion...");
+      console.log("📊 Current session before completion:", session);
+
       // Mark tutorial as completed
       const response = await fetch("/api/onboarding/complete", {
         method: "POST",
@@ -175,19 +178,25 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
         throw new Error("Failed to complete onboarding");
       }
 
+      const result = await response.json();
+      console.log("✅ API response:", result);
+
       // Update session to reflect onboarding completion
-      await updateSession({
-        ...session,
-        user: {
-          ...session?.user,
-          tutorialCompleted: true,
-        },
-      });
+      console.log("🔄 Updating session...");
+      
+      // Force a session refresh from the server to get the updated user data
+      const updatedSession = await updateSession();
+      
+      console.log("✅ Session updated:", updatedSession);
+      console.log("📊 New session state:", session);
+
+      // Add a small delay to ensure session is fully updated
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       toast.success("Bem-vindo ao Fluency Lab!");
       onComplete();
     } catch (error) {
-      console.error("Error completing onboarding:", error);
+      console.error("❌ Error completing onboarding:", error);
       toast.error("Erro ao finalizar o processo de integração.");
     } finally {
       setIsLoading(false);

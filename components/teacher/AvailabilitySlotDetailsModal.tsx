@@ -79,8 +79,6 @@ export default function AvailabilitySlotDetailsModal({
     switch (type) {
       case "regular":
         return "Regular";
-      case "occasional":
-        return "Ocasional";
       case "makeup":
         return "Reposição";
       default:

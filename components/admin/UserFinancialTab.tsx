@@ -184,44 +184,6 @@ const useAdminStudentPaymentHistory = (
   return { payments, isLoading };
 };
 
-// Function to fetch occasional student payment history
-const useOccasionalStudentPaymentHistory = (
-  userId: string,
-  userRole: string,
-  enabled: boolean
-) => {
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (!enabled || !userId || userRole !== UserRoles.OCCASIONAL_STUDENT)
-      return;
-
-    const fetchPaymentHistory = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch(`/api/admin/users/${userId}/financials`);
-        if (!response.ok) {
-          const data = await response.json();
-          throw new Error(
-            data.error || "Falha ao buscar histórico de pagamentos."
-          );
-        }
-        const data = await response.json();
-        setPayments(data);
-      } catch (error: any) {
-        toast.error(error.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchPaymentHistory();
-  }, [userId, userRole, enabled]);
-
-  return { payments, isLoading };
-};
-
 export default function UserFinancialTab({ user }: UserFinancialTabProps) {
   const { data: session } = useSession();
   const isAdmin =
@@ -245,23 +207,13 @@ export default function UserFinancialTab({ user }: UserFinancialTabProps) {
     isLoading: isAdminStudentPaymentsLoading,
   } = useAdminStudentPaymentHistory(user.id, user.role, isAdmin);
 
-  const {
-    payments: occasionalPayments,
-    isLoading: isOccasionalPaymentsLoading,
-  } = useOccasionalStudentPaymentHistory(
-    user.id,
-    user.role,
-    isAdmin || user.role === UserRoles.OCCASIONAL_STUDENT
-  );
-
   // Calculate classes per month for teacher
   const classesPerMonth = classes.length;
 
   if (
     isClassesLoading ||
     isStudentPaymentsLoading ||
-    isAdminStudentPaymentsLoading ||
-    isOccasionalPaymentsLoading
+    isAdminStudentPaymentsLoading
   ) {
     return <Loading />;
   }
@@ -518,61 +470,6 @@ export default function UserFinancialTab({ user }: UserFinancialTabProps) {
           </div>
         ) : (
           <Text>Nenhum pagamento encontrado para este utilizador.</Text>
-        )}
-      </Card>
-    );
-  }
-
-  // For occasional students, show Stripe payment history
-  if (user.role === UserRoles.OCCASIONAL_STUDENT) {
-    return (
-      <Card className="p-6">
-        <Text variant="title" size="lg" weight="semibold" className="mb-4">
-          Histórico de Pagamentos
-        </Text>
-
-        {occasionalPayments.length === 0 ? (
-          <Text>Nenhum pagamento encontrado para este utilizador.</Text>
-        ) : (
-          <div className="rounded-lg border border-surface-2 overflow-hidden">
-            <Table>
-              <TableHeader className="bg-surface-1">
-                <TableRow>
-                  <TableHead className="text-subtitle">Data</TableHead>
-                  <TableHead className="text-subtitle">Descrição</TableHead>
-                  <TableHead className="text-subtitle">Valor</TableHead>
-                  <TableHead className="text-subtitle">Status</TableHead>
-                  <TableHead className="text-subtitle">Provedor</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody className="bg-container divide-y divide-surface-2">
-                {occasionalPayments.map((payment) => (
-                  <TableRow key={payment.id}>
-                    <TableCell>
-                      {new Date(payment.createdAt).toLocaleDateString("pt-BR")}
-                    </TableCell>
-                    <TableCell>{payment.description}</TableCell>
-                    <TableCell>
-                      {new Intl.NumberFormat("pt-BR", {
-                        style: "currency",
-                        currency: payment.currency,
-                      }).format(payment.amount)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          payment.status === "completed" ? "success" : "warning"
-                        }
-                      >
-                        {payment.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{payment.provider}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
         )}
       </Card>
     );

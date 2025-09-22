@@ -20,7 +20,6 @@ interface SchedulingSettings {
   bookingLeadTimeHours: number;
   cancellationPolicyHours: number;
   bookingHorizonDays: number;
-  maxOccasionalClassesPerDay: number;
 }
 
 type SettingsData = SchedulingSettings;
@@ -69,17 +68,6 @@ export default function TeacherSettingsForm({
       unit: "dias",
       min: 1,
       max: 365,
-    },
-    {
-      key: "maxOccasionalClassesPerDay",
-      label: "Limite de Aulas Avulsas",
-      description: "Máximo de aulas avulsas por dia (0 = ilimitado)",
-      placeholder: "0",
-      defaultValue: 0,
-      icon: <UserIcon className="w-5 h-5" />,
-      unit: "aulas/dia",
-      min: 0,
-      max: 20,
     },
   ];
 
@@ -230,17 +218,6 @@ export default function TeacherSettingsForm({
                           </Text>
                         </div>
                       )}
-
-                      {/* Default value hint */}
-                      <Text
-                        size="xs"
-                        className="text-slate-500 dark:text-slate-400"
-                      >
-                        Valor padrão: {field.defaultValue} {field.unit}
-                        {field.key === "maxOccasionalClassesPerDay" &&
-                          field.defaultValue === 0 &&
-                          " (ilimitado)"}
-                      </Text>
                     </div>
                   </div>
                 );

@@ -6,7 +6,6 @@ export enum UserRoles {
   STUDENT = "student",
   TEACHER = "teacher",
   GUARDED_STUDENT = "guarded_student",
-  OCCASIONAL_STUDENT = "occasional_student",
   MATERIAL_MANAGER = "material_manager",
 }
 
@@ -16,5 +15,4 @@ export enum UserRoles {
 // STUDENT: has access to the courses and materials they are enrolled in
 // TEACHER: has access to the courses and materials they are enrolled in
 // GUARDED_STUDENT: has access to the courses and materials they are enrolled in
-// OCCASIONAL_STUDENT: has access to the courses and materials they are enrolled in
 // MATERIAL_MANAGER: has access to the courses and materials they are enrolled in

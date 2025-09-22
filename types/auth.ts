@@ -1,12 +1,12 @@
 /**
  * Tipos TypeScript para Sistema de Autorização
- * 
+ *
  * Este arquivo define todos os tipos necessários para o sistema de autorização centralizado,
  * incluindo permissões, contextos, validações e interfaces para middleware.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { Session } from 'next-auth';
+import { NextRequest, NextResponse } from "next/server";
+import { Session } from "next-auth";
 
 // ============================================================================
 // TIPOS BÁSICOS DE USUÁRIO E ROLES
@@ -15,12 +15,7 @@ import { Session } from 'next-auth';
 /**
  * Roles disponíveis no sistema
  */
-export type UserRole = 
-  | 'admin'
-  | 'manager' 
-  | 'teacher'
-  | 'student'
-  | 'occasional_student';
+export type UserRole = "admin" | "manager" | "teacher" | "student";
 
 /**
  * Hierarquia de roles (do maior para o menor privilégio)
@@ -30,45 +25,44 @@ export const ROLE_HIERARCHY: Record<UserRole, number> = {
   manager: 4,
   teacher: 3,
   student: 2,
-  occasional_student: 1
 } as const;
 
 /**
  * Permissões específicas do sistema
  */
-export type UserPermission = 
+export type UserPermission =
   // Permissões de aulas
-  | 'classes.view.own'
-  | 'classes.view.teaching'
-  | 'classes.view.all'
-  | 'classes.cancel.own'
-  | 'classes.cancel.teaching'
-  | 'classes.cancel.all'
-  | 'classes.reschedule.own'
-  | 'classes.reschedule.teaching'
-  | 'classes.reschedule.all'
-  | 'classes.modify.teaching'
-  | 'classes.modify.all'
-  | 'classes.create'
-  
+  | "classes.view.own"
+  | "classes.view.teaching"
+  | "classes.view.all"
+  | "classes.cancel.own"
+  | "classes.cancel.teaching"
+  | "classes.cancel.all"
+  | "classes.reschedule.own"
+  | "classes.reschedule.teaching"
+  | "classes.reschedule.all"
+  | "classes.modify.teaching"
+  | "classes.modify.all"
+  | "classes.create"
+
   // Permissões de usuários
-  | 'users.view.own'
-  | 'users.view.all'
-  | 'users.create'
-  | 'users.modify.own'
-  | 'users.modify.all'
-  | 'users.delete'
-  
+  | "users.view.own"
+  | "users.view.all"
+  | "users.create"
+  | "users.modify.own"
+  | "users.modify.all"
+  | "users.delete"
+
   // Permissões de configurações
-  | 'settings.modify.own'
-  | 'settings.modify.all'
-  | 'settings.view.system'
-  
+  | "settings.modify.own"
+  | "settings.modify.all"
+  | "settings.view.system"
+
   // Permissões administrativas
-  | 'admin.access'
-  | 'reports.view'
-  | 'reports.export'
-  | 'system.configure';
+  | "admin.access"
+  | "reports.view"
+  | "reports.export"
+  | "system.configure";
 
 // ============================================================================
 // CONTEXTOS DE AUTORIZAÇÃO
@@ -95,12 +89,12 @@ export interface AuthContext {
 /**
  * Tipos de recursos que podem ser protegidos
  */
-export type ResourceType = 
-  | 'class'
-  | 'user'
-  | 'setting'
-  | 'report'
-  | 'admin_panel';
+export type ResourceType =
+  | "class"
+  | "user"
+  | "setting"
+  | "report"
+  | "admin_panel";
 
 /**
  * Resultado de validação de ownership
@@ -158,18 +152,18 @@ export interface RateLimitConfig {
 /**
  * Tipos de operação para rate limiting
  */
-export type RateLimitOperationType = 
-  | 'cancellation'
-  | 'reschedule'
-  | 'login'
-  | 'general'
-  | 'admin_operation'
-  | 'user_creation'
-  | 'student_cancellation'
-  | 'teacher_cancellation'
-  | 'student_reschedule'
-  | 'teacher_reschedule'
-  | 'admin_reschedule';
+export type RateLimitOperationType =
+  | "cancellation"
+  | "reschedule"
+  | "login"
+  | "general"
+  | "admin_operation"
+  | "user_creation"
+  | "student_cancellation"
+  | "teacher_cancellation"
+  | "student_reschedule"
+  | "teacher_reschedule"
+  | "admin_reschedule";
 
 // ============================================================================
 // INTERFACES PARA MIDDLEWARE
@@ -221,14 +215,14 @@ export interface AuthMiddlewareResult {
 /**
  * Tipos de erro de autorização
  */
-export type AuthorizationErrorType = 
-  | 'UNAUTHENTICATED'
-  | 'INSUFFICIENT_ROLE'
-  | 'MISSING_PERMISSION'
-  | 'OWNERSHIP_DENIED'
-  | 'CONTEXT_DENIED'
-  | 'RATE_LIMITED'
-  | 'CUSTOM_VALIDATION_FAILED';
+export type AuthorizationErrorType =
+  | "UNAUTHENTICATED"
+  | "INSUFFICIENT_ROLE"
+  | "MISSING_PERMISSION"
+  | "OWNERSHIP_DENIED"
+  | "CONTEXT_DENIED"
+  | "RATE_LIMITED"
+  | "CUSTOM_VALIDATION_FAILED";
 
 /**
  * Erro de autorização
@@ -241,7 +235,7 @@ export class AuthorizationError extends Error {
     public metadata?: Record<string, any>
   ) {
     super(message);
-    this.name = 'AuthorizationError';
+    this.name = "AuthorizationError";
   }
 }
 
@@ -259,7 +253,7 @@ export interface OwnershipValidator {
     resourceId: string,
     resourceType: ResourceType
   ): Promise<OwnershipValidationResult>;
-  
+
   /** Valida contexto específico (ex: professor da aula) */
   validateContext(
     userId: string,
@@ -279,63 +273,56 @@ export interface OwnershipValidator {
 export const ROLE_PERMISSIONS: Record<UserRole, UserPermission[]> = {
   admin: [
     // Todas as permissões
-    'classes.view.all',
-    'classes.cancel.all',
-    'classes.reschedule.all',
-    'classes.modify.all',
-    'classes.create',
-    'users.view.all',
-    'users.create',
-    'users.modify.all',
-    'users.delete',
-    'settings.modify.all',
-    'settings.view.system',
-    'admin.access',
-    'reports.view',
-    'reports.export',
-    'system.configure'
+    "classes.view.all",
+    "classes.cancel.all",
+    "classes.reschedule.all",
+    "classes.modify.all",
+    "classes.create",
+    "users.view.all",
+    "users.create",
+    "users.modify.all",
+    "users.delete",
+    "settings.modify.all",
+    "settings.view.system",
+    "admin.access",
+    "reports.view",
+    "reports.export",
+    "system.configure",
   ],
-  
+
   manager: [
-    'classes.view.all',
-    'classes.cancel.all',
-    'classes.reschedule.all',
-    'classes.modify.all',
-    'classes.create',
-    'users.view.all',
-    'users.create',
-    'users.modify.all',
-    'settings.modify.all',
-    'reports.view',
-    'reports.export'
+    "classes.view.all",
+    "classes.cancel.all",
+    "classes.reschedule.all",
+    "classes.modify.all",
+    "classes.create",
+    "users.view.all",
+    "users.create",
+    "users.modify.all",
+    "settings.modify.all",
+    "reports.view",
+    "reports.export",
   ],
-  
+
   teacher: [
-    'classes.view.teaching',
-    'classes.view.own',
-    'classes.cancel.teaching',
-    'classes.reschedule.teaching',
-    'classes.modify.teaching',
-    'users.view.own',
-    'users.modify.own',
-    'settings.modify.own'
+    "classes.view.teaching",
+    "classes.view.own",
+    "classes.cancel.teaching",
+    "classes.reschedule.teaching",
+    "classes.modify.teaching",
+    "users.view.own",
+    "users.modify.own",
+    "settings.modify.own",
   ],
-  
+
   student: [
-    'classes.view.own',
-    'classes.cancel.own',
-    'classes.reschedule.own',
-    'users.view.own',
-    'users.modify.own',
-    'settings.modify.own'
+    "classes.view.own",
+    "classes.cancel.own",
+    "classes.reschedule.own",
+    "users.view.own",
+    "users.modify.own",
+    "settings.modify.own",
   ],
-  
-  occasional_student: [
-    'classes.view.own',
-    'users.view.own',
-    'users.modify.own',
-    'settings.modify.own'
-  ]
 } as const;
 
 // ============================================================================
@@ -345,7 +332,10 @@ export const ROLE_PERMISSIONS: Record<UserRole, UserPermission[]> = {
 /**
  * Verifica se um role tem uma permissão específica
  */
-export function roleHasPermission(role: UserRole, permission: UserPermission): boolean {
+export function roleHasPermission(
+  role: UserRole,
+  permission: UserPermission
+): boolean {
   return ROLE_PERMISSIONS[role].includes(permission);
 }
 
@@ -367,7 +357,7 @@ export function getPermissionsForRole(role: UserRole): UserPermission[] {
  * Sessão estendida com informações de autorização
  */
 export interface ExtendedSession extends Session {
-  user: Session['user'] & {
+  user: Session["user"] & {
     id: string;
     role: UserRole;
     permissions?: UserPermission[];
@@ -381,7 +371,10 @@ export interface ExtendedSession extends Session {
 /**
  * Configurações padrão de rate limiting por operação
  */
-export const DEFAULT_RATE_LIMITS: Record<RateLimitOperationType, { requests: number; windowMs: number }> = {
+export const DEFAULT_RATE_LIMITS: Record<
+  RateLimitOperationType,
+  { requests: number; windowMs: number }
+> = {
   cancellation: { requests: 5, windowMs: 60 * 60 * 1000 }, // 5/hora
   reschedule: { requests: 10, windowMs: 60 * 60 * 1000 }, // 10/hora
   login: { requests: 10, windowMs: 15 * 60 * 1000 }, // 10/15min
@@ -393,5 +386,5 @@ export const DEFAULT_RATE_LIMITS: Record<RateLimitOperationType, { requests: num
   teacher_cancellation: { requests: 20, windowMs: 60 * 60 * 1000 }, // 20 cancelamentos por hora para professores
   student_reschedule: { requests: 10, windowMs: 60 * 60 * 1000 }, // 10 reagendamentos por hora
   teacher_reschedule: { requests: 30, windowMs: 60 * 60 * 1000 }, // 30 reagendamentos por hora para professores
-  admin_reschedule: { requests: 100, windowMs: 60 * 60 * 1000 } // 100 reagendamentos por hora para admins
+  admin_reschedule: { requests: 100, windowMs: 60 * 60 * 1000 }, // 100 reagendamentos por hora para admins
 } as const;

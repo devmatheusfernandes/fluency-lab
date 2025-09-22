@@ -1,9 +1,12 @@
 // hooks/useStudentClassActions.ts
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
-import { ClassStatus, StudentClass } from '@/types/classes/class';
-import { AvailabilitySlot, AvailabilityException } from '@/types/time/availability';
+import { useState, useCallback } from "react";
+import { ClassStatus, StudentClass } from "@/types/classes/class";
+import {
+  AvailabilitySlot,
+  AvailabilityException,
+} from "@/types/time/availability";
 
 export interface RescheduleOption {
   slotId: string;
@@ -47,9 +50,9 @@ const generateConcreteSlots = (
 
   // Create lookup structures for efficient access
   const exceptionSet = new Set<string>();
-  exceptions.forEach(ex => {
+  exceptions.forEach((ex) => {
     const date = new Date(ex.date);
-    const time = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+    const time = `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
     const key = `${date.toDateString()}-${time}`;
     exceptionSet.add(key);
   });
@@ -57,14 +60,14 @@ const generateConcreteSlots = (
   const bookedSet = new Set<string>();
   bookedClasses.forEach((booked: any) => {
     const date = new Date(booked.scheduledAt);
-    const time = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+    const time = `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
     const key = `${date.toDateString()}-${time}`;
     bookedSet.add(key);
   });
 
   slots.forEach((slot: AvailabilitySlot) => {
-    // Only include makeup and occasional slots for rescheduling
-    if (slot.type !== 'makeup' && slot.type !== 'occasional') {
+    // Only include makeup slots for rescheduling
+    if (slot.type !== "makeup") {
       return;
     }
 
@@ -73,7 +76,8 @@ const generateConcreteSlots = (
 
     // Loop to generate concrete dates based on recurrence
     let iterations = 0;
-    while (currentDate <= maxBookingDate && iterations < 100) { // Safety limit
+    while (currentDate <= maxBookingDate && iterations < 100) {
+      // Safety limit
       iterations++;
       const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 1 = Monday...
 
@@ -99,10 +103,10 @@ const generateConcreteSlots = (
           let isSameAsOriginal = false;
           if (classToReschedule) {
             const originalDate = new Date(classToReschedule.scheduledAt);
-            const originalTime = `${originalDate.getHours().toString().padStart(2, '0')}:${originalDate.getMinutes().toString().padStart(2, '0')}`;
-            isSameAsOriginal = 
-              potentialSlotDate.toDateString() === originalDate.toDateString() &&
-              slot.startTime === originalTime;
+            const originalTime = `${originalDate.getHours().toString().padStart(2, "0")}:${originalDate.getMinutes().toString().padStart(2, "0")}`;
+            isSameAsOriginal =
+              potentialSlotDate.toDateString() ===
+                originalDate.toDateString() && slot.startTime === originalTime;
           }
 
           if (!isException && !isBooked && !isSameAsOriginal) {
@@ -110,7 +114,7 @@ const generateConcreteSlots = (
               slotId: slot.id!,
               date: potentialSlotDate,
               time: slot.startTime,
-              teacherId: slot.teacherId
+              teacherId: slot.teacherId,
             });
           }
         }
@@ -130,7 +134,7 @@ const generateConcreteSlots = (
     }
 
     if (iterations >= 100) {
-      console.warn('[Safety limit reached for slot]:', slot.id);
+      console.warn("[Safety limit reached for slot]:", slot.id);
     }
   });
 
@@ -143,30 +147,35 @@ const generateConcreteSlots = (
 export const useStudentClassActions = (studentId: string) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [rescheduleOptions, setRescheduleOptions] = useState<RescheduleOption[]>([]);
+  const [rescheduleOptions, setRescheduleOptions] = useState<
+    RescheduleOption[]
+  >([]);
   const [selectedClass, setSelectedClass] = useState<StudentClass | null>(null);
 
   const checkRescheduleOptions = useCallback(async (classId: string) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Get teacher availability for rescheduling
       const classResponse = await fetch(`/api/student/classes/list`);
-      if (!classResponse.ok) throw new Error('Failed to fetch class details');
-      
+      if (!classResponse.ok) throw new Error("Failed to fetch class details");
+
       const classes = await classResponse.json();
       const targetClass = classes.find((c: StudentClass) => c.id === classId);
-      
+
       if (!targetClass || !targetClass.teacherId) {
-        throw new Error('Class or teacher not found');
+        throw new Error("Class or teacher not found");
       }
-      
-      const availabilityResponse = await fetch(`/api/student/reschedule-availability?teacherId=${targetClass.teacherId}`);
-      if (!availabilityResponse.ok) throw new Error('Failed to fetch availability');
-      
+
+      const availabilityResponse = await fetch(
+        `/api/student/reschedule-availability?teacherId=${targetClass.teacherId}`
+      );
+      if (!availabilityResponse.ok)
+        throw new Error("Failed to fetch availability");
+
       const availabilityData = await availabilityResponse.json();
-      
+
       // Generate concrete reschedule options based on availability slots and rules
       const options: RescheduleOption[] = generateConcreteSlots(
         availabilityData.slots,
@@ -175,10 +184,10 @@ export const useStudentClassActions = (studentId: string) => {
         availabilityData.settings,
         targetClass
       );
-      
+
       setRescheduleOptions(options);
       setSelectedClass(targetClass);
-      
+
       return options;
     } catch (err: any) {
       setError(err.message);
@@ -188,80 +197,91 @@ export const useStudentClassActions = (studentId: string) => {
     }
   }, []);
 
-  const cancelClass = useCallback(async (classId: string, scheduledAt?: Date): Promise<CancellationResult> => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const requestBody: { classId: string; scheduledAt?: string } = { classId };
-      if (scheduledAt) {
-        requestBody.scheduledAt = scheduledAt.toISOString();
-      }
-      
-      const response = await fetch(`/api/student/classes/cancel`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
+  const cancelClass = useCallback(
+    async (
+      classId: string,
+      scheduledAt?: Date
+    ): Promise<CancellationResult> => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to cancel class');
-      }
-
-      const result = await response.json();
-      return result;
-    } catch (err: any) {
-      setError(err.message);
-      return {
-        success: false,
-        message: err.message,
-        suggestReschedule: false
-      };
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const rescheduleClass = useCallback(async (
-    classId: string, 
-    newScheduledAt: Date, 
-    availabilitySlotId: string,
-    reason?: string
-  ) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await fetch(`/api/student/classes/reschedule`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+        const requestBody: { classId: string; scheduledAt?: string } = {
           classId,
-          newScheduledAt,
-          availabilitySlotId,
-          reason
-        }),
-      });
+        };
+        if (scheduledAt) {
+          requestBody.scheduledAt = scheduledAt.toISOString();
+        }
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to reschedule class');
+        const response = await fetch(`/api/student/classes/cancel`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestBody),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to cancel class");
+        }
+
+        const result = await response.json();
+        return result;
+      } catch (err: any) {
+        setError(err.message);
+        return {
+          success: false,
+          message: err.message,
+          suggestReschedule: false,
+        };
+      } finally {
+        setLoading(false);
       }
+    },
+    []
+  );
 
-      const result = await response.json();
-      return result;
-    } catch (err: any) {
-      setError(err.message);
-      return { success: false, error: err.message };
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const rescheduleClass = useCallback(
+    async (
+      classId: string,
+      newScheduledAt: Date,
+      availabilitySlotId: string,
+      reason?: string
+    ) => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await fetch(`/api/student/classes/reschedule`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            classId,
+            newScheduledAt,
+            availabilitySlotId,
+            reason,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to reschedule class");
+        }
+
+        const result = await response.json();
+        return result;
+      } catch (err: any) {
+        setError(err.message);
+        return { success: false, error: err.message };
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
   return {
     loading,
@@ -270,6 +290,6 @@ export const useStudentClassActions = (studentId: string) => {
     selectedClass,
     checkRescheduleOptions,
     cancelClass,
-    rescheduleClass
+    rescheduleClass,
   };
 };

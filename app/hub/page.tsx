@@ -17,7 +17,6 @@ export default function HubEntryPoint() {
       const roleToPathMap: { [key: string]: string } = {
         admin: "hub/plataforma/admin",
         teacher: "hub/plataforma/teacher",
-        occasional_student: "hub/plataforma/occasional-student",
         student: "hub/plataforma/profile",
       };
 

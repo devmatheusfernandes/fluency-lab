@@ -18,7 +18,7 @@ interface UserPermissionsTabProps {
 
 // Get all possible permissions
 const allPermissions: UserPermission[] = [
-  // Student / Guarded / Occasional
+  // Student / Guarded
   "class.view",
   "class.cancel.self",
   "class.reschedule.self",

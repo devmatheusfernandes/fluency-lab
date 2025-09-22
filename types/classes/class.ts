@@ -10,7 +10,7 @@ export enum ClassStatus {
   CANCELED_TEACHER = "canceled-teacher",
   CANCELED_TEACHER_MAKEUP = "canceled-teacher-makeup", // Teacher cancellation allowing makeup
   CANCELED_ADMIN = "canceled-admin", // Administrative cancellation
-  CANCELED_CREDIT = "canceled-credit",  // Credit-based class canceled (cannot be rescheduled)
+  CANCELED_CREDIT = "canceled-credit", // Credit-based class canceled (cannot be rescheduled)
   NO_SHOW = "no-show",
   RESCHEDULED = "rescheduled",
   TEACHER_VACATION = "teacher-vacation",
@@ -19,7 +19,7 @@ export enum ClassStatus {
 
 export type ClassTemplateDay = {
   id: string;
-  day: typeof daysOfWeek[number];
+  day: (typeof daysOfWeek)[number];
   hour: string;
   teacherId: string;
   language: string;
@@ -42,12 +42,12 @@ export type StudentClass = {
   canceledAt?: Date;
   canceledBy?: "student" | "teacher" | "system";
   reason?: string;
-  classType: 'regular' | 'occasional';
+  classType: "regular" | "makeup";
 
   // CREDIT-BASED CLASSES
-  creditId?: string;                    // ID of the credit used to create this class
-  creditType?: 'bonus' | 'late-students' | 'teacher-cancellation'; // Type of credit used
-  isReschedulable?: boolean;            // Whether this class can be rescheduled (false for credit classes)
+  creditId?: string; // ID of the credit used to create this class
+  creditType?: "bonus" | "late-students" | "teacher-cancellation"; // Type of credit used
+  isReschedulable?: boolean; // Whether this class can be rescheduled (false for credit classes)
 
   // CAMPOS ADICIONADOS PARA RASTREAR REAGENDAMENTOS
   rescheduledFrom?: {
@@ -57,15 +57,13 @@ export type StudentClass = {
   rescheduleReason?: string;
 
   completedAt?: Date;
-  feedback?: string;  //TEACHER ADDS A NOTE AFTER CLASS
-  notes?: string; //OCASIONAL STUDENT ADDS A NOTE ABOUT HIS CLASS
+  feedback?: string; //TEACHER ADDS A NOTE AFTER CLASS
+  notes?: string;
 
   createdAt: Date;
   updatedAt: Date;
 
   createdBy: string; // userId who created the class
-
-  // OCASIONAL STUDENTS TYPES SPECIFIC
   availabilitySlotId?: string;
 
   // CONVERSÃO PARA SLOT DISPONÍVEL
@@ -90,5 +88,5 @@ export type TeacherAvailability = {
   slots: AvailabilitySlot[];
   exceptions: AvailabilityException[];
   bookedClasses: StudentClass[];
-  settings?: User['schedulingSettings'];
-}
+  settings?: User["schedulingSettings"];
+};

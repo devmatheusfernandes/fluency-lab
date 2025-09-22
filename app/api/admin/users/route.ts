@@ -74,7 +74,7 @@ async function createUserHandler(
     }
 
     // Validate role
-    const validRoles = ['student', 'teacher', 'admin', 'manager'];
+    const validRoles = ['student', 'teacher', 'admin', 'manager', 'guarded_student', 'material_manager'];
     if (!validRoles.includes(userData.role)) {
       return NextResponse.json(
         { error: 'Role inválido.' },
@@ -87,9 +87,18 @@ async function createUserHandler(
     // 2. Role de admin/manager
     // 3. Rate limiting
     
+    // Extract IP and User Agent for audit logging
+    const ip = request.headers.get('x-forwarded-for') || 
+               request.headers.get('x-real-ip') || 
+               'unknown';
+    const userAgent = request.headers.get('user-agent') || 'unknown';
+    
     const newUser = await userService.createUser({
       ...userData,
       createdBy: authContext.userId
+    }, {
+      ip,
+      userAgent
     });
     
     return NextResponse.json({

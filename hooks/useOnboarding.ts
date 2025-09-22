@@ -14,42 +14,41 @@ export const useOnboarding = () => {
 
   useEffect(() => {
     // Only check onboarding status for authenticated regular students
-    if (status === 'loading') return;
-    
-    if (status === 'unauthenticated') {
+    if (status === "loading") return;
+
+    if (status === "unauthenticated") {
       setIsChecking(false);
       return;
     }
 
-    // Debug logging for troubleshooting
-    // console.log('🔍 Onboarding Debug:', {
-    //   status,
-    //   userRole: session?.user?.role,
-    //   tutorialCompleted: session?.user?.tutorialCompleted,
-    //   userId: session?.user?.id
-    // });
+    console.log("🔍 useOnboarding - Session check:", {
+      status,
+      userId: session?.user?.id,
+      role: session?.user?.role,
+      tutorialCompleted: session?.user?.tutorialCompleted,
+      sessionUser: session?.user
+    });
 
-    // Check if user is a student or occasional student AND hasn't completed onboarding
+    // Check if user is a rgular student student AND hasn't completed onboarding. this is onyl for regular students
     if (
-      (session?.user?.role === UserRoles.STUDENT || 
-       session?.user?.role === UserRoles.OCCASIONAL_STUDENT) && 
+      session?.user?.role === UserRoles.STUDENT &&
       !session?.user?.tutorialCompleted
     ) {
       // Show onboarding for new students who haven't completed tutorial
-      console.log('✅ Showing onboarding modal for user');
+      console.log("✅ Showing onboarding modal for user - tutorialCompleted:", session?.user?.tutorialCompleted);
       setShowOnboarding(true);
     } else {
-      // console.log('❌ Onboarding conditions not met or already completed');
+      console.log("❌ NOT showing onboarding modal - tutorialCompleted:", session?.user?.tutorialCompleted, "role:", session?.user?.role);
       setShowOnboarding(false);
     }
-    
+
     setIsChecking(false);
   }, [session, status]);
 
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
     // Redirect to dashboard after onboarding completion
-    router.push('/hub/plataforma');
+    router.push("/hub/plataforma");
   };
 
   const handleOnboardingClose = () => {

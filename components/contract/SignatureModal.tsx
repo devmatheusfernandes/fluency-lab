@@ -258,6 +258,7 @@ const SignatureModal: React.FC<SignatureModalProps> = ({
                 )}
               </div>
 
+              {/* verificar se a data é igual a já registrada */}
               <div>
                 <label
                   htmlFor="birthDate"

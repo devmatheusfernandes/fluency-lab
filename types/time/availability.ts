@@ -1,5 +1,4 @@
 export enum AvailabilityType {
-  OCCASIONAL = "occasional",
   MAKEUP = "makeup",
   REGULAR = "regular",
 }
@@ -8,7 +7,6 @@ export enum AvailabilityType {
 export type AvailabilityColor = "primary" | "success" | "info";
 
 export type RepeatingType = "weekly" | "bi-weekly" | "monthly";
-
 
 export interface AvailabilityException {
   id: string;
@@ -25,7 +23,7 @@ export interface AvailabilitySlot {
   color?: AvailabilityColor;
   repeating?: {
     type: RepeatingType;
-    interval: number; 
+    interval: number;
     endDate?: Date;
   };
   startDate: Date;

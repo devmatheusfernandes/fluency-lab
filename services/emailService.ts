@@ -16,13 +16,17 @@ interface AffectedClass {
 }
 
 export class EmailService {
-  async sendWelcomeAndSetPasswordEmail(email: string, name: string, actionLink: string) {
+  async sendWelcomeAndSetPasswordEmail(email: string, name: string, actionLink: string, studentInfo?: string) {
     try {
+      const subject = studentInfo 
+        ? 'Bem-vindo(a) à Fluency Lab! Defina sua senha para acessar a conta do estudante.'
+        : 'Bem-vindo(a) à Fluency Lab! Defina sua senha.';
+
       await resend.emails.send({
         from: 'Matheus Fernandes <contato@matheusfernandes.me>',
         to: email,
-        subject: 'Bem-vindo(a) à Fluency Lab! Defina sua senha.',
-        react: await WelcomeEmail({ name, actionLink }),
+        subject,
+        react: await WelcomeEmail({ name, actionLink, studentInfo }),
       });
 
       console.log(`E-mail de boas-vindas enviado para ${email}`);

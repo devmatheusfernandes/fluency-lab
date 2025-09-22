@@ -82,7 +82,7 @@ export const authOptions: NextAuthOptions = {
     }
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
@@ -90,6 +90,22 @@ export const authOptions: NextAuthOptions = {
         token.tutorialCompleted = user.tutorialCompleted;
         token.twoFactorEnabled = user.twoFactorEnabled;
       }
+      
+      // Refresh user data from database when session is updated or periodically
+      if (trigger === 'update' || (!user && token.id)) {
+        try {
+          const refreshedUser = await authService.getUserById(token.id as string);
+          if (refreshedUser) {
+            token.role = refreshedUser.role;
+            token.permissions = refreshedUser.permissions;
+            token.tutorialCompleted = refreshedUser.tutorialCompleted;
+            token.twoFactorEnabled = refreshedUser.twoFactorEnabled;
+          }
+        } catch (error) {
+          console.error('Error refreshing user data in JWT callback:', error);
+        }
+      }
+      
       return token;
     },
     async session({ session, token }) {

@@ -25,100 +25,106 @@ export interface GoogleCalendarDefaultTimes {
 
 //firebase > db > users > user.id
 export type User = {
-    id: string;
-    firebaseUid?: string; // UID do Firebase Auth
+  id: string;
+  firebaseUid?: string; // UID do Firebase Auth
+  name: string;
+  nickname?: string;
+  email: string;
+  role: UserRoles;
+  permissions: UserPermission[];
+  createdAt: Date;
+  updatedAt?: Date; // Campo para armazenar a data de última atualização
+  isActive: boolean;
+  deactivatedAt?: Date; //If the user is deactivated, this field will be filled
+
+  avatarUrl: string;
+  interfaceLanguage: string;
+  theme?: "light" | "dark";
+  tutorialCompleted: boolean;
+  onboardingCompletedAt?: Date; // Campo para armazenar quando o onboarding foi concluído
+
+  //PERSONAL INFO
+  birthDate?: Date; //Required
+  gender?: "male" | "female";
+  phoneNumber?: string;
+  
+  // Guardian info for minors (GUARDED_STUDENT)
+  guardian?: {
     name: string;
-    nickname?: string;
     email: string;
-    role: UserRoles;
-    permissions: UserPermission[];
-    createdAt: Date;
-    updatedAt?: Date; // Campo para armazenar a data de última atualização
-    isActive: boolean;
-    deactivatedAt?: Date; //If the user is deactivated, this field will be filled
-
-    avatarUrl: string;
-    interfaceLanguage: string;
-    theme?: 'light' | 'dark';
-    tutorialCompleted: boolean;
-    onboardingCompletedAt?: Date; // Campo para armazenar quando o onboarding foi concluído
-
-    //PERSONAL INFO
-    birthDate?: Date; //Required
-    gender?: "male" | "female";
     phoneNumber?: string;
-    address?: { //Required
-        street: string;
-        number: string;
-        complement?: string;
-        neighborhood: string;
-        city: string;
-        state: string;
-        zipCode: string;
-    };
+    relationship?: string; // "pai", "mãe", "responsável legal", etc.
+  };
+  
+  address?: {
+    //Required
+    street: string;
+    number: string;
+    complement?: string;
+    neighborhood: string;
+    city: string;
+    state: string;
+    zipCode: string;
+  };
 
-    //STUDENT
-    teachersIds?: string[];
-    badges?: string[]; //Maybe put in a differente collection
-    coursesIds?: string[]; //Maybe put in a differente collection
+  //STUDENT
+  teachersIds?: string[];
+  badges?: string[]; //Maybe put in a differente collection
+  coursesIds?: string[]; //Maybe put in a differente collection
+  languages?: string[];
+
+  // ACHIEVEMENTS
+  achievements?: StudentAchievement[];
+
+  // CAMPOS ADICIONADOS PARA CONTRATO E REAGENDAMENTO
+  contractStartDate?: Date;
+  contractLengthMonths?: 6 | 12;
+  monthlyReschedules?: {
+    month: string; // Formato "YYYY-MM"
+    count: number;
+  }[];
+
+  placementDone?: boolean;
+
+  // REGULAR STUDENTS - Extra class credits system
+  regularClassCredits?: RegularClassCredit[];
+
+  // PAYMENT / STRIPE FIELDS
+  stripeCustomerId?: string | null;
+  stripeSubscriptionId?: string | null;
+  subscriptionStatus?: "active" | "canceled" | "incomplete" | null;
+  lastPaymentIntentId?: string | null;
+
+  // MERCADO PAGO SUBSCRIPTION FIELDS
+  mercadoPagoCustomerId?: string | null;
+  mercadoPagoSubscriptionId?: string | null;
+  subscriptionPaymentMethod?: "pix" | "credit_card" | null;
+  subscriptionBillingDay?: number; // Day of month for billing (1-28)
+  subscriptionNextBilling?: Date;
+  subscriptionCreatedAt?: Date;
+  subscriptionCanceledAt?: Date;
+  subscriptionCancellationReason?: string;
+
+  //TEACHER
+  vacationDaysRemaining?: number; // <<< NOVO CAMPO ADICIONADO
+  schedulingSettings?: {
+    bookingLeadTimeHours?: number;
+    bookingHorizonDays?: number;
+    cancellationPolicyHours?: number;
+  };
+
+  profile?: {
+    bio?: string;
+    specialties?: string[];
     languages?: string[];
-    
-    // ACHIEVEMENTS
-    achievements?: StudentAchievement[];
+  };
 
-    // CAMPOS ADICIONADOS PARA CONTRATO E REAGENDAMENTO
-    contractStartDate?: Date;
-    contractLengthMonths?: 6 | 12;
-    monthlyReschedules?: {
-        month: string; // Formato "YYYY-MM"
-        count: number;
-    }[];
+  // TWO-FACTOR AUTHENTICATION FIELDS
+  twoFactorEnabled?: boolean;
+  twoFactorSecret?: string;
+  twoFactorBackupCodes?: string[];
 
-    placementDone?: boolean;
-
-    //OCCASIONAL_STUDENT
-    classCredits?: number;
-
-    // REGULAR STUDENTS - Extra class credits system
-    regularClassCredits?: RegularClassCredit[];
-
-    // PAYMENT / STRIPE FIELDS
-    stripeCustomerId?: string | null;
-    stripeSubscriptionId?: string | null;
-    subscriptionStatus?: 'active' | 'canceled' | 'incomplete' | null;
-    lastPaymentIntentId?: string | null;
-
-    // MERCADO PAGO SUBSCRIPTION FIELDS
-    mercadoPagoCustomerId?: string | null;
-    mercadoPagoSubscriptionId?: string | null;
-    subscriptionPaymentMethod?: 'pix' | 'credit_card' | null;
-    subscriptionBillingDay?: number; // Day of month for billing (1-28)
-    subscriptionNextBilling?: Date;
-    subscriptionCreatedAt?: Date;
-    subscriptionCanceledAt?: Date;
-    subscriptionCancellationReason?: string;
-
-    //TEACHER
-    vacationDaysRemaining?: number; // <<< NOVO CAMPO ADICIONADO
-    schedulingSettings?: {
-        bookingLeadTimeHours?: number;
-        bookingHorizonDays?: number;
-        cancellationPolicyHours?: number;
-        maxOccasionalClassesPerDay?: number;
-    }
-
-    profile?: {
-        bio?: string;
-        specialties?: string[];
-        languages?: string[];
-    }
-
-    // TWO-FACTOR AUTHENTICATION FIELDS
-    twoFactorEnabled?: boolean;
-    twoFactorSecret?: string;
-    twoFactorBackupCodes?: string[];
-    
-    // GOOGLE CALENDAR INTEGRATION
-    googleCalendarTokens?: GoogleCalendarTokens;
-    googleCalendarDefaultTimes?: GoogleCalendarDefaultTimes;
+  // GOOGLE CALENDAR INTEGRATION
+  googleCalendarTokens?: GoogleCalendarTokens;
+  googleCalendarDefaultTimes?: GoogleCalendarDefaultTimes;
 };

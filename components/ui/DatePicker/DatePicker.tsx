@@ -14,6 +14,7 @@ interface DatePickerProps {
   maxDate?: Date | null;
   disabled?: boolean;
   size?: "sm" | "default" | "lg";
+  required?: boolean;
 }
 
 export default function DatePicker({

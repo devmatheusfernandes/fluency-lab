@@ -73,29 +73,6 @@ const teacherItems: SidebarItemType[] = [
   },
 ];
 
-const occasionalStudentItems: SidebarItemType[] = [
-  {
-    href: "/hub/plataforma/occasional-student",
-    label: "Painel",
-    icon: <Home />,
-  },
-  {
-    href: "/hub/plataforma/occasional-student/schedule",
-    label: "Agendar Aula",
-    icon: <Calendar />,
-  },
-  {
-    href: "/hub/plataforma/occasional-student/my-classes",
-    label: "Minhas Aulas",
-    icon: <List />,
-  },
-  {
-    href: "/hub/plataforma/occasional-student/courses",
-    label: "Cursos",
-    icon: <Book />,
-  },
-];
-
 const studentItems: SidebarItemType[] = [
   {
     href: "/hub/plataforma/student/meu-perfil",
@@ -133,6 +110,5 @@ const studentItems: SidebarItemType[] = [
 export const sidebarItemsByRole: Record<string, SidebarItemType[]> = {
   [UserRoles.ADMIN]: adminItems,
   [UserRoles.TEACHER]: teacherItems,
-  [UserRoles.OCCASIONAL_STUDENT]: occasionalStudentItems,
   [UserRoles.STUDENT]: studentItems,
 };

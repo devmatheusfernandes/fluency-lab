@@ -13,11 +13,13 @@ import { EmailButton } from "../components/EmailButton";
 interface WelcomeEmailProps {
   name: string;
   actionLink: string;
+  studentInfo?: string;
 }
 
 export const WelcomeEmail: React.FC<WelcomeEmailProps> = ({
   name,
   actionLink,
+  studentInfo,
 }) => {
   return (
     <Html>
@@ -28,9 +30,10 @@ export const WelcomeEmail: React.FC<WelcomeEmailProps> = ({
           <Section>
             <Text style={paragraph}>Olá, {name}!</Text>
             <Text style={paragraph}>
-              Sua conta em nossa plataforma foi criada com sucesso. Para
-              começar, por favor, defina uma senha segura para sua conta
-              clicando no botão abaixo:
+              {studentInfo 
+                ? `Uma conta foi criada${studentInfo}. Como responsável, você terá acesso à plataforma para acompanhar o progresso e gerenciar as aulas. Para começar, por favor, defina uma senha segura para a conta clicando no botão abaixo:`
+                : `Sua conta em nossa plataforma foi criada com sucesso. Para começar, por favor, defina uma senha segura para sua conta clicando no botão abaixo:`
+              }
             </Text>
           </Section>
           <EmailButton href={actionLink}>Definir Minha Senha</EmailButton>

@@ -186,23 +186,12 @@ export const ContractReviewStep: React.FC<OnboardingStepProps> = ({
 
     setIsSubmitting(true);
     try {
-      // Get browser and IP info
-      const browserInfo = navigator.userAgent;
-      const ipResponse = await fetch("https://api.ipify.org?format=json");
-      const ipData = await ipResponse.json();
-
-      const signatureData = {
-        ...formData,
-        ip: ipData.ip,
-        browser: browserInfo,
-      };
-
-      // Sign the contract
+      // Sign the contract (IP and browser info will be handled server-side)
       const response = await fetch("/api/onboarding/sign-contract", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          signatureData,
+          signatureData: formData,
           contractLengthMonths: data.contractLengthMonths,
         }),
       });

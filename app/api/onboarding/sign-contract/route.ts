@@ -19,10 +19,22 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { signatureData, contractLengthMonths } = body;
 
+    // Extract IP address from request headers
+    const forwarded = request.headers.get('x-forwarded-for');
+    const realIp = request.headers.get('x-real-ip');
+    const clientIp = forwarded?.split(',')[0]?.trim() || realIp || 'unknown';
+
+    // Add IP and browser info to signature data
+    const enhancedSignatureData = {
+      ...signatureData,
+      ip: clientIp,
+      browser: request.headers.get('user-agent') || 'unknown'
+    };
+
     // Prepare the request for contract service
     const contractRequest: CreateContractRequest = {
       studentId: session.user.id,
-      signatureData
+      signatureData: enhancedSignatureData
     };
 
     // Use the same contract service as the student contract page

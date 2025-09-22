@@ -34,8 +34,6 @@ export default async function TeacherSettingsPage() {
     cancellationPolicyHours:
       teacher?.schedulingSettings?.cancellationPolicyHours ?? 24,
     bookingHorizonDays: teacher?.schedulingSettings?.bookingHorizonDays ?? 30,
-    maxOccasionalClassesPerDay:
-      teacher?.schedulingSettings?.maxOccasionalClassesPerDay ?? 0,
   };
 
   // Fetch teacher's schedule data

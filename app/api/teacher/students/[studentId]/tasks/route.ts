@@ -20,22 +20,41 @@ export async function GET(
 ) {
   const session = await getServerSession(authOptions);
   
+  console.log('Tasks API - Session info:', {
+    userId: session?.user?.id,
+    userRole: session?.user?.role,
+    hasSession: !!session
+  });
+  
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Acesso não autorizado.' }, { status: 401 });
   }
 
-  // Allow both teachers and admins to access this endpoint
-  if (!session?.user?.role || !['teacher', 'admin'].includes(session.user.role)) {
+  // Allow teachers, admins, and students to access this endpoint
+  if (!session?.user?.role || !['teacher', 'admin', 'student'].includes(session.user.role)) {
+    console.log('Invalid role detected:', session.user.role);
     return NextResponse.json({ error: 'Acesso não autorizado.' }, { status: 403 });
   }
 
   try {
     const { studentId } = await params;
     
-    // Verify that this student belongs to the teacher (only for teachers)
-    if (session.user.role === 'teacher') {
+    // Permission checks based on user role
+    if (session.user.role === 'student') {
+      // Students can only access their own tasks
+      if (session.user.id !== studentId) {
+        return NextResponse.json({ error: 'Acesso não autorizado.' }, { status: 403 });
+      }
+    } else if (session.user.role === 'teacher') {
+      // Teachers can only access tasks of their students
       const teacherId = session.user.id;
       const studentDoc = await adminDb.doc(`users/${studentId}`).get();
+      
+      console.log('Teacher access check:', {
+        teacherId,
+        studentId,
+        studentExists: studentDoc.exists
+      });
       
       if (!studentDoc.exists) {
         return NextResponse.json({ error: 'Aluno não encontrado.' }, { status: 404 });
@@ -44,10 +63,18 @@ export async function GET(
       const studentData = studentDoc.data();
       const studentTeachers = studentData?.teachersIds || [];
       
+      console.log('Teacher-student relationship check:', {
+        teacherId,
+        studentId,
+        studentTeachers,
+        hasAccess: studentTeachers.includes(teacherId)
+      });
+      
       if (!studentTeachers.includes(teacherId)) {
         return NextResponse.json({ error: 'Acesso não autorizado.' }, { status: 403 });
       }
     }
+    // Admins have access to all tasks (no additional check needed)
     
     // Fetch tasks from Firestore (excluding deleted tasks)
     const tasksSnapshot = await adminDb

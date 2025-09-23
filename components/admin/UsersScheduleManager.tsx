@@ -13,6 +13,7 @@ import { useState, useEffect } from "react";
 import { FullUserDetails } from "@/types/users/user-details";
 import { User } from "@/types/users/users";
 import { ClassTemplateDay } from "@/types/classes/class";
+import { AvailabilitySlot } from "@/types/time/availability";
 import { daysOfWeek } from "@/types/time/times";
 import { toast } from "sonner";
 import { Card } from "../ui/Card";
@@ -34,6 +35,7 @@ import {
   Calendar,
   Pen,
   TrashBinMinimalistic,
+  ArrowLeft,
 } from "@solar-icons/react";
 
 interface UserScheduleManagerProps {
@@ -51,16 +53,41 @@ const initialNewEntryState = {
 
 const languageOptions = ["Inglês", "Espanhol", "Libras", "Português"];
 
+// Novo tipo para representar horários únicos do professor
+type UniqueScheduleSlot = {
+  day: string;
+  startTime: string;
+  slotId: string;
+  teacherId: string;
+  language?: string;
+};
+
+// Tipo para a resposta da API de disponibilidade do professor
+type TeacherAvailabilitySlot = {
+  id: string;
+  day: string;
+  startTime: string;
+  endTime: string;
+  title: string;
+  originalSlot: AvailabilitySlot;
+};
+
 export default function UserScheduleManager({
   user,
   allTeachers,
 }: UserScheduleManagerProps) {
   const [schedule, setSchedule] = useState<ClassTemplateDay[]>([]);
-  const [newEntry, setNewEntry] =
-    useState<Omit<ClassTemplateDay, "id">>(initialNewEntryState);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
+  
+  // Novos estados para o fluxo de seleção
+  const [selectedTeacherId, setSelectedTeacherId] = useState<string>("");
+  const [selectedLanguage, setSelectedLanguage] = useState<string>("");
+  const [availableSlots, setAvailableSlots] = useState<UniqueScheduleSlot[]>([]);
+  const [isLoadingSlots, setIsLoadingSlots] = useState(false);
+  const [showScheduleSelection, setShowScheduleSelection] = useState(false);
+  
+  // Estados para modal de exclusão (mantidos do código original)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteOption, setDeleteOption] = useState<
     "all" | "date-range" | "from-date"
@@ -103,27 +130,93 @@ export default function UserScheduleManager({
     fetchSchedule();
   }, [user.id]);
 
-  const handleInputChange = (field: keyof typeof newEntry, value: string) => {
-    setNewEntry((prev) => ({ ...prev, [field]: value }));
+  // Função para buscar horários disponíveis do professor
+  const fetchTeacherAvailability = async () => {
+    if (!selectedTeacherId || !selectedLanguage) return;
+    
+    setIsLoadingSlots(true);
+    try {
+      const response = await fetch(`/api/admin/teacher-availability/${selectedTeacherId}`);
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Agrupa os slots únicos por dia e horário
+        const uniqueSlots: UniqueScheduleSlot[] = [];
+        const seenSlots = new Set<string>();
+        
+        data.slots.forEach((slot: TeacherAvailabilitySlot) => {
+          const key = `${slot.day}-${slot.startTime}`;
+          if (!seenSlots.has(key)) {
+            seenSlots.add(key);
+            uniqueSlots.push({
+              day: slot.day,
+              startTime: slot.startTime,
+              slotId: slot.id,
+              teacherId: selectedTeacherId,
+              language: selectedLanguage,
+            });
+          }
+        });
+        
+        setAvailableSlots(uniqueSlots);
+        setShowScheduleSelection(true);
+      } else {
+        toast.error("Erro ao carregar horários do professor.");
+      }
+    } catch (error) {
+      toast.error("Erro ao buscar horários disponíveis.");
+    } finally {
+      setIsLoadingSlots(false);
+    }
   };
 
-  const handleAddNewEntry = () => {
-    if (
-      !newEntry.day ||
-      !newEntry.hour ||
-      !newEntry.teacherId ||
-      newEntry.teacherId.startsWith("teacher-") ||
-      !newEntry.language
-    ) {
-      toast.warning(
-        "Por favor, preencha todos os campos para adicionar um horário."
-      );
-      return;
+  // Função para selecionar um horário e atribuir ao aluno
+  const handleSelectSchedule = async (slot: UniqueScheduleSlot) => {
+    setIsSaving(true);
+    try {
+      const response = await fetch('/api/admin/assign-schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentId: user.id,
+          teacherId: slot.teacherId,
+          slotId: slot.slotId,
+          language: slot.language,
+          day: slot.day,
+          startTime: slot.startTime,
+        }),
+      });
+
+      if (response.ok) {
+        toast.success("Horário atribuído com sucesso!");
+        
+        // Atualiza a lista de horários do aluno
+        const newEntry: ClassTemplateDay = {
+          id: `temp-${Date.now()}`,
+          day: slot.day,
+          hour: slot.startTime,
+          teacherId: slot.teacherId,
+          language: slot.language!,
+        };
+        
+        setSchedule(prev => [...prev, newEntry]);
+        
+        // Remove o slot da lista de disponíveis
+        setAvailableSlots(prev => prev.filter(s => s.slotId !== slot.slotId));
+        
+        // Volta para a tela inicial
+        setShowScheduleSelection(false);
+        setSelectedTeacherId("");
+        setSelectedLanguage("");
+      } else {
+        const error = await response.json();
+        toast.error(`Erro ao atribuir horário: ${error.error}`);
+      }
+    } catch (error) {
+      toast.error("Erro ao atribuir horário.");
+    } finally {
+      setIsSaving(false);
     }
-    // Adiciona um ID temporário para a key do React
-    const entryWithId = { ...newEntry, id: `temp-${Date.now()}` };
-    setSchedule((prev) => [...prev, entryWithId]);
-    setNewEntry(initialNewEntryState); // Limpa o formulário
   };
 
   const getTeacherName = (teacherId: string) => {
@@ -179,51 +272,6 @@ export default function UserScheduleManager({
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const handleAddOrUpdateEntry = () => {
-    if (
-      !newEntry.day ||
-      !newEntry.hour ||
-      !newEntry.teacherId ||
-      newEntry.teacherId.startsWith("teacher-") ||
-      !newEntry.language
-    ) {
-      toast.warning("Por favor, preencha todos os campos.");
-      return;
-    }
-
-    if (editingEntryId) {
-      // Se está em modo de edição
-      setSchedule((prev) =>
-        prev.map((entry) =>
-          entry.id === editingEntryId
-            ? { ...newEntry, id: editingEntryId }
-            : entry
-        )
-      );
-      toast.success(
-        "Horário atualizado na lista. Clique em 'Salvar' para confirmar."
-      );
-    } else {
-      // Se está adicionando um novo
-      const entryWithId = { ...newEntry, id: `temp-${Date.now()}` };
-      setSchedule((prev) => [...prev, entryWithId]);
-    }
-
-    // Limpa o formulário e sai do modo de edição
-    setNewEntry(initialNewEntryState);
-    setEditingEntryId(null);
-  };
-
-  const handleStartEditing = (entryToEdit: ClassTemplateDay) => {
-    setEditingEntryId(entryToEdit.id);
-    setNewEntry(entryToEdit); // Preenche o formulário com os dados do item
-  };
-
-  const handleCancelEditing = () => {
-    setNewEntry(initialNewEntryState);
-    setEditingEntryId(null);
   };
 
   const handleRemoveEntry = (idToRemove: string) => {
@@ -297,6 +345,12 @@ export default function UserScheduleManager({
     setDeleteFromDate("");
     setDeleteToDate("");
     setSelectedTemplateEntries([]);
+  };
+
+  // Função para voltar à seleção de professor/idioma
+  const handleBackToSelection = () => {
+    setShowScheduleSelection(false);
+    setAvailableSlots([]);
   };
 
   return (
@@ -468,46 +522,25 @@ export default function UserScheduleManager({
           <Loading />
         ) : (
           <>
-            {/* --- FORMULÁRIO DE ADIÇÃO/EDIÇÃO --- */}
-            <div className="p-4 border border-surface-2 rounded-lg space-y-4">
-              <Text weight="semibold">
-                {editingEntryId ? "Editando Horário" : "Adicionar Novo Horário"}
+            {!showScheduleSelection ? (
+              <>
+                {/* --- SELEÇÃO DE PROFESSOR E IDIOMA --- */}
+                <div className="p-4 border border-surface-2 rounded-lg space-y-4">
+              <Text weight="semibold">Adicionar Novo Horário</Text>
+              <Text variant="subtitle">
+                Primeiro, selecione o professor e o idioma para ver os horários disponíveis.
               </Text>
 
-              {/* ▼▼▼ GRID COM OS SELECTS E INPUTS ▼▼▼ */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Select
-                  value={newEntry.day}
-                  onValueChange={(value) => handleInputChange("day", value)}
+                  value={selectedTeacherId}
+                  onValueChange={setSelectedTeacherId}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Dia da semana" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {daysOfWeek.map((day) => (
-                      <SelectOption key={day} value={day}>
-                        {day}
-                      </SelectOption>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  type="time"
-                  value={newEntry.hour}
-                  onChange={(e) => handleInputChange("hour", e.target.value)}
-                />
-                <Select
-                  value={newEntry.teacherId || ""}
-                  onValueChange={(value) =>
-                    handleInputChange("teacherId", value)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Professor" />
+                    <SelectValue placeholder="Selecione o professor" />
                   </SelectTrigger>
                   <SelectContent>
                     {allTeachers.map((teacher, index) => {
-                      // Ensure we have a valid value for the SelectOption
                       const teacherValue =
                         teacher.id && teacher.id.trim() !== ""
                           ? teacher.id
@@ -521,14 +554,13 @@ export default function UserScheduleManager({
                     })}
                   </SelectContent>
                 </Select>
+
                 <Select
-                  value={newEntry.language}
-                  onValueChange={(value) =>
-                    handleInputChange("language", value)
-                  }
+                  value={selectedLanguage}
+                  onValueChange={setSelectedLanguage}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Idioma" />
+                    <SelectValue placeholder="Selecione o idioma" />
                   </SelectTrigger>
                   <SelectContent>
                     {languageOptions.map((lang) => (
@@ -538,26 +570,23 @@ export default function UserScheduleManager({
                     ))}
                   </SelectContent>
                 </Select>
-                {/* O botão de adicionar/atualizar foi movido para fora do grid para melhor responsividade */}
               </div>
-              {/* ▲▲▲ FIM DO GRID ▲▲▲ */}
 
-              <div className="flex gap-2">
-                <Button onClick={handleAddOrUpdateEntry} className="w-full">
-                  {editingEntryId ? (
-                    <Pen className="mr-2" />
-                  ) : (
-                    <AddSquare className="mr-2" />
-                  )}
-                  {editingEntryId ? "Atualizar Horário" : "Adicionar"}
-                </Button>
-                {editingEntryId && (
-                  <Button onClick={handleCancelEditing}>Cancelar</Button>
+              <Button
+                onClick={fetchTeacherAvailability}
+                disabled={!selectedTeacherId || !selectedLanguage || isLoadingSlots}
+                className="w-full"
+              >
+                {isLoadingSlots ? (
+                  <Loading className="mr-2" />
+                ) : (
+                  <Calendar className="mr-2" />
                 )}
-              </div>
+                Ver Horários Disponíveis
+              </Button>
             </div>
 
-            {/* --- LISTA DE HORÁRIOS --- */}
+            {/* --- LISTA DE HORÁRIOS ATUAIS --- */}
             <div className="space-y-3">
               <Text weight="semibold">Horário Semanal Atual</Text>
               {schedule.length === 0 ? (
@@ -570,7 +599,6 @@ export default function UserScheduleManager({
                     key={entry.id}
                     className="flex items-center justify-between p-3 bg-surface-1 rounded-md border border-surface-2"
                   >
-                    {/* ▼▼▼ INFORMAÇÕES DO HORÁRIO ▼▼▼ */}
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                       <Text weight="medium" className="min-w-[80px]">
                         {entry.day}
@@ -581,15 +609,7 @@ export default function UserScheduleManager({
                       </Text>
                       <Text variant="subtitle">({entry.language})</Text>
                     </div>
-                    {/* ▲▲▲ FIM DAS INFORMAÇÕES ▲▲▲ */}
                     <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleStartEditing(entry)}
-                      >
-                        <Pen />
-                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -603,43 +623,96 @@ export default function UserScheduleManager({
                 ))
               )}
             </div>
+              </>
+            ) : (
+              <>
+                {/* --- SELEÇÃO DE HORÁRIOS DISPONÍVEIS --- */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleBackToSelection}
+                    >
+                      <ArrowLeft />
+                    </Button>
+                    <div>
+                      <Text weight="semibold">
+                        Horários Disponíveis - {getTeacherName(selectedTeacherId)}
+                      </Text>
+                      <Text variant="subtitle">
+                        Idioma: {selectedLanguage}
+                      </Text>
+                    </div>
+                  </div>
+
+                  {availableSlots.length === 0 ? (
+                    <Text variant="placeholder" className="text-center py-8">
+                      Nenhum horário disponível para este professor e idioma.
+                    </Text>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {availableSlots.map((slot) => (
+                        <Card
+                          key={`${slot.day}-${slot.startTime}`}
+                          className="p-4 hover:bg-surface-1 cursor-pointer transition-colors"
+                          onClick={() => handleSelectSchedule(slot)}
+                        >
+                          <div className="text-center space-y-2">
+                            <Text weight="medium">{slot.day}</Text>
+                            <Text variant="subtitle" className="text-lg">
+                              {slot.startTime}
+                            </Text>
+                            <Button size="sm" className="w-full">
+                              Selecionar
+                            </Button>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+              </div>
+            </>
+          )}
           </>
         )}
 
         {/* --- BOTÕES DE AÇÃO PRINCIPAIS --- */}
-        <div className="flex flex-col md:flex-row justify-end gap-4 pt-6 border-t border-surface-2">
-          <Button
-            variant="danger"
-            onClick={handleDeleteSchedule}
-            disabled={isSaving || isLoading}
-          >
-            <TrashBinMinimalistic className="mr-2" />
-            Excluir Aulas
-          </Button>
-
-          <div className="flex gap-4">
+        {!showScheduleSelection && (
+          <div className="flex flex-col md:flex-row justify-end gap-4 pt-6 border-t border-surface-2">
             <Button
-              variant="secondary"
-              onClick={handleGenerateClasses}
+              variant="danger"
+              onClick={handleDeleteSchedule}
               disabled={isSaving || isLoading}
             >
-              <Book className="mr-2" />
-              Gerar Aulas
+              <TrashBinMinimalistic className="mr-2" />
+              Excluir Aulas
             </Button>
 
-            <Button
-              onClick={handleSaveSchedule}
-              disabled={isSaving || isLoading}
-            >
-              {isSaving ? (
-                <Loading className="mr-2" />
-              ) : (
-                <Calendar className="mr-2" />
-              )}
-              Salvar Horário
-            </Button>
+            <div className="flex gap-4">
+              <Button
+                variant="secondary"
+                onClick={handleGenerateClasses}
+                disabled={isSaving || isLoading}
+              >
+                <Book className="mr-2" />
+                Gerar Aulas
+              </Button>
+
+              <Button
+                onClick={handleSaveSchedule}
+                disabled={isSaving || isLoading}
+              >
+                {isSaving ? (
+                  <Loading className="mr-2" />
+                ) : (
+                  <Calendar className="mr-2" />
+                )}
+                Salvar Horário
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </Card>
   );

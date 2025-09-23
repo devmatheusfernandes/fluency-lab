@@ -23,6 +23,13 @@ export const mapTeacherEventsToCalendar = (
   exceptions: AvailabilityException[],
   bookedClasses: PopulatedStudentClass[]
 ): CalendarEvent[] => {
+  console.log("[DEBUG] mapTeacherEventsToCalendar called with:", {
+    slotsCount: slots?.length || 0,
+    exceptionsCount: exceptions?.length || 0,
+    bookedClassesCount: bookedClasses?.length || 0,
+    slots: slots
+  });
+  
   const events: CalendarEvent[] = [];
 
   // Create lookup structures for efficient access
@@ -201,6 +208,7 @@ export const mapTeacherEventsToCalendar = (
     }
   });
 
+  console.log("[DEBUG] mapTeacherEventsToCalendar generated events:", events.length, events);
   return events;
 };
 

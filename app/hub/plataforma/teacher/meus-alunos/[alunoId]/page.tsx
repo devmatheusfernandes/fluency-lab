@@ -10,13 +10,6 @@ import NotebooksCard from "@/components/teacher/student-panel/NotebooksCard";
 import ClassesCard from "@/components/teacher/student-panel/ClassesCard";
 import { Container } from "@/components/ui/Container";
 import { SubContainer } from "@/components/ui/SubContainer";
-import { Card, CardContent } from "@/components/ui/Card";
-import {
-  Bookmark,
-  Document,
-  TestTubeMinimalistic,
-} from "@solar-icons/react/ssr";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import SkeletonLoader from "@/components/shared/Skeleton/SkeletonLoader";
 import ErrorAlert from "@/components/ui/ErrorAlert";

@@ -210,6 +210,34 @@ service cloud.firestore {
       allow delete: if request.auth != null && request.auth.token.role == 'admin';
     }
 
+    // ## RULES FOR 'teacherBankingInfo' COLLECTION ##
+    match /teacherBankingInfo/{bankingInfoId} {
+      
+      // WHO CAN READ?
+      // Only the teacher who owns the banking info, or admins/managers
+      allow read: if request.auth != null && (
+        resource.data.teacherId == request.auth.uid ||
+        request.auth.token.role in ['admin', 'manager']
+      );
+      
+      // WHO CAN CREATE?
+      // Only teachers can create their own banking info
+      allow create: if request.auth != null && 
+        request.auth.token.role == 'teacher' && 
+        request.resource.data.teacherId == request.auth.uid;
+      
+      // WHO CAN UPDATE?
+      // Only the teacher who owns the banking info, or admins/managers
+      allow update: if request.auth != null && (
+        resource.data.teacherId == request.auth.uid ||
+        request.auth.token.role in ['admin', 'manager']
+      );
+      
+      // WHO CAN DELETE?
+      // Only admins (banking info should generally be preserved for audit purposes)
+      allow delete: if request.auth != null && request.auth.token.role == 'admin';
+    }
+
     // ## FALLBACK RULE ##
     // Deny all other access by default
     match /{document=**} {

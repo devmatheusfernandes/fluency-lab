@@ -49,6 +49,22 @@ export const EmailVerificationStep: React.FC<OnboardingStepProps> = ({
   const checkVerificationStatus = async () => {
     try {
       const response = await fetch("/api/auth/verify-status");
+      
+      if (!response.ok) {
+        console.error(`HTTP error! status: ${response.status}`);
+        setVerificationStatus("unverified");
+        onDataChange({ emailVerified: false });
+        return;
+      }
+      
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        console.error("Response is not JSON");
+        setVerificationStatus("unverified");
+        onDataChange({ emailVerified: false });
+        return;
+      }
+      
       const result = await response.json();
 
       setVerificationStatus(result.emailVerified ? "verified" : "unverified");
@@ -56,6 +72,7 @@ export const EmailVerificationStep: React.FC<OnboardingStepProps> = ({
     } catch (error) {
       console.error("Error checking verification status:", error);
       setVerificationStatus("unverified");
+      onDataChange({ emailVerified: false });
     }
   };
 
@@ -69,10 +86,24 @@ export const EmailVerificationStep: React.FC<OnboardingStepProps> = ({
       });
 
       if (response.ok) {
-        toast.success("Email de verificação reenviado!");
+        // Try to parse JSON response for success message
+        try {
+          const result = await response.json();
+          toast.success(result.message || "Email de verificação reenviado!");
+        } catch {
+          // If JSON parsing fails, show default success message
+          toast.success("Email de verificação reenviado!");
+        }
         setCooldown(60); // 60 seconds cooldown
       } else {
-        toast.error("Erro ao reenviar email de verificação");
+        // Try to get error message from response
+        try {
+          const errorResult = await response.json();
+          toast.error(errorResult.error || errorResult.message || "Erro ao reenviar email de verificação");
+        } catch {
+          // If JSON parsing fails, show default error message
+          toast.error(`Erro ao reenviar email de verificação. Status: ${response.status}`);
+        }
       }
     } catch (error) {
       console.error("Error resending verification:", error);

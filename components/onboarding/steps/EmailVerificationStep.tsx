@@ -9,7 +9,16 @@ import { Button } from "@/components/ui/Button";
 
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { LinkRoundAngle } from "@solar-icons/react/ssr";
+import {
+  ChatRoundCheck,
+  LinkRoundAngle,
+  Mailbox,
+  NotificationUnread,
+  RefreshCircle,
+  ShieldCheck,
+  ShieldWarning,
+} from "@solar-icons/react/ssr";
+import { Loading } from "@/components/ui/Loading";
 
 export const EmailVerificationStep: React.FC<OnboardingStepProps> = ({
   data,
@@ -39,11 +48,11 @@ export const EmailVerificationStep: React.FC<OnboardingStepProps> = ({
 
   const checkVerificationStatus = async () => {
     try {
-      const response = await fetch("/api/auth/verification-status");
+      const response = await fetch("/api/auth/verify-status");
       const result = await response.json();
 
-      setVerificationStatus(result.verified ? "verified" : "unverified");
-      onDataChange({ emailVerified: result.verified });
+      setVerificationStatus(result.emailVerified ? "verified" : "unverified");
+      onDataChange({ emailVerified: result.emailVerified });
     } catch (error) {
       console.error("Error checking verification status:", error);
       setVerificationStatus("unverified");
@@ -73,16 +82,11 @@ export const EmailVerificationStep: React.FC<OnboardingStepProps> = ({
     }
   };
 
-  const skipVerification = () => {
-    onDataChange({ emailVerified: false });
-    onNext();
-  };
-
   if (verificationStatus === "checking") {
     return (
-      <div className="p-8 flex items-center justify-center">
+      <div className="p-8 flex gap-2 items-center justify-center">
         <div className="text-center">
-          <LinkRoundAngle className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-4" />
+          <Loading />
           <Text>Verificando status do email...</Text>
         </div>
       </div>
@@ -102,9 +106,9 @@ export const EmailVerificationStep: React.FC<OnboardingStepProps> = ({
             }`}
           >
             {verificationStatus === "verified" ? (
-              <LinkRoundAngle className="w-8 h-8 text-green-600 dark:text-green-300" />
+              <Mailbox className="w-8 h-8 text-green-600 dark:text-green-300" />
             ) : (
-              <LinkRoundAngle className="w-8 h-8 text-yellow-600 dark:text-yellow-300" />
+              <Mailbox className="w-8 h-8 text-yellow-600 dark:text-yellow-300" />
             )}
           </div>
 
@@ -123,9 +127,9 @@ export const EmailVerificationStep: React.FC<OnboardingStepProps> = ({
 
         {verificationStatus === "verified" ? (
           /* Email Verified Content */
-          <Card className="p-6 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700">
+          <Card className="p-6 card-base">
             <div className="text-center">
-              <LinkRoundAngle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+              <ChatRoundCheck className="w-12 h-12 text-green-500 mx-auto mb-4" />
               <Text
                 size="lg"
                 className="text-green-800 dark:text-green-100 mb-2"
@@ -140,29 +144,22 @@ export const EmailVerificationStep: React.FC<OnboardingStepProps> = ({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div className="flex items-center gap-3 p-3 bg-white dark:bg-green-800/50 rounded-lg">
-                  <LinkRoundAngle className="w-5 h-5 text-green-600 dark:text-green-300" />
+                  <ShieldCheck className="w-5 h-5 text-green-600 dark:text-green-300" />
                   <Text size="sm">Conta protegida</Text>
                 </div>
                 <div className="flex items-center gap-3 p-3 bg-white dark:bg-green-800/50 rounded-lg">
-                  <LinkRoundAngle className="w-5 h-5 text-green-600 dark:text-green-300" />
+                  <NotificationUnread className="w-5 h-5 text-green-600 dark:text-green-300" />
                   <Text size="sm">Notificações ativas</Text>
                 </div>
               </div>
-
-              <Button
-                onClick={onNext}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                Continuar para as boas práticas
-              </Button>
             </div>
           </Card>
         ) : (
           /* Email Not Verified Content */
           <div className="space-y-6">
-            <Card className="p-6 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700">
+            <Card className="p-6 card-base">
               <div className="flex items-start gap-4">
-                <LinkRoundAngle className="w-6 h-6 text-yellow-600 dark:text-yellow-300 mt-1" />
+                <ShieldWarning className="w-6 h-6 text-yellow-600 dark:text-yellow-300 mt-1" />
                 <div className="flex-1">
                   <Text
                     size="lg"
@@ -198,7 +195,7 @@ export const EmailVerificationStep: React.FC<OnboardingStepProps> = ({
                       variant="ghost"
                       className="w-full sm:w-auto ml-0 sm:ml-3"
                     >
-                      <LinkRoundAngle className="w-4 h-4 mr-2" />
+                      <RefreshCircle className="w-4 h-4 mr-2" />
                       Já verifiquei, atualizar status
                     </Button>
                   </div>
@@ -229,23 +226,19 @@ export const EmailVerificationStep: React.FC<OnboardingStepProps> = ({
               </div>
             </Card>
 
-            {/* Continue Options */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button
-                onClick={onNext}
-                disabled={parentLoading}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                Continuar (verificarei depois)
-              </Button>
-
-              <Button
-                onClick={skipVerification}
-                variant="ghost"
-                className="text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-gray-100"
-              >
-                Pular verificação
-              </Button>
+            {/* Verification Required Message */}
+            <div className="text-center">
+              <Card className="p-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700">
+                <Text className="text-blue-800 dark:text-blue-100 font-medium">
+                  ⚠️ A verificação do email é obrigatória para continuar
+                </Text>
+                <Text
+                  size="sm"
+                  className="text-blue-700 dark:text-blue-200 mt-2"
+                >
+                  Por favor, verifique seu email para prosseguir com o cadastro
+                </Text>
+              </Card>
             </div>
 
             <div className="text-center">

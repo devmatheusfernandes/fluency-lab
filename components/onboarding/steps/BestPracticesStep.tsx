@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/Card";
 import { Text } from "@/components/ui/Text";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { LinkRoundAngle } from "@solar-icons/react/ssr";
+import { LightbulbBolt, LinkRoundAngle } from "@solar-icons/react/ssr";
 
 interface PracticeCardProps {
   icon: React.ReactNode;
@@ -61,7 +61,7 @@ const PracticeCard: React.FC<PracticeCardProps> = ({
 
   return (
     <Card
-      className={`p-6 ${classes.border} ${classes.bg} transition-all duration-200 hover:shadow-md`}
+      className={`p-6 ${classes.border} ${classes.bg} transition-all duration-200 `}
     >
       <div className="flex items-start gap-4">
         <div
@@ -93,7 +93,7 @@ const PracticeCard: React.FC<PracticeCardProps> = ({
             variant="ghost"
             size="sm"
             onClick={() => setIsExpanded(!isExpanded)}
-            className={`p-0 h-auto font-medium ${classes.buttonColor}`}
+            className={`h-auto font-medium ${classes.buttonColor}`}
           >
             {isExpanded ? "Ver menos" : "Ver dicas"}
             <LinkRoundAngle
@@ -190,8 +190,8 @@ export const BestPracticesStep: React.FC<OnboardingStepProps> = ({
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-green-500 to-blue-600 rounded-full mb-4">
-            <LinkRoundAngle className="w-8 h-8 text-white" />
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-secondary/20 border-1 border-secondary rounded-full mb-4">
+            <LightbulbBolt className="w-8 h-8 text-secondary" />
           </div>
 
           <Text variant="title">Boas Práticas para o Sucesso</Text>
@@ -203,24 +203,6 @@ export const BestPracticesStep: React.FC<OnboardingStepProps> = ({
             melhor experiência possível conosco.
           </Text>
         </div>
-
-        {/* Success Quote */}
-        <Card className="p-6 mb-8 bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/30 dark:to-green-900/30 border border-blue-200 dark:border-blue-700">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-800 rounded-full flex items-center justify-center">
-              <LinkRoundAngle className="w-6 h-6 text-yellow-600 dark:text-yellow-300" />
-            </div>
-            <div>
-              <Text className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
-                "O sucesso no aprendizado de idiomas é 50% método e 50%
-                consistência."
-              </Text>
-              <Text size="sm" className="text-blue-700 dark:text-blue-200">
-                — Equipe Pedagógica Fluency Lab
-              </Text>
-            </div>
-          </div>
-        </Card>
 
         {/* Best Practices Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -351,31 +333,6 @@ export const BestPracticesStep: React.FC<OnboardingStepProps> = ({
             </div>
           </div>
         </Card>
-
-        {/* Success Tips */}
-        <Card className="p-6 bg-gradient-to-r from-green-50 to-teal-50 dark:from-green-900/30 dark:to-teal-900/30 border border-green-200 dark:border-green-700">
-          <div className="text-center">
-            <LinkRoundAngle className="w-8 h-8 text-green-600 dark:text-green-300 mx-auto mb-3" />
-            <Text className="font-semibold text-green-800 dark:text-green-100 mb-2">
-              💡 Dica de Ouro
-            </Text>
-            <Text className="text-green-700 dark:text-green-200">
-              Estudantes que seguem essas boas práticas avançam{" "}
-              <strong>3x mais rápido</strong> no aprendizado. A consistência e o
-              comprometimento são seus maiores aliados!
-            </Text>
-          </div>
-        </Card>
-
-        <div className="text-center mt-8">
-          <Button
-            onClick={onNext}
-            size="lg"
-            className="px-8 py-3 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-semibold"
-          >
-            Entendi! Vamos escolher meu plano
-          </Button>
-        </div>
       </div>
     </div>
   );

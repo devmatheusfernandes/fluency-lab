@@ -66,7 +66,7 @@ const ModalContent = React.forwardRef<
             <Dialog.Content
               className={twMerge(
                 `relative w-full max-w-lg mx-4 mb-4 sm:mb-6
-                bg-white/75 dark:bg-gray-900/95 
+                bg-white dark:bg-gray-900/95 
                 backdrop-blur-xl
                 rounded-2xl shadow-2xl
                 border border-gray-200/50 dark:border-gray-700/50
@@ -226,7 +226,7 @@ const ModalFooter = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2, duration: 0.2 }}
       className={twMerge(
-        "flex gap-3 pt-4 border-t border-gray-200/50 dark:border-gray-700/50",
+        "flex flex-row justify-end gap-3 pt-4 border-t border-gray-200/50 dark:border-gray-700/50",
         className
       )}
       {...props}
@@ -444,11 +444,11 @@ const ModalPrimaryButton = React.forwardRef<
 >(({ className, variant = "default", ...props }, ref) => {
   const variantStyles = {
     default:
-      "bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700",
+      "bg-primary hover:bg-primary-hover dark:bg-primary dark:hover:bg-primary-hover",
     destructive:
-      "bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700",
+      "bg-danger hover:bg-danger-hover dark:bg-danger dark:hover:bg-danger-hover",
     secondary:
-      "bg-orange-600 hover:bg-orange-700 dark:bg-orange-600 dark:hover:bg-orange-700",
+      "bg-secondary hover:bg-secondary-hover dark:bg-secondary dark:hover:bg-secondary-hover",
   };
 
   return (
@@ -460,7 +460,7 @@ const ModalPrimaryButton = React.forwardRef<
       className={twMerge(
         `min-w-fit flex-1 px-6 py-3 text-base font-semibold text-white rounded-xl 
         transition-all duration-150 focus:outline-none 
-        disabled:opacity-50 disabled:cursor-not-allowed shadow-lg
+        disabled:opacity-50 disabled:cursor-not-allowed
         ${variantStyles[variant]}`,
         className
       )}
@@ -482,7 +482,7 @@ const ModalSecondaryButton = React.forwardRef<
       whileTap={{ scale: 0.98 }}
       transition={{ type: "spring", stiffness: 400, damping: 17 }}
       className={twMerge(
-        `flex-1 px-6 py-3 text-base font-semibold 
+        `min-w-fit px-6 py-3 text-base font-semibold 
         text-gray-700 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-200
         bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700
         rounded-xl transition-all duration-150

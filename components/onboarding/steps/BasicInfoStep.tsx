@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/Button";
 
 import { useSession } from "next-auth/react";
+import { useTheme } from "@/context/ThemeContext";
 import {
   LinkRoundAngle,
   Moon,
@@ -90,6 +91,7 @@ export const BasicInfoStep: React.FC<OnboardingStepProps> = ({
   onNext,
 }) => {
   const { data: session } = useSession();
+  const { isDark, setTheme } = useTheme();
 
   const languageOptions = [
     { value: "pt", label: "Português" },
@@ -122,6 +124,8 @@ export const BasicInfoStep: React.FC<OnboardingStepProps> = ({
 
   const handleThemeChange = (theme: "light" | "dark") => {
     onDataChange({ theme });
+    // Actually apply the theme change immediately
+    setTheme(theme === "dark");
   };
 
   const isValid = data.nickname.trim().length >= 2;
@@ -131,7 +135,7 @@ export const BasicInfoStep: React.FC<OnboardingStepProps> = ({
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-full mb-4">
             <User className="w-8 h-8 text-white" />
           </div>
 
@@ -238,65 +242,12 @@ export const BasicInfoStep: React.FC<OnboardingStepProps> = ({
             </div>
           </Card>
 
-          {/* Preview Card */}
-          {isValid && (
-            <Card className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 border border-blue-200 dark:border-blue-700">
-              <Text className="font-semibold mb-2 text-blue-900 dark:text-blue-100">
-                Prévia da sua configuração:
-              </Text>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-300">
-                    Apelido:
-                  </span>
-                  <span className="font-medium">{data.nickname}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-300">
-                    Idioma:
-                  </span>
-                  <span className="font-medium">
-                    {
-                      languageOptions.find(
-                        (lang) => lang.value === data.interfaceLanguage
-                      )?.label
-                    }
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-300">
-                    Tema:
-                  </span>
-                  <span className="font-medium capitalize">{data.theme}</span>
-                </div>
-              </div>
-            </Card>
-          )}
-
           {/* Help Text */}
-          <div className="text-center">
-            <Text size="sm" className="text-gray-500 dark:text-gray-400">
+          <div className="text-center bg-secondary/15 p-3 rounded-xl">
+            <Text size="sm" className="text-gray-800 dark:text-gray-200">
               💡 Não se preocupe, você pode alterar essas configurações a
               qualquer momento nas preferências da conta.
             </Text>
-          </div>
-
-          {/* Continue Button */}
-          <div className="text-center pt-4">
-            <Button
-              onClick={onNext}
-              disabled={!isValid}
-              size="lg"
-              className={`px-8 py-3 font-semibold transition-all duration-200 ${
-                isValid
-                  ? "bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white transform hover:scale-105 shadow-lg hover:shadow-xl"
-                  : "bg-gray-300 dark:bg-gray-600 text-gray-500 cursor-not-allowed"
-              }`}
-            >
-              {isValid
-                ? "Continuar configuração"
-                : "Preencha seu apelido para continuar"}
-            </Button>
           </div>
         </div>
       </div>

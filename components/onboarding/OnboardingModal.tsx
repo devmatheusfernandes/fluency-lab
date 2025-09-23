@@ -4,11 +4,11 @@ import React, { useState, useCallback } from "react";
 import {
   Modal,
   ModalContent,
-  ModalClose,
-  ModalDescription,
-  ModalTitle,
+  ModalFooter,
+  ModalHeader,
+  ModalPrimaryButton,
+  ModalSecondaryButton,
 } from "@/components/ui/Modal";
-import { Button } from "@/components/ui/Button";
 import { ProgressTracker } from "@/components/ui/ProgressTracker";
 import { ArrowLeft, ArrowRight } from "@solar-icons/react";
 import { toast } from "sonner";
@@ -90,9 +90,21 @@ const STEPS = [
   { id: "finish", title: "Finalização", component: FinishStep },
 ];
 
+// Dynamic button texts for each step
+const BUTTON_TEXTS = {
+  welcome: "Vamos começar!",
+  overview: "Entendi! Vamos continuar",
+  "basic-info": "Salvar e continuar",
+  "email-verification": "Continuar para as boas práticas",
+  "best-practices": "Entendi! Vamos escolher meu plano",
+  "contract-selection": "Revisar contrato",
+  "contract-review": "Aceitar e continuar",
+  payment: "Finalizar cadastro",
+  finish: "Continuar",
+};
+
 export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   isOpen,
-  onClose,
   onComplete,
 }) => {
   const { data: session, update: updateSession } = useSession();
@@ -122,7 +134,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
       case "basic-info":
         return data.nickname.trim().length > 0;
       case "email-verification":
-        return true; // Optional step
+        return data.emailVerified; // Require email verification
       case "best-practices":
         return true;
       case "contract-selection":
@@ -164,9 +176,6 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
     try {
       setIsLoading(true);
 
-      console.log("🚀 Starting onboarding completion...");
-      console.log("📊 Current session before completion:", session);
-
       // Mark tutorial as completed
       const response = await fetch("/api/onboarding/complete", {
         method: "POST",
@@ -178,83 +187,36 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
         throw new Error("Failed to complete onboarding");
       }
 
-      const result = await response.json();
-      console.log("✅ API response:", result);
-
-      // Update session to reflect onboarding completion
-      console.log("🔄 Updating session...");
-      
-      // Force a session refresh from the server to get the updated user data
-      const updatedSession = await updateSession();
-      
-      console.log("✅ Session updated:", updatedSession);
-      console.log("📊 New session state:", session);
-
       // Add a small delay to ensure session is fully updated
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       toast.success("Bem-vindo ao Fluency Lab!");
       onComplete();
     } catch (error) {
-      console.error("❌ Error completing onboarding:", error);
       toast.error("Erro ao finalizar o processo de integração.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleClose = (open: boolean) => {
-    // Prevent closing during critical steps
-    if (!open && currentStep >= 6 && !data.paymentCompleted) {
-      toast.warning(
-        "Por favor, complete o processo de pagamento antes de fechar."
-      );
-      return;
-    }
-    if (!open) {
-      onClose();
-    }
-  };
-
   // Don't render if not open
   if (!isOpen) return null;
-
-  console.log("🎯 OnboardingModal rendering:", {
-    isOpen,
-    currentStep,
-    stepTitle: STEPS[currentStep]?.title,
-    dataState: data,
-  });
-
   const CurrentStepComponent = STEPS[currentStep].component;
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === STEPS.length - 1;
 
   return (
-    <Modal open={isOpen} onOpenChange={handleClose}>
+    <Modal open={isOpen}>
       <ModalContent
-        className="max-w-4xl w-full mx-4 onboarding-modal-enter p-0 max-h-[90vh] overflow-hidden flex flex-col onboarding-card bg-white dark:bg-gray-900"
+        className="max-w-6xl w-full onboarding-modal-enter max-h-[95vh] overflow-y-auto flex flex-col no-scrollbar"
         style={{ zIndex: 9999, position: "fixed" }}
       >
-        {/* Required title and description for accessibility */}
-        <ModalTitle className="sr-only">Integração ao Fluency Lab</ModalTitle>
-        <ModalDescription className="sr-only">
-          Processo de integração ao Fluency Lab - Passo {currentStep + 1} de{" "}
-          {STEPS.length}: {STEPS[currentStep].title}
-        </ModalDescription>
-
         {/* Header with progress */}
-        <div className="flex-shrink-0 p-6 border-b border-gray-200 dark:border-gray-700">
-          {/* Close button - only show before payment/contract steps */}
-          {currentStep < 6 && <ModalClose />}
-
-          <div className="flex items-center justify-between mb-4">
+        <ModalHeader className="max-w-5xl mx-auto">
+          <div className="flex items-center justify-between mb-2">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Integração ao Fluency Lab
+              Primeiros passos
             </h2>
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              {currentStep + 1} de {STEPS.length}
-            </span>
           </div>
 
           <ProgressTracker
@@ -264,58 +226,53 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
             value={(currentStep + 1) * (100 / STEPS.length)}
             className="mb-2"
           />
-        </div>
+        </ModalHeader>
 
-        {/* Step content */}
-        <div className="flex-1 overflow-y-auto step-content-enter">
-          <CurrentStepComponent
-            data={data}
-            onDataChange={handleDataChange}
-            onNext={handleNext}
-            onBack={handleBack}
-            isLoading={isLoading}
-          />
-        </div>
+        <CurrentStepComponent
+          data={data}
+          onDataChange={handleDataChange}
+          onNext={handleNext}
+          onBack={handleBack}
+          isLoading={isLoading}
+        />
 
         {/* Footer with navigation buttons */}
-        <div className="flex-shrink-0 p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-          <div className="flex justify-between items-center">
-            <Button
-              variant="ghost"
+        <ModalFooter>
+          {!isLastStep && (
+            <ModalSecondaryButton
               onClick={handleBack}
               disabled={isFirstStep || isLoading}
-              className="flex items-center gap-2 step-nav-button"
+              className="flex flex-row items-center gap-1"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-5 h-5" />
               Voltar
-            </Button>
+            </ModalSecondaryButton>
+          )}
 
-            <div className="flex gap-3">
-              {!isLastStep && (
-                <Button
-                  onClick={handleNext}
-                  disabled={!canGoNext() || isLoading}
-                  className="flex items-center gap-2 step-nav-button"
-                  isLoading={isLoading}
-                >
-                  Continuar
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-              )}
+          <div className="flex gap-3">
+            {!isLastStep && (
+              <ModalPrimaryButton
+                onClick={handleNext}
+                disabled={!canGoNext() || isLoading}
+                className="flex flex-row gap-1 items-center"
+              >
+                {BUTTON_TEXTS[
+                  STEPS[currentStep].id as keyof typeof BUTTON_TEXTS
+                ] || "Continuar"}{" "}
+                <ArrowRight className="w-5 h-5" />
+              </ModalPrimaryButton>
+            )}
 
-              {isLastStep && (
-                <Button
-                  onClick={handleCompleteOnboarding}
-                  disabled={isLoading}
-                  className="flex items-center gap-2 step-nav-button"
-                  isLoading={isLoading}
-                >
-                  Finalizar
-                </Button>
-              )}
-            </div>
+            {isLastStep && (
+              <ModalPrimaryButton
+                onClick={handleCompleteOnboarding}
+                disabled={isLoading}
+              >
+                Finalizar
+              </ModalPrimaryButton>
+            )}
           </div>
-        </div>
+        </ModalFooter>
       </ModalContent>
     </Modal>
   );

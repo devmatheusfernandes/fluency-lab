@@ -287,10 +287,6 @@ export default function TasksCard({
                 disabled={isSyncingWithGoogleCalendar}
                 className="flex items-center gap-1 px-3 py-2 bg-primary text-primary-text rounded-lg text-sm font-medium disabled:opacity-50"
               >
-                <Refresh
-                  weight="BoldDuotone"
-                  className={`w-4 h-4 ${isSyncingWithGoogleCalendar ? "animate-spin" : ""}`}
-                />
                 {isSyncingWithGoogleCalendar ? (
                   <Loading size="sm" />
                 ) : (

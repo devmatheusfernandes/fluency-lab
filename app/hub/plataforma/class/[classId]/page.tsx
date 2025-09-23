@@ -13,7 +13,7 @@ interface ClassPageProps {
 
 export default async function ClassPage({ params }: ClassPageProps) {
   const session = await getServerSession(authOptions);
-  const { classId } = await params;
+  const { classId } = params;
 
   // Busca os dados da aula no servidor
   const classDetails = await schedulingService.getClassDetails(

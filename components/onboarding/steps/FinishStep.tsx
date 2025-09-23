@@ -102,14 +102,6 @@ export const FinishStep: React.FC<OnboardingStepProps> = ({ data }) => {
   const nextSteps = [
     {
       icon: <LinkRoundAngle className="w-6 h-6" />,
-      title: "Agende sua Primeira Aula",
-      description:
-        "Escolha um horário conveniente com um dos nossos professores qualificados.",
-      action: "Ir para Agendamento",
-      color: "blue" as const,
-    },
-    {
-      icon: <LinkRoundAngle className="w-6 h-6" />,
       title: "Complete seu Perfil",
       description:
         "Adicione informações sobre seus objetivos e nível atual de conhecimento.",
@@ -161,20 +153,7 @@ export const FinishStep: React.FC<OnboardingStepProps> = ({ data }) => {
     <div className="p-8">
       <div className="max-w-4xl mx-auto">
         {/* Main Celebration */}
-        <div className="text-center mb-12">
-          <div className="relative inline-block">
-            <div className="w-24 h-24 bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 rounded-full flex items-center justify-center mb-6 mx-auto relative overflow-hidden">
-              <LinkRoundAngle className="w-12 h-12 text-white" />
-              <div className="absolute inset-0 bg-gradient-to-r from-green-400/20 via-blue-500/20 to-purple-600/20 animate-pulse rounded-full"></div>
-            </div>
-
-            {/* Floating celebration icons */}
-            <LinkRoundAngle className="w-6 h-6 text-yellow-400 absolute -top-2 -left-4 animate-bounce" />
-            <LinkRoundAngle className="w-5 h-5 text-blue-400 absolute -top-4 -right-2 animate-bounce delay-300" />
-            <LinkRoundAngle className="w-4 h-4 text-pink-400 absolute -bottom-2 -left-6 animate-bounce delay-700" />
-            <LinkRoundAngle className="w-5 h-5 text-orange-400 absolute -bottom-4 right-0 animate-bounce delay-500" />
-          </div>
-
+        <div className="text-center mb-6">
           <Text
             variant="title"
             size="3xl"
@@ -290,61 +269,17 @@ export const FinishStep: React.FC<OnboardingStepProps> = ({ data }) => {
           <Text variant="title" size="xl" className="text-center mb-6">
             Próximos Passos
           </Text>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {nextSteps.map((step, index) => (
               <NextStepCard key={index} {...step} />
             ))}
           </div>
         </div>
 
-        {/* Welcome Benefits */}
-        <Card className="p-8 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-200 dark:border-yellow-700 mb-8">
-          <div className="text-center mb-6">
-            <LinkRoundAngle className="w-12 h-12 text-yellow-600 dark:text-yellow-300 mx-auto mb-3" />
-            <Text
-              variant="title"
-              size="lg"
-              className="text-yellow-900 dark:text-yellow-100 mb-2"
-            >
-              Bônus de Boas-Vindas! 🎁
-            </Text>
-            <Text className="text-yellow-700 dark:text-yellow-200">
-              Como novo estudante, você tem direito a estes benefícios
-              especiais:
-            </Text>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center p-4 bg-white dark:bg-yellow-900/20 rounded-lg">
-              <LinkRoundAngle className="w-8 h-8 text-yellow-600 dark:text-yellow-300 mx-auto mb-2" />
-              <Text className="font-semibold mb-1">Material Gratuito</Text>
-              <Text size="sm" className="text-gray-600 dark:text-gray-300">
-                Acesso completo a todos os materiais didáticos
-              </Text>
-            </div>
-
-            <div className="text-center p-4 bg-white dark:bg-yellow-900/20 rounded-lg">
-              <LinkRoundAngle className="w-8 h-8 text-yellow-600 dark:text-yellow-300 mx-auto mb-2" />
-              <Text className="font-semibold mb-1">Suporte Prioritário</Text>
-              <Text size="sm" className="text-gray-600 dark:text-gray-300">
-                Atendimento especial nos primeiros 30 dias
-              </Text>
-            </div>
-
-            <div className="text-center p-4 bg-white dark:bg-yellow-900/20 rounded-lg">
-              <LinkRoundAngle className="w-8 h-8 text-yellow-600 dark:text-yellow-300 mx-auto mb-2" />
-              <Text className="font-semibold mb-1">Avaliação Gratuita</Text>
-              <Text size="sm" className="text-gray-600 dark:text-gray-300">
-                Teste de nivelamento sem custo adicional
-              </Text>
-            </div>
-          </div>
-        </Card>
-
         {/* Success Message */}
-        <Card className="p-6 bg-gradient-to-r from-green-500 to-blue-600 text-white text-center">
+        <Card className="p-6 bg-gradient-to-r from-success to-primary text-white text-center">
           <Text size="xl" className="mb-3 text-white">
-            Bem-vindo à família Fluency Lab! 💙
+            Bem-vindo à Fluency Lab! 💙
           </Text>
           <Text className="mb-4 text-green-50">
             Estamos muito empolgados em fazer parte da sua jornada de
@@ -354,13 +289,13 @@ export const FinishStep: React.FC<OnboardingStepProps> = ({ data }) => {
 
           <div className="flex flex-wrap justify-center gap-2 text-sm">
             <span className="bg-white/20 px-3 py-1 rounded-full">
-              📚 Aprenda no seu ritmo
+              Aprenda no seu ritmo
             </span>
             <span className="bg-white/20 px-3 py-1 rounded-full">
-              🎯 Foque nos seus objetivos
+              Foque nos seus objetivos
             </span>
             <span className="bg-white/20 px-3 py-1 rounded-full">
-              🏆 Alcance a fluência
+              Alcance a fluência
             </span>
           </div>
         </Card>
@@ -372,10 +307,10 @@ export const FinishStep: React.FC<OnboardingStepProps> = ({ data }) => {
           </Text>
           <div className="flex flex-wrap justify-center gap-4 text-sm">
             <span className="text-blue-600 dark:text-blue-400">
-              📧 contato@fluencylab.com.br
+              📧 contato@fluencylab.me
             </span>
             <span className="text-green-600 dark:text-green-400">
-              📱 WhatsApp: (49) 99999-9999
+              📱 WhatsApp: (86) 99999-9999
             </span>
           </div>
         </div>

@@ -61,12 +61,12 @@ E TAMBÉM PODEM FUNCIONAR COMO ITENS DENTRO DE SUBCONTAINERS*/
 
 @theme {
   /* Light Theme Colors */
-  --color-primary: oklch(32.07% 0.1509 270.29);
-  --color-primary-hover: oklch(27.85% 0.1262 270.94);
+  --color-primary: oklch(.585 .233 277.117);
+  --color-primary-hover: oklch(.457 .24 277.023);
   --color-primary-text: oklch(95% 0.015 296.8);
 
-  --color-secondary: oklch(81.79% 0.1705 77.95);
-  --color-secondary-hover: oklch(78.39% 0.1719 68.09);
+  --color-secondary: oklch(.769 .188 70.08);
+  --color-secondary-hover: oklch(.666 .179 58.318);
   --color-secondary-text: oklch(95% 0.015 296.8);
 
   --color-background: oklch(75% 0.0650 280);
@@ -88,7 +88,7 @@ E TAMBÉM PODEM FUNCIONAR COMO ITENS DENTRO DE SUBCONTAINERS*/
   --color-warning-light: oklch(.555 .163 48.998);
 
   --color-danger: oklch(.586 .253 17.585);
-  --color-danger-light: oklch(.514 .222 16.935);
+  --color-danger-light: oklch(.645 .246 16.439);
 
   --color-error: oklch(.455 .188 13.697);
 
@@ -116,12 +116,12 @@ E TAMBÉM PODEM FUNCIONAR COMO ITENS DENTRO DE SUBCONTAINERS*/
 
 /* Dark theme colors - applied when .dark class is present */
 .dark {
-  --color-primary: oklch(0.491 0.27 292.581);
-  --color-primary-hover: oklch(0.438 0.218 303.724);
+  --color-primary: oklch(.585 .233 277.117);
+  --color-primary-hover: oklch(.457 .24 277.023);
   --color-primary-text: oklch(95% 0.015 296.8);
 
-  --color-secondary: oklch(0.769 0.188 70.08);
-  --color-secondary-hover: oklch(0.666 0.179 58.318);
+  --color-secondary: oklch(.769 .188 70.08);
+  --color-secondary-hover: oklch(.666 .179 58.318);
   --color-secondary-text: oklch(95% 0.015 296.8);
 
   --color-background: oklch(12.27% 0.0105 280);
@@ -143,8 +143,8 @@ E TAMBÉM PODEM FUNCIONAR COMO ITENS DENTRO DE SUBCONTAINERS*/
   --color-warning: oklch(0.705 0.213 47.604);
   --color-warning-light: oklch(0.75 0.183 55.934);
 
-  --color-danger: oklch(0.645 0.246 16.439);
-  --color-danger-light: oklch(65% 0.18 26);
+  --color-danger: oklch(.586 .253 17.585);
+  --color-danger-light: oklch(.645 .246 16.439);
 
   --color-error: oklch(45% 0.2 26.8);
 

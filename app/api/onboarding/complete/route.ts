@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { adminDb, adminAuth } from "@/lib/firebase/admin";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { UserRoles } from "@/types/users/userRoles";
 import { withValidation } from "@/lib/validation";
 import { z } from "zod";
 
@@ -15,7 +14,7 @@ const onboardingSchema = z.object({
   emailVerified: z.boolean().optional(),
   contractLengthMonths: z.number().int().min(1).max(24).optional(),
   contractSigned: z.boolean().optional(),
-  paymentMethod: z.string().max(50).optional(),
+  paymentMethod: z.string().max(50).nullable().optional(),
   paymentCompleted: z.boolean().optional(),
   subscriptionId: z.string().max(100).optional(),
 });

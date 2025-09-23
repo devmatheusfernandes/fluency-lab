@@ -77,7 +77,7 @@ export default function SettingsForm({
   ];
 
   return (
-    <SubContainer onSubmit={handleSubmit} className="p-3">
+    <SubContainer className="p-3">
       <Card>
         <Text variant="subtitle" size="lg" weight="semibold">
           Interface
@@ -103,6 +103,12 @@ export default function SettingsForm({
               onCheckedChange={(checked) => setTheme(checked)}
             />
           </div>
+        </div>
+
+        <div className="flex flex-row justify-end">
+          <Button type="submit" variant="primary" disabled={isLoading}>
+            {isLoading ? <Loading /> : "Salvar Configurações"}
+          </Button>
         </div>
       </Card>
 
@@ -274,12 +280,6 @@ export default function SettingsForm({
           </div>
         </div>
       </Card>
-
-      <div className="flex justify-end">
-        <Button type="submit" variant="primary" disabled={isLoading}>
-          {isLoading ? <Loading /> : "Salvar Configurações"}
-        </Button>
-      </div>
     </SubContainer>
   );
 }

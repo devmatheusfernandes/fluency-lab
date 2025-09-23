@@ -31,7 +31,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
       iconBg: "bg-blue-100 dark:bg-blue-800",
       iconColor: "text-blue-600 dark:text-blue-300",
       badgeColor:
-        "bg-blue-100 text-blue-700 dark:bg-blue-800 dark:text-blue-200",
+        "bg-blue-100 hover:bg-blue-200 text-blue-700 dark:bg-blue-800 hover:dark:bg-blue-900 dark:text-blue-200",
     },
     green: {
       border: "border-green-200 dark:border-green-800",
@@ -39,7 +39,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
       iconBg: "bg-green-100 dark:bg-green-800",
       iconColor: "text-green-600 dark:text-green-300",
       badgeColor:
-        "bg-green-100 text-green-700 dark:bg-green-800 dark:text-green-200",
+        "bg-green-100 hover:bg-green-200 text-green-700 dark:bg-green-800 hover:dark:bg-green-900 dark:text-green-200",
     },
     purple: {
       border: "border-purple-200 dark:border-purple-800",
@@ -47,7 +47,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
       iconBg: "bg-purple-100 dark:bg-purple-800",
       iconColor: "text-purple-600 dark:text-purple-300",
       badgeColor:
-        "bg-purple-100 text-purple-700 dark:bg-purple-800 dark:text-purple-200",
+        "bg-purple-100 hover:bg-purple-200 text-purple-700 dark:bg-purple-800 hover:dark:bg-purple-900 dark:text-purple-200",
     },
     orange: {
       border: "border-orange-200 dark:border-orange-800",
@@ -55,7 +55,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
       iconBg: "bg-orange-100 dark:bg-orange-800",
       iconColor: "text-orange-600 dark:text-orange-300",
       badgeColor:
-        "bg-orange-100 text-orange-700 dark:bg-orange-800 dark:text-orange-200",
+        "bg-orange-100 hover:bg-orange-200 text-orange-700 dark:bg-orange-800 hover:dark:bg-orange-900 dark:text-orange-200",
     },
   };
 
@@ -63,7 +63,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
 
   return (
     <Card
-      className={`p-6 ${classes.border} ${classes.bg} transition-all duration-200 hover:shadow-lg hover:scale-105`}
+      className={`p-6 ${classes.border} ${classes.bg} card-base transition-all duration-200 hover:shadow-sm hover:scale-101`}
     >
       <div
         className={`inline-flex items-center justify-center w-12 h-12 ${classes.iconBg} rounded-lg mb-4`}
@@ -82,7 +82,6 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
         {highlights.map((highlight, index) => (
           <Badge
             key={index}
-            variant="secondary"
             className={`${classes.badgeColor} text-xs px-2 py-1 mr-2 mb-1`}
           >
             {highlight}
@@ -151,7 +150,7 @@ export const PlatformOverviewStep: React.FC<OnboardingStepProps> = ({
   };
 
   return (
-    <div className="p-8">
+    <div className="py-2">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
@@ -169,7 +168,7 @@ export const PlatformOverviewStep: React.FC<OnboardingStepProps> = ({
         </div>
 
         {/* Demo Video Section */}
-        <Card className="p-6 mb-8 bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900/30">
+        <Card className="p-6 mb-8 card-base">
           <div className="flex flex-col md:flex-row items-center gap-6">
             <div className="flex-1">
               <Text variant="title">Veja como funciona na prática</Text>
@@ -223,94 +222,6 @@ export const PlatformOverviewStep: React.FC<OnboardingStepProps> = ({
           {features.map((feature, index) => (
             <FeatureCard key={index} {...feature} />
           ))}
-        </div>
-
-        {/* Learning Path Preview */}
-        <Card className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 border border-blue-200 dark:border-blue-700">
-          <div className="text-center mb-6">
-            <Text size="lg" className="mb-3">
-              Sua jornada de aprendizado
-            </Text>
-            <Text className="text-gray-600 dark:text-gray-300">
-              Veja como será sua experiência desde o primeiro dia até a fluência
-            </Text>
-          </div>
-
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            {[
-              {
-                step: "1",
-                title: "Avaliação inicial",
-                desc: "Definimos seu nível atual",
-              },
-              {
-                step: "2",
-                title: "Plano personalizado",
-                desc: "Criamos sua trilha de estudos",
-              },
-              {
-                step: "3",
-                title: "Aulas regulares",
-                desc: "Progresso consistente e acompanhado",
-              },
-              {
-                step: "4",
-                title: "Fluência alcançada",
-                desc: "Certificação e novos objetivos",
-              },
-            ].map((item, index) => (
-              <div key={index} className="text-center">
-                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold text-lg mb-2 mx-auto">
-                  {item.step}
-                </div>
-                <Text className="font-semibold mb-1">{item.title}</Text>
-                <Text size="sm" className="text-gray-600 dark:text-gray-300">
-                  {item.desc}
-                </Text>
-                {index < 3 && (
-                  <LinkRoundAngle className="w-4 h-4 text-gray-400 mx-auto mt-2 hidden md:block" />
-                )}
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        {/* Success Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-          <div className="text-center p-4">
-            <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-1">
-              98%
-            </div>
-            <Text size="sm" className="text-gray-600 dark:text-gray-300">
-              Taxa de satisfação
-            </Text>
-          </div>
-          <div className="text-center p-4">
-            <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-1">
-              500+
-            </div>
-            <Text size="sm" className="text-gray-600 dark:text-gray-300">
-              Alunos ativos
-            </Text>
-          </div>
-          <div className="text-center p-4">
-            <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-1">
-              12k+
-            </div>
-            <Text size="sm" className="text-gray-600 dark:text-gray-300">
-              Aulas ministradas
-            </Text>
-          </div>
-        </div>
-
-        <div className="text-center mt-8">
-          <Button
-            onClick={onNext}
-            size="lg"
-            className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold"
-          >
-            Entendi! Vamos configurar minha conta
-          </Button>
         </div>
       </div>
     </div>

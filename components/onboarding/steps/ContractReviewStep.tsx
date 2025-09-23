@@ -1,7 +1,7 @@
 // components/onboarding/steps/ContractReviewStep.tsx
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { OnboardingStepProps } from "../OnboardingModal";
 import { Card } from "@/components/ui/Card";
 import { Text } from "@/components/ui/Text";
@@ -14,7 +14,8 @@ import ContratoPDF from "@/components/contract/ContratoPDF";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { formatPrice } from "@/config/pricing";
-import { LinkRoundAngle } from "@solar-icons/react/ssr";
+import { LinkRoundAngle, SquareAcademicCap2 } from "@solar-icons/react/ssr";
+import { Loading } from "@/components/ui/Loading";
 
 export const ContractReviewStep: React.FC<OnboardingStepProps> = ({
   data,
@@ -26,6 +27,7 @@ export const ContractReviewStep: React.FC<OnboardingStepProps> = ({
   const [showContract, setShowContract] = useState(false);
   const [isSigningMode, setIsSigningMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCheckingContract, setIsCheckingContract] = useState(true);
   const [formData, setFormData] = useState<SignatureFormData>({
     cpf: "",
     name: session?.user?.name || "",
@@ -56,6 +58,36 @@ export const ContractReviewStep: React.FC<OnboardingStepProps> = ({
     savings:
       data.contractLengthMonths === 12 ? basePrice * 12 - monthlyPrice * 12 : 0,
   };
+
+  // Check if contract is already signed when component mounts
+  useEffect(() => {
+    const checkContractStatus = async () => {
+      if (data.contractSigned) {
+        setIsCheckingContract(false);
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/onboarding/contract-status");
+        if (response.ok) {
+          const result = await response.json();
+          if (result.contractSigned) {
+            onDataChange({
+              contractSigned: true,
+              contractData: result.contractData,
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error checking contract status:", error);
+        // Continue with normal flow if check fails
+      } finally {
+        setIsCheckingContract(false);
+      }
+    };
+
+    checkContractStatus();
+  }, [data.contractSigned, onDataChange]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -218,26 +250,42 @@ export const ContractReviewStep: React.FC<OnboardingStepProps> = ({
     }
   };
 
+  // Show loading state while checking contract status
+  if (isCheckingContract) {
+    return (
+      <div className="p-8 text-center">
+        <div className="max-w-2xl mx-auto">
+          <Loading />
+          <Text variant="title">Verificando Status do Contrato</Text>
+
+          <Text size="lg" className="text-gray-600 dark:text-gray-300 mb-8">
+            Aguarde enquanto verificamos se você já possui um contrato
+            assinado...
+          </Text>
+        </div>
+      </div>
+    );
+  }
+
   if (data.contractSigned) {
     return (
       <div className="p-8 text-center">
         <div className="max-w-2xl mx-auto">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-800 rounded-full mb-6">
-            <LinkRoundAngle className="w-8 h-8 text-green-600 dark:text-green-300" />
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-800 rounded-full mb-3">
+            <SquareAcademicCap2
+              weight="BoldDuotone"
+              className="w-8 h-8 text-green-600 dark:text-green-300"
+            />
           </div>
 
-          <Text variant="title">Contrato Assinado com Sucesso!</Text>
+          <Text variant="title">Contrato assinado com sucesso!</Text>
 
           <Text size="lg" className="text-green-700 dark:text-green-200 mb-8">
             Seu contrato foi processado e está válido. Agora vamos para o
             pagamento!
           </Text>
 
-          <Button
-            onClick={onNext}
-            size="lg"
-            className="bg-green-600 hover:bg-green-700"
-          >
+          <Button onClick={onNext} size="lg" variant="success">
             Prosseguir para pagamento
           </Button>
         </div>
@@ -323,7 +371,6 @@ export const ContractReviewStep: React.FC<OnboardingStepProps> = ({
             onClick={() => setShowContract(!showContract)}
             className="flex items-center gap-2"
           >
-            <LinkRoundAngle className="w-4 h-4" />
             {showContract ? "Ocultar" : "Visualizar"} Contrato Completo
           </Button>
         </div>
@@ -374,7 +421,7 @@ export const ContractReviewStep: React.FC<OnboardingStepProps> = ({
               className="px-8 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold"
             >
               <LinkRoundAngle className="w-5 h-5 mr-2" />
-              Prosseguir para Assinatura Digital
+              Quero assinar o contrato
             </Button>
           </div>
         ) : (
@@ -537,6 +584,7 @@ export const ContractReviewStep: React.FC<OnboardingStepProps> = ({
               <Button
                 onClick={() => setIsSigningMode(false)}
                 disabled={isSubmitting}
+                variant="ghost"
               >
                 Voltar para Revisão
               </Button>
@@ -545,10 +593,9 @@ export const ContractReviewStep: React.FC<OnboardingStepProps> = ({
                 onClick={handleSignContract}
                 disabled={!formData.agreedToTerms || isSubmitting}
                 isLoading={isSubmitting}
-                className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+                variant="success"
               >
-                <LinkRoundAngle className="w-4 h-4 mr-2" />
-                Assinar Contrato Digitalmente
+                Assinar Contrato
               </Button>
             </div>
           </Card>

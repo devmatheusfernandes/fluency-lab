@@ -88,7 +88,7 @@ const ProgressTracker = React.forwardRef<HTMLDivElement, ProgressTrackerProps>(
       <div className="w-full">
         <div
           className={twMerge(
-            "relative bg-surface-2 rounded-full overflow-hidden",
+            "relative rounded-full overflow-hidden",
             sizeClasses[size]
           )}
         >
@@ -126,8 +126,8 @@ const ProgressTracker = React.forwardRef<HTMLDivElement, ProgressTrackerProps>(
                 size === "sm"
                   ? "w-16 h-16"
                   : size === "base"
-                  ? "w-24 h-24"
-                  : "w-32 h-32"
+                    ? "w-24 h-24"
+                    : "w-32 h-32"
               )}
             >
               {/* Background circle */}
@@ -165,8 +165,8 @@ const ProgressTracker = React.forwardRef<HTMLDivElement, ProgressTrackerProps>(
                     size === "sm"
                       ? "text-xs"
                       : size === "base"
-                      ? "text-sm"
-                      : "text-base"
+                        ? "text-sm"
+                        : "text-base"
                   )}
                 >
                   {Math.round(percentage)}%
@@ -186,7 +186,7 @@ const ProgressTracker = React.forwardRef<HTMLDivElement, ProgressTrackerProps>(
         <div className="w-full">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-paragraph">
-              Step {current} of {steps}
+              Passo {current} de {steps}
             </span>
             {showPercentage && (
               <span className="text-sm text-paragraph">

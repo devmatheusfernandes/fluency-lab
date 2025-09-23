@@ -13,6 +13,7 @@ import Badges from "@/components/placement/Badges/Badges";
 import { determineCEFRLevel } from "@/lib/utils";
 import { usePlacementTests } from "@/hooks/usePlacementTests";
 import AchievementList from "@/components/student/AchievementList";
+import { ContainerCard } from "@/components/ui/ContainerCard/ContainerCard";
 
 export default function MeuPerfil() {
   const { user, isLoading } = useCurrentUser();
@@ -23,7 +24,7 @@ export default function MeuPerfil() {
   };
 
   return (
-    <Container
+    <ContainerCard
       className="
         grid gap-2
         grid-cols-1
@@ -87,6 +88,6 @@ export default function MeuPerfil() {
       >
         <AchievementList userId={user?.id} limit={3} />
       </SubContainer>
-    </Container>
+    </ContainerCard>
   );
 }

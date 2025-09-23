@@ -1,7 +1,7 @@
 // components/onboarding/steps/ContractSelectionStep.tsx
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { OnboardingStepProps } from "../OnboardingModal";
 import { Card } from "@/components/ui/Card";
 import { Text } from "@/components/ui/Text";
@@ -10,7 +10,14 @@ import { Badge } from "@/components/ui/Badge";
 
 import { formatPrice } from "@/config/pricing";
 import { useSession } from "next-auth/react";
-import { LinkRoundAngle } from "@solar-icons/react/ssr";
+import {
+  ArrowDown,
+  HandMoney,
+  InfoCircle,
+  LinkRoundAngle,
+  WadOfMoney,
+} from "@solar-icons/react/ssr";
+import { Loading } from "@/components/ui/Loading";
 
 interface ContractOptionProps {
   duration: 6 | 12;
@@ -41,17 +48,17 @@ const ContractOption: React.FC<ContractOptionProps> = ({
 
   return (
     <Card
-      className={`relative p-6 cursor-pointer transition-all duration-300 hover:shadow-lg ${
+      className={`relative p-6 cursor-pointer ease-in-out transition-all duration-300 ${
         selected
-          ? "border-2 border-blue-500 bg-blue-50 dark:bg-blue-900/30 shadow-lg transform scale-105"
-          : "border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600"
-      } ${popular ? "ring-2 ring-yellow-400 ring-opacity-50" : ""}`}
+          ? "!border-1 !border-primary !bg-primary/5 dark:bg-primary/30 transform scale-103"
+          : "!bg-white/10 !border-3"
+      } ${popular ? "" : ""}`}
       onClick={onSelect}
     >
       {popular && (
         <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-          <Badge className="bg-yellow-500 text-white font-bold px-3 py-1">
-            ⭐ MAIS POPULAR
+          <Badge className="bg-secondary text-white font-bold px-4 py-2">
+            MAIS POPULAR
           </Badge>
         </div>
       )}
@@ -60,14 +67,15 @@ const ContractOption: React.FC<ContractOptionProps> = ({
         <div
           className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${
             selected
-              ? "bg-blue-100 dark:bg-blue-800"
+              ? "bg-indigo-100 dark:bg-indigo-800"
               : "bg-gray-100 dark:bg-gray-700"
           }`}
         >
-          <LinkRoundAngle
+          <WadOfMoney
+            weight="BoldDuotone"
             className={`w-8 h-8 ${
               selected
-                ? "text-blue-600 dark:text-blue-300"
+                ? "text-success dark:text-success"
                 : "text-gray-600 dark:text-gray-300"
             }`}
           />
@@ -75,7 +83,7 @@ const ContractOption: React.FC<ContractOptionProps> = ({
 
         <Text variant="title">{title}</Text>
         <Text
-          className={`mt-2 ${selected ? "text-blue-700 dark:text-blue-200" : "text-gray-600 dark:text-gray-300"}`}
+          className={`mt-2 ${selected ? "text-paragraph" : "text-paragraph"}`}
         >
           {description}
         </Text>
@@ -85,26 +93,23 @@ const ContractOption: React.FC<ContractOptionProps> = ({
         <div className="flex items-center justify-center gap-2 mb-2">
           <Text
             size="3xl"
-            className={`font-bold ${selected ? "text-blue-900 dark:text-blue-100" : ""}`}
+            className={`font-bold ${selected ? "text-primary" : ""}`}
           >
             {formatPrice(monthlyPrice)}
           </Text>
-          <Text className="text-gray-500 dark:text-gray-400">/mês</Text>
+          <Text className="text-paragraph">/mês</Text>
         </div>
 
         <div className="space-y-1">
-          <Text size="sm" className="text-gray-600 dark:text-gray-300">
-            Total: <strong>{formatPrice(totalPrice)}</strong>
-          </Text>
           {savings && (
             <div className="flex items-center justify-center gap-1">
-              <Text
-                size="sm"
-                className="text-green-600 dark:text-green-400 font-medium"
-              >
+              <Text size="sm" className="text-success font-medium">
                 Economiza {formatPrice(savings)}
               </Text>
-              <LinkRoundAngle className="w-4 h-4 text-green-500" />
+              <HandMoney
+                weight="BoldDuotone"
+                className="w-4 h-4 text-success"
+              />
             </div>
           )}
         </div>
@@ -115,14 +120,13 @@ const ContractOption: React.FC<ContractOptionProps> = ({
           .slice(0, isExpanded ? benefits.length : 3)
           .map((benefit, index) => (
             <div key={index} className="flex items-center gap-3">
-              <LinkRoundAngle className="w-5 h-5 text-green-500 flex-shrink-0" />
+              <InfoCircle
+                weight="BoldDuotone"
+                className="w-5 h-5 text-primary"
+              />
               <Text
                 size="sm"
-                className={
-                  selected
-                    ? "text-blue-700 dark:text-blue-200"
-                    : "text-gray-600 dark:text-gray-300"
-                }
+                className={selected ? "text-paragraph" : "text-paragraph"}
               >
                 {benefit}
               </Text>
@@ -131,37 +135,31 @@ const ContractOption: React.FC<ContractOptionProps> = ({
       </div>
 
       {benefits.length > 3 && (
-        <Button
-          variant="ghost"
-          size="sm"
+        <div
           onClick={(e) => {
             e.stopPropagation();
             setIsExpanded(!isExpanded);
           }}
-          className={`w-full mb-4 ${selected ? "text-blue-600 hover:text-blue-700" : ""}`}
+          className={`flex flex-row items-center justify-center gap-2 w-full mb-4 ${selected ? "text-primary hover:text-primary-hover" : ""}`}
         >
           {isExpanded
             ? "Ver menos"
             : `Ver mais ${benefits.length - 3} benefícios`}
-          <LinkRoundAngle
-            className={`w-4 h-4 ml-1 transition-transform ${isExpanded ? "rotate-90" : ""}`}
+          <ArrowDown
+            className={`w-4 h-4 ml-1 transition-transform ${isExpanded ? "rotate-180" : ""}`}
           />
-        </Button>
+        </div>
       )}
 
       <div
         className={`text-center p-3 rounded-lg ${
-          selected
-            ? "bg-blue-100 dark:bg-blue-800/50"
-            : "bg-gray-50 dark:bg-gray-700/50"
+          selected ? "bg-primary/30" : "bg-gray-100 dark:bg-gray-700/50"
         }`}
       >
         <Text
           size="sm"
           className={`font-medium ${
-            selected
-              ? "text-blue-900 dark:text-blue-100"
-              : "text-gray-700 dark:text-gray-300"
+            selected ? "text-title" : "text-gray-700 dark:text-gray-300"
           }`}
         >
           {selected ? "✓ Plano Selecionado" : "Clique para selecionar"}
@@ -176,11 +174,41 @@ export const ContractSelectionStep: React.FC<OnboardingStepProps> = ({
   onDataChange,
   onNext,
 }) => {
-  const { data: session } = useSession();
+  const [isCheckingContract, setIsCheckingContract] = useState(true);
+  const basePrice = 29900; // in centavos
 
-  // Get pricing based on user role (STUDENT vs GUARDED_STUDENT)
-  const isGuardedStudent = session?.user?.role === "GUARDED_STUDENT";
-  const basePrice = isGuardedStudent ? 39900 : 29900; // in centavos
+  // Check if contract is already signed when component mounts
+  useEffect(() => {
+    const checkContractStatus = async () => {
+      if (data.contractSigned) {
+        setIsCheckingContract(false);
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/onboarding/contract-status");
+        if (response.ok) {
+          const result = await response.json();
+          if (result.contractSigned) {
+            onDataChange({
+              contractSigned: true,
+              contractData: result.contractData,
+            });
+            // Automatically proceed to next step if contract is already signed
+            onNext();
+            return;
+          }
+        }
+      } catch (error) {
+        console.error("Error checking contract status:", error);
+        // Continue with normal flow if check fails
+      } finally {
+        setIsCheckingContract(false);
+      }
+    };
+
+    checkContractStatus();
+  }, [data.contractSigned, onDataChange, onNext]);
 
   const contractOptions = [
     {
@@ -230,8 +258,25 @@ export const ContractSelectionStep: React.FC<OnboardingStepProps> = ({
     onDataChange({ contractLengthMonths: duration });
   };
 
+  // Show loading state while checking contract status
+  if (isCheckingContract) {
+    return (
+      <div className="py-2">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center">
+            <Loading />
+            <Text variant="title">Verificando Status do Contrato</Text>
+            <Text size="lg" className="text-gray-600 dark:text-gray-300 mb-8">
+              Aguarde enquanto verificamos se você já possui um contrato assinado...
+            </Text>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-8">
+    <div className="py-2">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
@@ -248,20 +293,6 @@ export const ContractSelectionStep: React.FC<OnboardingStepProps> = ({
             aprendizado. Ambos os planos incluem as mesmas funcionalidades
             principais.
           </Text>
-
-          {/* User Type Badge */}
-          <Badge
-            variant="secondary"
-            className={`px-3 py-1 ${
-              isGuardedStudent
-                ? "bg-purple-100 text-purple-700 dark:bg-purple-800 dark:text-purple-200"
-                : "bg-blue-100 text-blue-700 dark:bg-blue-800 dark:text-blue-200"
-            }`}
-          >
-            {isGuardedStudent
-              ? "👨‍👩‍👧‍👦 Estudante Acompanhado"
-              : "🎓 Estudante Regular"}
-          </Badge>
         </div>
 
         {/* Contract Options */}
@@ -375,76 +406,6 @@ export const ContractSelectionStep: React.FC<OnboardingStepProps> = ({
             </div>
           </Card>
         )}
-
-        {/* Success Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-            <LinkRoundAngle className="w-8 h-8 text-green-600 dark:text-green-400 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">
-              95%
-            </div>
-            <Text size="sm" className="text-green-700 dark:text-green-300">
-              dos alunos anuais atingem fluência
-            </Text>
-          </div>
-
-          <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-            <LinkRoundAngle className="w-8 h-8 text-blue-600 dark:text-blue-400 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">
-              3x
-            </div>
-            <Text size="sm" className="text-blue-700 dark:text-blue-300">
-              progresso mais rápido que estudos tradicionais
-            </Text>
-          </div>
-
-          <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-            <LinkRoundAngle className="w-8 h-8 text-purple-600 dark:text-purple-400 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-1">
-              4.9/5
-            </div>
-            <Text size="sm" className="text-purple-700 dark:text-purple-300">
-              avaliação média dos estudantes
-            </Text>
-          </div>
-        </div>
-
-        {/* Info Card */}
-        <Card className="p-6 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-200 dark:border-yellow-700">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-800 rounded-full flex items-center justify-center">
-              <LinkRoundAngle className="w-6 h-6 text-yellow-600 dark:text-yellow-300" />
-            </div>
-            <div>
-              <Text className="font-semibold text-yellow-900 dark:text-yellow-100 mb-1">
-                💡 Dica: A maioria dos nossos alunos de sucesso escolhe o plano
-                anual
-              </Text>
-              <Text size="sm" className="text-yellow-700 dark:text-yellow-200">
-                O aprendizado de idiomas requer consistência e tempo. Com mais
-                tempo para praticar, você desenvolve fluência real e duradoura,
-                além de economizar no processo.
-              </Text>
-            </div>
-          </div>
-        </Card>
-
-        <div className="text-center mt-8">
-          <Button
-            onClick={onNext}
-            disabled={!data.contractLengthMonths}
-            size="lg"
-            className={`px-8 py-3 font-semibold transition-all duration-200 ${
-              data.contractLengthMonths
-                ? "bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white transform hover:scale-105 shadow-lg hover:shadow-xl"
-                : "bg-gray-300 dark:bg-gray-600 text-gray-500 cursor-not-allowed"
-            }`}
-          >
-            {data.contractLengthMonths
-              ? "Revisar contrato e assinar"
-              : "Selecione um plano para continuar"}
-          </Button>
-        </div>
       </div>
     </div>
   );

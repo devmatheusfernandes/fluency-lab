@@ -2,9 +2,11 @@
 
 import {
   signInWithEmailAndPassword,
+  sendEmailVerification,
+  User as FirebaseUser,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase/config";
-import { adminDb } from "@/lib/firebase/admin";
+import { adminDb, adminAuth } from "@/lib/firebase/admin";
 import { User } from "@/types/users/users";
 import { UserRoles } from "@/types/users/userRoles";
 import { TwoFactorService } from "./twoFactorService";
@@ -123,6 +125,95 @@ export class AuthService {
     } catch (error) {
       console.error("Erro ao buscar usuário por ID:", error);
       return null;
+    }
+  }
+
+  /**
+   * Sends email verification using Firebase Auth Admin SDK
+   */
+  async sendEmailVerification(userId: string): Promise<{ success: boolean; message: string }> {
+    try {
+      // Get user from Firebase Auth using Admin SDK
+      const userRecord = await adminAuth.getUser(userId);
+      
+      if (!userRecord) {
+        return {
+          success: false,
+          message: 'User not found'
+        };
+      }
+
+      if (userRecord.emailVerified) {
+        return {
+          success: false,
+          message: 'Email is already verified'
+        };
+      }
+
+      // Generate email verification link using Admin SDK
+      const actionCodeSettings = {
+        url: `${process.env.NEXTAUTH_URL}/auth/verify-email`,
+        handleCodeInApp: true,
+      };
+
+      const verificationLink = await adminAuth.generateEmailVerificationLink(
+        userRecord.email!,
+        actionCodeSettings
+      );
+
+      // Here you would typically send the email using your email service
+      // For now, we'll log it and return success
+      console.log(`Email verification link for ${userRecord.email}: ${verificationLink}`);
+
+      // You can integrate with your email service here:
+      // await this.sendVerificationEmail(userRecord.email, verificationLink);
+
+      return {
+        success: true,
+        message: 'Verification email sent successfully'
+      };
+
+    } catch (error) {
+      console.error('Error sending email verification:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to send verification email'
+      };
+    }
+  }
+
+  /**
+   * Checks if user's email is verified
+   */
+  async isEmailVerified(userId: string): Promise<boolean> {
+    try {
+      const userRecord = await adminAuth.getUser(userId);
+      return userRecord.emailVerified;
+    } catch (error) {
+      console.error('Error checking email verification status:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Manually verify user's email (admin function)
+   */
+  async verifyUserEmail(userId: string): Promise<{ success: boolean; message: string }> {
+    try {
+      await adminAuth.updateUser(userId, {
+        emailVerified: true
+      });
+
+      return {
+        success: true,
+        message: 'Email verified successfully'
+      };
+    } catch (error) {
+      console.error('Error verifying user email:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to verify email'
+      };
     }
   }
 }

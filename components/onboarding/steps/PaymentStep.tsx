@@ -7,12 +7,19 @@ import { Card } from "@/components/ui/Card";
 import { Text } from "@/components/ui/Text";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Badge } from "@/components/ui/Badge";
 
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { formatPrice } from "@/config/pricing";
-import { LinkRoundAngle } from "@solar-icons/react/ssr";
+import {
+  Calendar,
+  Card2,
+  ChatSquareCheck,
+  InfoCircle,
+  LinkRoundAngle,
+  QrCode,
+} from "@solar-icons/react/ssr";
+import { Loading } from "@/components/ui/Loading";
 
 interface PaymentMethodCardProps {
   method: "pix" | "credit_card";
@@ -37,8 +44,8 @@ const PaymentMethodCard: React.FC<PaymentMethodCardProps> = ({
     <Card
       className={`p-6 cursor-pointer transition-all duration-200 hover:shadow-lg ${
         selected
-          ? "border-2 border-blue-500 bg-blue-50 dark:bg-blue-900/30 shadow-lg"
-          : "border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600"
+          ? "!border-1 !border-primary !bg-primary/5 dark:bg-primary/30 transform scale-103"
+          : "!bg-white/10 !border-3"
       }`}
       onClick={onSelect}
     >
@@ -46,14 +53,14 @@ const PaymentMethodCard: React.FC<PaymentMethodCardProps> = ({
         <div
           className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-3 ${
             selected
-              ? "bg-blue-100 dark:bg-blue-800"
+              ? "bg-indigo-100 dark:bg-indigo-800"
               : "bg-gray-100 dark:bg-gray-700"
           }`}
         >
           <div
             className={
               selected
-                ? "text-blue-600 dark:text-blue-300"
+                ? "text-primary-hover "
                 : "text-gray-600 dark:text-gray-300"
             }
           >
@@ -61,14 +68,11 @@ const PaymentMethodCard: React.FC<PaymentMethodCardProps> = ({
           </div>
         </div>
 
-        <Text
-          size="lg"
-          className={selected ? "text-blue-900 dark:text-blue-100" : ""}
-        >
+        <Text size="lg" className={selected ? "text-paragraph" : ""}>
           {title}
         </Text>
         <Text
-          className={`mt-2 ${selected ? "text-blue-700 dark:text-blue-200" : "text-gray-600 dark:text-gray-300"}`}
+          className={`mt-2 ${selected ? "text-title" : "text-gray-600 dark:text-gray-300"}`}
         >
           {description}
         </Text>
@@ -77,13 +81,11 @@ const PaymentMethodCard: React.FC<PaymentMethodCardProps> = ({
       <div className="space-y-2 mb-4">
         {benefits.map((benefit, index) => (
           <div key={index} className="flex items-center gap-2">
-            <LinkRoundAngle className="w-4 h-4 text-green-500 flex-shrink-0" />
+            <InfoCircle className="w-4 h-4 text-success flex-shrink-0" />
             <Text
               size="sm"
               className={
-                selected
-                  ? "text-blue-700 dark:text-blue-200"
-                  : "text-gray-600 dark:text-gray-300"
+                selected ? "text-paragraph" : "text-gray-600 dark:text-gray-300"
               }
             >
               {benefit}
@@ -95,7 +97,7 @@ const PaymentMethodCard: React.FC<PaymentMethodCardProps> = ({
       <div
         className={`text-center p-2 rounded-lg ${
           selected
-            ? "bg-blue-100 dark:bg-blue-800/50"
+            ? "bg-indigo-100 dark:bg-indigo-800/50"
             : "bg-gray-50 dark:bg-gray-700/50"
         }`}
       >
@@ -103,7 +105,7 @@ const PaymentMethodCard: React.FC<PaymentMethodCardProps> = ({
           size="sm"
           className={`font-medium ${
             selected
-              ? "text-blue-900 dark:text-blue-100"
+              ? "text-indigo-900 dark:text-indigo-100"
               : "text-gray-700 dark:text-gray-300"
           }`}
         >
@@ -120,15 +122,14 @@ export const PaymentStep: React.FC<OnboardingStepProps> = ({
   onNext,
   isLoading: parentLoading,
 }) => {
-  const { data: session } = useSession();
   const [billingDay, setBillingDay] = useState(5);
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentRedirecting, setPaymentRedirecting] = useState(false);
   const [processingMessage, setProcessingMessage] = useState("");
+  const [checkingPaymentStatus, setCheckingPaymentStatus] = useState(true);
+  const { data: session } = useSession();
 
-  // Get pricing
-  const isGuardedStudent = session?.user?.role === "GUARDED_STUDENT";
-  const basePrice = isGuardedStudent ? 39900 : 29900;
+  const basePrice = 29900;
   const monthlyPrice =
     data.contractLengthMonths === 12 ? Math.round(basePrice * 0.85) : basePrice;
 
@@ -137,7 +138,7 @@ export const PaymentStep: React.FC<OnboardingStepProps> = ({
       method: "pix" as const,
       title: "PIX",
       description: "Pagamento instantâneo via QR Code",
-      icon: <LinkRoundAngle className="w-8 h-8" />,
+      icon: <QrCode weight="BoldDuotone" className="w-8 h-8" />,
       benefits: [
         "Pagamento instantâneo",
         "Sem taxas adicionais",
@@ -149,7 +150,7 @@ export const PaymentStep: React.FC<OnboardingStepProps> = ({
       method: "credit_card" as const,
       title: "Cartão de Crédito",
       description: "Pagamento recorrente automático",
-      icon: <LinkRoundAngle className="w-8 h-8" />,
+      icon: <Card2 weight="BoldDuotone" className="w-8 h-8" />,
       benefits: [
         "Pagamento automático mensal",
         "Processo seguro e criptografado",
@@ -238,8 +239,29 @@ export const PaymentStep: React.FC<OnboardingStepProps> = ({
     }
   };
 
-  // Check for returning credit card payments
+  // Check payment status on mount and for returning credit card payments
   useEffect(() => {
+    const checkPaymentStatus = async () => {
+      if (!session?.user?.id) {
+        setCheckingPaymentStatus(false);
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/onboarding/check-payment-status");
+        if (response.ok) {
+          const { hasActiveSubscription } = await response.json();
+          if (hasActiveSubscription) {
+            onDataChange({ paymentCompleted: true });
+          }
+        }
+      } catch (error) {
+        console.error("Error checking payment status:", error);
+      } finally {
+        setCheckingPaymentStatus(false);
+      }
+    };
+
     const urlParams = new URLSearchParams(window.location.search);
     const success = urlParams.get("payment_success");
     const cancelled = urlParams.get("payment_cancelled");
@@ -249,22 +271,54 @@ export const PaymentStep: React.FC<OnboardingStepProps> = ({
       toast.success("Pagamento processado com sucesso!");
       // Clean URL
       window.history.replaceState({}, document.title, window.location.pathname);
+      setCheckingPaymentStatus(false);
     } else if (cancelled === "true") {
       toast.error("Pagamento cancelado. Tente novamente.");
       // Clean URL
       window.history.replaceState({}, document.title, window.location.pathname);
+      setCheckingPaymentStatus(false);
+    } else {
+      checkPaymentStatus();
     }
-  }, [onDataChange]);
+  }, [session?.user?.id, onDataChange]);
+
+  // Auto-advance when payment is completed and status checking is done
+  useEffect(() => {
+    if (data.paymentCompleted && !checkingPaymentStatus) {
+      // Small delay to show success message briefly
+      const timer = setTimeout(() => {
+        onNext();
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [data.paymentCompleted, checkingPaymentStatus, onNext]);
+
+  if (checkingPaymentStatus) {
+    return (
+      <div className="p-8 text-center">
+        <div className="max-w-2xl mx-auto">
+          <Loading />
+          <Text size="xl" className="mb-4">
+            Verificando status do pagamento...
+          </Text>
+          <Text className="text-gray-600 dark:text-gray-300">
+            Aguarde enquanto verificamos sua assinatura.
+          </Text>
+        </div>
+      </div>
+    );
+  }
 
   if (data.paymentCompleted) {
     return (
       <div className="p-8 text-center">
         <div className="max-w-2xl mx-auto">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-800 rounded-full mb-6">
-            <LinkRoundAngle className="w-8 h-8 text-green-600 dark:text-green-300" />
+            <ChatSquareCheck className="w-8 h-8 text-success-light" />
           </div>
 
-          <Text size="2xl" className="mb-4 text-green-800 dark:text-green-100">
+          <Text size="2xl" className="mb-4 text-success-light">
             Pagamento Processado!
           </Text>
 
@@ -274,11 +328,7 @@ export const PaymentStep: React.FC<OnboardingStepProps> = ({
               : "Seu pagamento foi processado com sucesso! Sua assinatura está ativa."}
           </Text>
 
-          <Button
-            onClick={onNext}
-            size="lg"
-            className="bg-green-600 hover:bg-green-700"
-          >
+          <Button onClick={onNext} size="lg" variant="success">
             Finalizar integração
           </Button>
         </div>
@@ -290,11 +340,11 @@ export const PaymentStep: React.FC<OnboardingStepProps> = ({
     return (
       <div className="p-8 text-center">
         <div className="max-w-2xl mx-auto">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 dark:bg-blue-800 rounded-full mb-6">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 dark:bg-indigo-800 rounded-full mb-6">
             {paymentRedirecting ? (
-              <LinkRoundAngle className="w-8 h-8 text-blue-600 dark:text-blue-300" />
+              <LinkRoundAngle className="w-8 h-8 text-indigo-600 dark:text-indigo-300" />
             ) : (
-              <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+              <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
             )}
           </div>
 
@@ -307,8 +357,8 @@ export const PaymentStep: React.FC<OnboardingStepProps> = ({
           </Text>
 
           {paymentRedirecting && (
-            <Card className="p-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700">
-              <div className="flex items-center justify-center gap-2 text-blue-700 dark:text-blue-200">
+            <Card className="p-4 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700">
+              <div className="flex items-center justify-center gap-2 text-indigo-700 dark:text-indigo-200">
                 <LinkRoundAngle className="w-5 h-5" />
                 <Text size="sm">
                   Você será redirecionado para uma página segura do Mercado Pago
@@ -325,11 +375,7 @@ export const PaymentStep: React.FC<OnboardingStepProps> = ({
     <div className="p-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-green-500 to-teal-600 rounded-full mb-4">
-            <LinkRoundAngle className="w-8 h-8 text-white" />
-          </div>
-
+        <div className="text-center mb-4">
           <Text size="2xl" className="mb-4">
             Escolha sua Forma de Pagamento
           </Text>
@@ -339,41 +385,23 @@ export const PaymentStep: React.FC<OnboardingStepProps> = ({
         </div>
 
         {/* Payment Summary */}
-        <Card className="p-6 mb-8 bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/30 dark:to-green-900/30 border border-blue-200 dark:border-blue-700">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+        <Card className="p-6 mb-8 bg-gradient-to-r from-indigo-50 to-green-50 dark:from-indigo-900/30 dark:to-green-900/30 border border-indigo-200 dark:border-indigo-700">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
             <div>
-              <Text className="font-semibold text-blue-900 dark:text-blue-100">
+              <Text className="font-semibold text-primary-hover">
                 Valor Mensal
               </Text>
-              <Text
-                size="2xl"
-                className="font-bold text-blue-600 dark:text-blue-300"
-              >
+              <Text size="2xl" className="font-bold text-primary">
                 {formatPrice(monthlyPrice)}
               </Text>
             </div>
 
             <div>
-              <Text className="font-semibold text-green-900 dark:text-green-100">
+              <Text className="font-semibold text-secondary-hover">
                 Duração
               </Text>
-              <Text
-                size="xl"
-                className="font-bold text-green-600 dark:text-green-300"
-              >
+              <Text size="xl" className="font-bold text-secondary">
                 {data.contractLengthMonths} meses
-              </Text>
-            </div>
-
-            <div>
-              <Text className="font-semibold text-purple-900 dark:text-purple-100">
-                Tipo
-              </Text>
-              <Text
-                size="lg"
-                className="font-bold text-purple-600 dark:text-purple-300"
-              >
-                {isGuardedStudent ? "Acompanhado" : "Regular"}
               </Text>
             </div>
           </div>
@@ -394,7 +422,7 @@ export const PaymentStep: React.FC<OnboardingStepProps> = ({
         {/* Billing Day Selection */}
         <Card className="p-6 mb-8">
           <div className="flex items-center gap-3 mb-4">
-            <LinkRoundAngle className="w-6 h-6 text-blue-600 dark:text-blue-300" />
+            <Calendar className="w-6 h-6 text-primary" />
             <Text size="lg">Dia de Vencimento</Text>
           </div>
 
@@ -421,13 +449,13 @@ export const PaymentStep: React.FC<OnboardingStepProps> = ({
 
         {/* Payment Method Details */}
         {data.paymentMethod && (
-          <Card className="p-6 mb-8 bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900/30">
+          <Card className="p-6 mb-8 bg-gradient-to-r from-gray-50 to-indigo-50 dark:from-gray-900 dark:to-indigo-900/30">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-800 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-800 rounded-lg flex items-center justify-center">
                 {data.paymentMethod === "pix" ? (
-                  <LinkRoundAngle className="w-6 h-6 text-blue-600 dark:text-blue-300" />
+                  <LinkRoundAngle className="w-6 h-6 text-indigo-600 dark:text-indigo-300" />
                 ) : (
-                  <LinkRoundAngle className="w-6 h-6 text-blue-600 dark:text-blue-300" />
+                  <LinkRoundAngle className="w-6 h-6 text-indigo-600 dark:text-indigo-300" />
                 )}
               </div>
 
@@ -441,7 +469,7 @@ export const PaymentStep: React.FC<OnboardingStepProps> = ({
                 {data.paymentMethod === "pix" ? (
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center text-xs font-bold text-blue-600 dark:text-blue-300">
+                      <div className="w-6 h-6 bg-indigo-100 dark:bg-indigo-800 rounded-full flex items-center justify-center text-xs font-bold text-indigo-600 dark:text-indigo-300">
                         1
                       </div>
                       <Text size="sm">
@@ -449,7 +477,7 @@ export const PaymentStep: React.FC<OnboardingStepProps> = ({
                       </Text>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center text-xs font-bold text-blue-600 dark:text-blue-300">
+                      <div className="w-6 h-6 bg-indigo-100 dark:bg-indigo-800 rounded-full flex items-center justify-center text-xs font-bold text-indigo-600 dark:text-indigo-300">
                         2
                       </div>
                       <Text size="sm">
@@ -457,7 +485,7 @@ export const PaymentStep: React.FC<OnboardingStepProps> = ({
                       </Text>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center text-xs font-bold text-blue-600 dark:text-blue-300">
+                      <div className="w-6 h-6 bg-indigo-100 dark:bg-indigo-800 rounded-full flex items-center justify-center text-xs font-bold text-indigo-600 dark:text-indigo-300">
                         3
                       </div>
                       <Text size="sm">
@@ -468,7 +496,7 @@ export const PaymentStep: React.FC<OnboardingStepProps> = ({
                 ) : (
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center text-xs font-bold text-blue-600 dark:text-blue-300">
+                      <div className="w-6 h-6 bg-indigo-100 dark:bg-indigo-800 rounded-full flex items-center justify-center text-xs font-bold text-indigo-600 dark:text-indigo-300">
                         1
                       </div>
                       <Text size="sm">
@@ -476,7 +504,7 @@ export const PaymentStep: React.FC<OnboardingStepProps> = ({
                       </Text>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center text-xs font-bold text-blue-600 dark:text-blue-300">
+                      <div className="w-6 h-6 bg-indigo-100 dark:bg-indigo-800 rounded-full flex items-center justify-center text-xs font-bold text-indigo-600 dark:text-indigo-300">
                         2
                       </div>
                       <Text size="sm">
@@ -484,7 +512,7 @@ export const PaymentStep: React.FC<OnboardingStepProps> = ({
                       </Text>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center text-xs font-bold text-blue-600 dark:text-blue-300">
+                      <div className="w-6 h-6 bg-indigo-100 dark:bg-indigo-800 rounded-full flex items-center justify-center text-xs font-bold text-indigo-600 dark:text-indigo-300">
                         3
                       </div>
                       <Text size="sm">
@@ -524,15 +552,15 @@ export const PaymentStep: React.FC<OnboardingStepProps> = ({
             isLoading={isProcessing}
             className={`px-8 py-3 font-semibold transition-all duration-200 ${
               data.paymentMethod
-                ? "bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white transform hover:scale-105 shadow-lg hover:shadow-xl"
+                ? "bg-gradient-to-r from-primary/90 to-primary/70 hover:bg-primary-hover text-white"
                 : "bg-gray-300 dark:bg-gray-600 text-gray-500 cursor-not-allowed"
             }`}
           >
             {!data.paymentMethod
               ? "Selecione um método de pagamento"
               : data.paymentMethod === "pix"
-                ? "Criar Assinatura PIX"
-                : "Prosseguir com Cartão de Crédito"}
+                ? "Criar assinatura PIX"
+                : "Prosseguir com cartão de crédito"}
           </Button>
         </div>
       </div>

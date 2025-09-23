@@ -10,7 +10,7 @@ import {
 } from "@solar-icons/react/ssr";
 
 const dashboardService = new DashboardService();
-
+//essa página aparece para manager e admin
 export default async function DashboardPage() {
   const dashboardData = await dashboardService.getDashboardData();
 

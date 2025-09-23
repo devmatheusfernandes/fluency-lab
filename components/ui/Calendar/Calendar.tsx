@@ -65,11 +65,11 @@ const getEventsForDate = (events: CalendarEvent[], date: Date) => {
 
 const getEventColorClasses = (color: CalendarEvent["color"]) => {
   const colorMap = {
-    primary: "bg-blue-100 text-blue-800 border-blue-200",
+    primary: "bg-indigo-100 text-indigo-800 border-indigo-200",
     secondary: "bg-purple-100 text-purple-800 border-purple-200",
     success: "bg-emerald-100 text-emerald-800 border-emerald-200",
     warning: "bg-amber-100 text-amber-800 border-amber-200",
-    danger: "bg-red-100 text-red-800 border-red-200",
+    danger: "bg-rose-100 text-rose-800 border-rose-200",
     info: "bg-cyan-100 text-cyan-800 border-cyan-200",
   };
   return colorMap[color || "primary"];
@@ -215,8 +215,11 @@ export const Calendar: React.FC<CalendarProps> = ({
     isCompact: boolean = false,
     isTimeline: boolean = false
   ) => {
+    // Apply different styling based on compact mode
     const baseClasses = twMerge(
-      "px-3 py-2 rounded-xl text-sm cursor-pointer transition-all duration-200 hover:shadow-md border overflow-hidden",
+      isCompact
+        ? "px-2 py-1 rounded-lg text-xs cursor-pointer transition-all duration-200 hover:shadow-sm border overflow-hidden"
+        : "px-3 py-2 rounded-xl text-sm cursor-pointer transition-all duration-200 hover:shadow-md border overflow-hidden",
       getEventColorClasses(event.color)
     );
 
@@ -260,13 +263,25 @@ export const Calendar: React.FC<CalendarProps> = ({
           onEventClick?.(event);
         }}
       >
-        <div className="font-medium truncate">{event.title}</div>
-        {event.startTime && event.endTime && (
+        <div
+          className={twMerge("font-medium truncate", isCompact && "text-xs")}
+        >
+          {event.title}
+        </div>
+        {/* In compact mode, only show time if there's space, hide other details */}
+        {!isCompact && event.startTime && event.endTime && (
           <div className="text-xs opacity-70 truncate">
             {event.startTime} - {event.endTime}
           </div>
         )}
-        {(event.studentInfo?.studentName || event.person) && (
+        {/* Show time in compact mode only if no person info */}
+        {isCompact &&
+          event.startTime &&
+          event.endTime &&
+          !(event.studentInfo?.studentName || event.person) && (
+            <div className="text-xs opacity-70 truncate">{event.startTime}</div>
+          )}
+        {!isCompact && (event.studentInfo?.studentName || event.person) && (
           <div className="text-xs opacity-70 truncate">
             {event.studentInfo?.studentName || event.person}
           </div>
@@ -352,7 +367,7 @@ export const Calendar: React.FC<CalendarProps> = ({
                 ? "cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600"
                 : "bg-slate-50 dark:bg-slate-900 opacity-60",
               isSelected &&
-                "bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-600 ring-2 ring-blue-200 dark:ring-blue-800",
+                "bg-indigo-50 dark:bg-indigo-900/20 border-indigo-300 dark:border-indigo-600 ring-2 ring-indigo-200 dark:ring-indigo-800",
               isCurrentDay &&
                 "bg-indigo-50 dark:bg-indigo-900/20 border-indigo-300 dark:border-indigo-600"
             )}
@@ -381,7 +396,7 @@ export const Calendar: React.FC<CalendarProps> = ({
                       className={twMerge(
                         "opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110",
                         isMobile ? "h-6 w-6 p-1" : "h-7 w-7 p-1.5",
-                        "text-primary hover:text-primary hover:bg-primary/10 dark:text-primary dark:hover:text-primary dark:hover:bg-primary/10"
+                        "text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:text-amber-300 dark:hover:bg-amber-900/30"
                       )}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -460,7 +475,7 @@ export const Calendar: React.FC<CalendarProps> = ({
                 className={twMerge(
                   "p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm cursor-pointer transition-all duration-200 hover:shadow-md",
                   isSelected &&
-                    "bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-600 ring-2 ring-blue-200 dark:ring-blue-800",
+                    "bg-indigo-50 dark:bg-indigo-900/20 border-indigo-300 dark:border-indigo-600 ring-2 ring-indigo-200 dark:ring-indigo-800",
                   isCurrentDay &&
                     "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-600"
                 )}
@@ -485,7 +500,7 @@ export const Calendar: React.FC<CalendarProps> = ({
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/30"
+                      className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:text-amber-300 dark:hover:bg-amber-900/30"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleAddEvent(date);
@@ -582,7 +597,7 @@ export const Calendar: React.FC<CalendarProps> = ({
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-5 w-5 p-1 opacity-0 group-hover:opacity-100 transition-all duration-200 absolute bottom-1 right-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/30"
+                        className="h-5 w-5 p-1 opacity-0 group-hover:opacity-100 transition-all duration-200 absolute bottom-1 right-1 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:text-amber-300 dark:hover:bg-amber-900/30"
                         onClick={(e) => {
                           e.stopPropagation();
                           const newDate = new Date(date);
@@ -644,7 +659,7 @@ export const Calendar: React.FC<CalendarProps> = ({
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="h-6 w-6 p-1 opacity-0 group-hover:opacity-100 transition-all duration-200 absolute bottom-2 right-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/30"
+                      className="h-6 w-6 p-1 opacity-0 group-hover:opacity-100 transition-all duration-200 absolute bottom-2 right-2 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:text-amber-300 dark:hover:bg-amber-900/30"
                       onClick={() => {
                         const newDate = new Date(currentDate);
                         newDate.setHours(hour);
@@ -740,7 +755,7 @@ export const Calendar: React.FC<CalendarProps> = ({
                       isSelected
                         ? "bg-primary/30 dark:bg-primary text-white shadow-lg"
                         : isCurrentDay
-                          ? "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
+                          ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400"
                           : "bg-gray-50 text-gray-600 hover:bg-gray-100 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
                     )}
                   >
@@ -761,7 +776,7 @@ export const Calendar: React.FC<CalendarProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={goToToday}
-                className="px-6 py-2 rounded-full border-2 border-blue-200 text-blue-600 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                className="px-6 py-2 rounded-full border-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-400 dark:hover:bg-indigo-900/20"
               >
                 Hoje
               </Button>

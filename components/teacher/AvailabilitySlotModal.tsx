@@ -27,6 +27,9 @@ import { Checkbox } from "@/components/ui/Checkbox";
 import { toast } from "sonner";
 import { AvailabilityType } from "@/types/time/availability";
 import { Loading } from "../ui/Loading";
+import { Alert, AlertTitle } from "../ui/Shadcn/alert";
+import { InfoCircle } from "@solar-icons/react/ssr";
+import { Badge } from "../ui/Badge";
 
 interface AvailabilitySlotModalProps {
   isOpen: boolean;
@@ -46,11 +49,21 @@ export default function AvailabilitySlotModal({
   const [startDate, setStartDate] = useState<Date>(selectedDate || new Date());
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("09:45");
-  const [isRepeating, setIsRepeating] = useState(false);
+  const [isRepeating, setIsRepeating] = useState(true); // Sempre true para regular por padrão
   const [repeatingType, setRepeatingType] = useState("weekly");
   const [interval, setInterval] = useState(1);
   const [endDate, setEndDate] = useState("");
+  const [hasEndDate, setHasEndDate] = useState(false); // Novo estado para controlar se tem data fim
   const [isLoading, setIsLoading] = useState(false);
+
+  // Atualizar isRepeating baseado no tipo
+  useEffect(() => {
+    if (type === AvailabilityType.REGULAR) {
+      setIsRepeating(true); // Horários regulares sempre são repetitivos
+    } else {
+      setIsRepeating(false); // Horários de makeup começam como não repetitivos
+    }
+  }, [type]);
 
   // Set default end time when start time changes
   useEffect(() => {
@@ -100,7 +113,7 @@ export default function AvailabilitySlotModal({
         payload.repeating = {
           type: repeatingType,
           interval: Number(interval),
-          endDate: endDate ? new Date(endDate) : undefined,
+          endDate: hasEndDate && endDate ? new Date(endDate) : undefined,
         };
       }
 
@@ -129,8 +142,7 @@ export default function AvailabilitySlotModal({
 
   return (
     <Modal open={isOpen} onOpenChange={onClose}>
-      <ModalContent>
-        <ModalClose />
+      <ModalContent className="overflow-y-auto">
         <ModalHeader>
           <ModalTitle>Adicionar Novo Horário</ModalTitle>
           <ModalDescription>
@@ -138,18 +150,7 @@ export default function AvailabilitySlotModal({
           </ModalDescription>
         </ModalHeader>
         <form onSubmit={handleSubmit}>
-          <ModalBody className="space-y-4">
-            <div>
-              <label htmlFor="title">Título</label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Ex: Horário de aulas"
-                required
-              />
-            </div>
-
+          <ModalBody className="space-y-3">
             <div>
               <label htmlFor="type">Tipo de Horário</label>
               <Select
@@ -203,19 +204,22 @@ export default function AvailabilitySlotModal({
               </div>
             </div>
 
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="isRepeating"
-                checked={isRepeating}
-                onCheckedChange={(checked) =>
-                  setIsRepeating(checked as boolean)
-                }
-              />
-              <label htmlFor="isRepeating">Repetir este horário</label>
-            </div>
+            {/* Mostrar checkbox de repetição apenas para horários de makeup */}
+            {type === AvailabilityType.MAKEUP && (
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="isRepeating"
+                  checked={isRepeating}
+                  onCheckedChange={(checked) =>
+                    setIsRepeating(checked as boolean)
+                  }
+                />
+                <label htmlFor="isRepeating">Repetir este horário</label>
+              </div>
+            )}
 
             {isRepeating && (
-              <div className="space-y-4 pl-6 border-l-2 border-surface-2">
+              <div className="space-y-3">
                 <div>
                   <label htmlFor="repeatingType">Frequência</label>
                   <Select
@@ -247,15 +251,45 @@ export default function AvailabilitySlotModal({
                   />
                 </div>
 
-                <div>
-                  <label htmlFor="endDate">Data de Término (Opcional)</label>
-                  <Input
-                    id="endDate"
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                  />
-                </div>
+                {/* Para horários regulares, permitir escolher entre tempo indefinido ou data específica */}
+                {type === AvailabilityType.REGULAR && (
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="hasEndDate"
+                      checked={hasEndDate}
+                      onCheckedChange={(checked) =>
+                        setHasEndDate(checked as boolean)
+                      }
+                    />
+                    <label htmlFor="hasEndDate">Definir data de término</label>
+                  </div>
+                )}
+
+                {/* Mostrar campo de data de término baseado no tipo e configuração */}
+                {((type === AvailabilityType.REGULAR && hasEndDate) ||
+                  type === AvailabilityType.MAKEUP) && (
+                  <div>
+                    <label htmlFor="endDate">
+                      {type === AvailabilityType.REGULAR
+                        ? "Data de Término"
+                        : "Data de Término (Opcional)"}
+                    </label>
+                    <Input
+                      id="endDate"
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      required={type === AvailabilityType.REGULAR && hasEndDate}
+                    />
+                  </div>
+                )}
+
+                {/* Mostrar informação sobre tempo indefinido para horários regulares */}
+                {type === AvailabilityType.REGULAR && !hasEndDate && (
+                  <Badge variant="warning">
+                    Horário será repetido por tempo indefinido
+                  </Badge>
+                )}
               </div>
             )}
           </ModalBody>

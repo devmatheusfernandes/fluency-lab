@@ -8,8 +8,6 @@ import AvailabilitySlotModal from "@/components/teacher/AvailabilitySlotModal";
 import AvailabilitySlotDetailsModal from "@/components/teacher/AvailabilitySlotDetailsModal";
 import { PopulatedStudentClass } from "@/types/classes/class";
 import { CalendarEvent } from "@/types/calendar/calendar";
-import { Button } from "@/components/ui/Button";
-import { AddCircle } from "@solar-icons/react";
 
 interface ClientCalendarProps {
   events: CalendarEvent[];

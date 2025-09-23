@@ -54,7 +54,7 @@ export default function TeacherSettingsClient({
 }: TeacherSettingsClientProps) {
   const [events, setEvents] = useState(initialEvents);
   const [classes, setClasses] = useState(initialClasses);
-  const [setScheduleData] = useState(initialScheduleData);
+  const [scheduleData, setScheduleData] = useState(initialScheduleData);
   const [isLoading, setIsLoading] = useState(false);
   const { deleteAvailability } = useTeacher();
 

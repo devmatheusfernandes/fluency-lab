@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useUsers } from "@/hooks/useUsers";
-import { User } from "@/types/users/users";
 import { UserRoles } from "@/types/users/userRoles";
 import { toast } from "sonner";
 
@@ -35,13 +34,11 @@ import {
 } from "@/components/ui/Select";
 import { Text } from "@/components/ui/Text";
 import { Loading } from "@/components/ui/Loading";
-import { Card } from "@/components/ui/Card";
 import AddUserModal from "./AddUserModal";
 import { useAdmin } from "@/hooks/useAdmin";
 import { Header } from "../ui/Header";
 import { MenuDots, UserPlus } from "@solar-icons/react";
 import { useRouter } from "next/navigation";
-import { Container } from "../ui/Container";
 import { SubContainer } from "../ui/SubContainer";
 
 export default function UserManagementTable() {

@@ -30,6 +30,7 @@ import { useToast } from "@/components/ui/Toast/Toast";
 import DatePicker from "@/components/ui/DatePicker/DatePicker";
 import { UserPlus, InfoCircle } from "@solar-icons/react";
 import { ShieldWarning } from "@solar-icons/react/ssr";
+import { Loading } from "../ui/Loading";
 
 interface AddUserModalProps {
   isOpen: boolean;
@@ -97,7 +98,8 @@ export default function AddUserModal({
         setRole(UserRoles.GUARDED_STUDENT);
         toast.info({
           title: "Role automaticamente ajustado",
-          description: "Menor de idade detectado - role alterado para Estudante Tutelado. Apenas estudantes tutelados são permitidos para menores de 18 anos.",
+          description:
+            "Menor de idade detectado - role alterado para Estudante Tutelado. Apenas estudantes tutelados são permitidos para menores de 18 anos.",
         });
       }
     }
@@ -108,20 +110,22 @@ export default function AddUserModal({
     const errors: string[] = [];
 
     if (!name.trim()) errors.push("Nome é obrigatório");
-    
+
     // For guarded students (minors), email is optional as they use guardian's email
     // For other roles, email is required
     if (!isMinor || role !== UserRoles.GUARDED_STUDENT) {
       if (!email.trim()) errors.push("Email é obrigatório");
     }
-    
+
     if (!birthDate) errors.push("Data de nascimento é obrigatória");
 
     // Validate age restriction for non-guarded students
     if (birthDate) {
       const age = calculateAge(birthDate);
       if (age < 18 && role !== UserRoles.GUARDED_STUDENT) {
-        errors.push("Usuários menores de 18 anos só podem ser estudantes tutelados");
+        errors.push(
+          "Usuários menores de 18 anos só podem ser estudantes tutelados"
+        );
       }
     }
 
@@ -164,7 +168,10 @@ export default function AddUserModal({
     const userData: any = {
       name,
       // For guarded students (minors), always use guardian email as the primary email
-      email: (isMinor && role === UserRoles.GUARDED_STUDENT && guardianEmail) ? guardianEmail : email,
+      email:
+        isMinor && role === UserRoles.GUARDED_STUDENT && guardianEmail
+          ? guardianEmail
+          : email,
       role,
     };
 
@@ -412,7 +419,7 @@ export default function AddUserModal({
               Cancelar
             </ModalSecondaryButton>
             <ModalPrimaryButton type="submit" disabled={isLoading}>
-              {isLoading ? "A Criar..." : "Criar Usuário"}{" "}
+              {isLoading ? <Loading size="sm" /> : "Criar Usuário"}{" "}
               <UserPlus weight="BoldDuotone" className="w-6 h-6" />
             </ModalPrimaryButton>
           </ModalFooter>

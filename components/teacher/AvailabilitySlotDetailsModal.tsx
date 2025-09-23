@@ -89,7 +89,6 @@ export default function AvailabilitySlotDetailsModal({
   return (
     <Modal open={isOpen} onOpenChange={onClose}>
       <ModalContent>
-        <ModalClose />
         <ModalHeader>
           <ModalTitle>Detalhes do Horário</ModalTitle>
         </ModalHeader>

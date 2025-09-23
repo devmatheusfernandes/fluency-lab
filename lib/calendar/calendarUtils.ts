@@ -91,7 +91,7 @@ export const mapTeacherEventsToCalendar = (
               )
                 .toTimeString()
                 .substring(0, 5),
-              color: "danger",
+              color: "primary",
               classType: bookedClass.classType,
               studentInfo: {
                 studentId: bookedClass.studentId,
@@ -103,7 +103,7 @@ export const mapTeacherEventsToCalendar = (
             // Priority 3: Available slot
             events.push({
               id: `slot-${slot.id}-${currentDate.getTime()}`,
-              title: "Horário Vago",
+              title: "Vago",
               date: new Date(currentDate),
               startTime: slot.startTime,
               endTime: slot.endTime,
@@ -156,7 +156,7 @@ export const mapTeacherEventsToCalendar = (
             // Priority 1: Booked class
             events.push({
               id: `class-${bookedClass.id}`,
-              title: "Reservado",
+              title: "Reservado (Reposição)",
               date: new Date(bookedClass.scheduledAt),
               startTime: bookedClass.scheduledAt.toTimeString().substring(0, 5),
               endTime: new Date(
@@ -165,7 +165,7 @@ export const mapTeacherEventsToCalendar = (
               )
                 .toTimeString()
                 .substring(0, 5),
-              color: "danger",
+              color: "primary",
               classType: bookedClass.classType,
               studentInfo: {
                 studentId: bookedClass.studentId,
@@ -174,25 +174,26 @@ export const mapTeacherEventsToCalendar = (
               },
             });
           } else {
-            // Priority 3: Available slot
+            // Priority 3: Available slot para reposição
             let slotColor: CalendarEvent["color"] = "success";
             switch (slot.type) {
               case "regular":
                 slotColor = "success"; // Green for regular slots
                 break;
               case "makeup":
-                slotColor = "info"; // Light blue for makeup slots
+                slotColor = "success"; // Light blue for makeup slots
                 break;
             }
 
             events.push({
               id: `slot-${slot.id}`,
-              title: "Horário Vago",
+              title: "Para Reposição",
               date: slotDate,
               startTime: slot.startTime,
               endTime: slot.endTime,
               color: slotColor,
               slotId: slot.id,
+              classType: slot.type,
             });
           }
         }

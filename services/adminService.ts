@@ -9,9 +9,9 @@ import { rolePermissionsMap } from "@/config/permissions";
 const emailService = new EmailService();
 
 export class AdminService {
-  async createUser(userData: { 
-    name: string; 
-    email: string; 
+  async createUser(userData: {
+    name: string;
+    email: string;
     role: UserRoles;
     birthDate?: Date;
     guardian?: {
@@ -37,37 +37,38 @@ export class AdminService {
     });
 
     await adminAuth.setCustomUserClaims(userRecord.uid, { role });
-    
+
     // 2. Cria o perfil do usuário no Firestore (como antes)
-    const newUserProfile: Omit<User, 'id'> = {
+    const newUserProfile: Omit<User, "id"> = {
       name,
       email: authEmail, // Email usado para autenticação
       role,
       permissions: rolePermissionsMap[role] || [],
       createdAt: new Date(),
       isActive: true,
-      avatarUrl: '',
-      interfaceLanguage: 'pt-BR',
+      avatarUrl: "",
+      interfaceLanguage: "pt-BR",
       tutorialCompleted: false,
       ...(birthDate && { birthDate }),
       ...(guardian && { guardian }),
+      ...(role === UserRoles.TEACHER && { vacationDaysRemaining: 30 }),
     };
-    
-    await adminDb.collection('users').doc(userRecord.uid).set(newUserProfile);
-    
+
+    await adminDb.collection("users").doc(userRecord.uid).set(newUserProfile);
+
     // 3. Gera o link para o usuário DEFINIR sua senha pela primeira vez
     const actionLink = await adminAuth.generatePasswordResetLink(authEmail);
 
     // 4. Envia o e-mail de boas-vindas com o link
     const recipientName = isMinor ? guardian.name : name;
-    const studentInfo = isMinor ? ` para o estudante ${name}` : '';
+    const studentInfo = isMinor ? ` para o estudante ${name}` : "";
     await emailService.sendWelcomeAndSetPasswordEmail(
-      authEmail, 
-      recipientName, 
+      authEmail,
+      recipientName,
       actionLink,
       studentInfo
     );
-    
+
     // 5. Retorna o usuário criado, mas sem nenhuma senha
     return { newUser: { id: userRecord.uid, ...newUserProfile } };
   }

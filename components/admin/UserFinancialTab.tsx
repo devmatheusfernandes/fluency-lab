@@ -1,486 +1,367 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/Card";
-import { Text } from "@/components/ui/Text";
-import { Loading } from "@/components/ui/Loading";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/Shadcn/table";
-import { Badge } from "@/components/ui/Badge";
-import { toast } from "sonner";
-import { FullUserDetails } from "@/types/users/user-details";
-import { UserRoles } from "@/types/users/userRoles";
-import { StudentClass, ClassStatus } from "@/types/classes/class";
-import {
-  Select,
-  SelectContent,
-  SelectOption,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/Select";
-import { Payment } from "@/types/financial/payments";
-import { MonthlyPayment } from "@/types/financial/subscription";
-import { useSession } from "next-auth/react";
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Shadcn/table';
+import { User } from '@/types/users/users';
+import { Payment } from '@/types/financial/payments';
+import { MonthlyPayment } from '@/types/financial/subscription';
+import { StudentClass, ClassStatus } from '@/types/classes/class';
+import { Calendar, ClockCircle, Dollar, HandMoney, MoneyBag } from '@solar-icons/react/ssr';
 
 interface UserFinancialTabProps {
-  user: FullUserDetails;
+  user: User;
 }
 
-// Function to fetch teacher classes
-const useTeacherClasses = (userId: string, userRole: string) => {
-  const [classes, setClasses] = useState<
-    (StudentClass & { studentName?: string })[]
-  >([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedMonth, setSelectedMonth] = useState<string>(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-  });
+interface TeacherClassStats {
+  studentId: string;
+  studentName: string;
+  completedClasses: number;
+  earnings: number;
+}
+
+interface StudentFinancialData {
+  paymentMethod: string;
+  subscriptionStatus: string;
+  payments: MonthlyPayment[];
+}
+
+const RATE_PER_CLASS = 25; // 25 reais per class
+
+const UserFinancialTab: React.FC<UserFinancialTabProps> = ({ user }) => {
+  const [teacherStats, setTeacherStats] = useState<TeacherClassStats[]>([]);
+  const [studentFinancialData, setStudentFinancialData] = useState<StudentFinancialData | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!userId || userRole !== UserRoles.TEACHER) return;
+    fetchFinancialData();
+  }, [user.id, user.role]);
 
-    const fetchClasses = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch(`/api/teacher/my-classes`);
-        if (!response.ok) {
-          const data = await response.json();
-          throw new Error(data.error || "Falha ao buscar aulas do professor.");
-        }
-        const data = await response.json();
-        setClasses(data);
-      } catch (error: any) {
-        toast.error(error.message);
-      } finally {
-        setIsLoading(false);
+  const fetchFinancialData = async () => {
+    try {
+      setLoading(true);
+      
+      if (user.role === 'teacher') {
+        await fetchTeacherFinancials();
+      } else {
+        await fetchStudentFinancials();
       }
-    };
-
-    fetchClasses();
-  }, [userId, selectedMonth, userRole]);
-
-  // Filter classes by selected month
-  const filteredClasses = classes.filter((cls) => {
-    const classDate = new Date(cls.scheduledAt);
-    const classMonth = `${classDate.getFullYear()}-${String(classDate.getMonth() + 1).padStart(2, "0")}`;
-    return classMonth === selectedMonth;
-  });
-
-  // Get unique students for the selected month
-  const uniqueStudents = [
-    ...new Set(filteredClasses.map((cls) => cls.studentId)),
-  ];
-
-  // Get all available months
-  const availableMonths = [
-    ...new Set(
-      classes.map((cls) => {
-        const date = new Date(cls.scheduledAt);
-        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-      })
-    ),
-  ]
-    .sort()
-    .reverse();
-
-  return {
-    classes: filteredClasses,
-    isLoading,
-    selectedMonth,
-    setSelectedMonth,
-    availableMonths,
-    studentCount: uniqueStudents.length,
+    } catch (error) {
+      console.error('Error fetching financial data:', error);
+    } finally {
+      setLoading(false);
+    }
   };
-};
 
-// Function to fetch student payment history
-const useStudentPaymentHistory = (
-  userId: string,
-  userRole: string,
-  enabled: boolean
-) => {
-  const [payments, setPayments] = useState<MonthlyPayment[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (
-      !enabled ||
-      !userId ||
-      (userRole !== UserRoles.STUDENT && userRole !== UserRoles.GUARDED_STUDENT)
-    )
-      return;
-
-    const fetchPaymentHistory = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch(`/api/student/payment-history`);
-        if (!response.ok) {
-          const data = await response.json();
-          throw new Error(
-            data.error || "Falha ao buscar histórico de pagamentos."
-          );
-        }
-        const data = await response.json();
-        setPayments(data.payments || []);
-      } catch (error: any) {
-        toast.error(error.message);
-      } finally {
-        setIsLoading(false);
+  const fetchTeacherFinancials = async () => {
+    try {
+      // Fetch real data from the API
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+      const startOfMonth = new Date(currentYear, currentMonth, 1).toISOString();
+      const endOfMonth = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59).toISOString();
+      
+      const response = await fetch(
+        `/api/admin/teachers/${user.id}/classes?status=completed&startDate=${startOfMonth}&endDate=${endOfMonth}`
+      );
+      
+      if (!response.ok) {
+        console.warn('Teacher classes endpoint not available, using empty data');
+        setTeacherStats([]);
+        return;
       }
-    };
+      
+      const data = await response.json();
+      const classes = data.classes || [];
+      
+      // Group classes by student and calculate earnings
+      const statsMap = new Map<string, { studentName: string; completedClasses: number; earnings: number }>();
+      
+      classes.forEach((cls: any) => {
+        if (cls.status !== 'completed' || !cls.completedAt) return;
+        
+        const studentId = cls.studentId;
+        const existing = statsMap.get(studentId) || {
+          studentName: cls.studentName || `Aluno ${studentId}`,
+          completedClasses: 0,
+          earnings: 0
+        };
+        
+        existing.completedClasses++;
+        existing.earnings = existing.completedClasses * RATE_PER_CLASS;
+        
+        statsMap.set(studentId, existing);
+      });
+      
+      // Convert to array format
+      const stats: TeacherClassStats[] = Array.from(statsMap.entries()).map(([studentId, data]) => ({
+        studentId,
+        ...data
+      }));
+      
+      setTeacherStats(stats);
+    } catch (error) {
+      console.error('Error fetching teacher earnings:', error);
+      setTeacherStats([]);
+    }
+  };
 
-    fetchPaymentHistory();
-  }, [userId, userRole, enabled]);
-
-  return { payments, isLoading };
-};
-
-// Function to fetch student payment history for admins (uses different endpoint and data type)
-const useAdminStudentPaymentHistory = (
-  userId: string,
-  userRole: string,
-  enabled: boolean
-) => {
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (
-      !enabled ||
-      !userId ||
-      (userRole !== UserRoles.STUDENT && userRole !== UserRoles.GUARDED_STUDENT)
-    )
-      return;
-
-    const fetchPaymentHistory = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch(`/api/admin/users/${userId}/financials`);
-        if (!response.ok) {
-          const data = await response.json();
-          throw new Error(
-            data.error || "Falha ao buscar histórico de pagamentos."
-          );
-        }
-        const data = await response.json();
-        setPayments(data);
-      } catch (error: any) {
-        toast.error(error.message);
-      } finally {
-        setIsLoading(false);
+  const fetchStudentFinancials = async () => {
+    try {
+      const response = await fetch(`/api/admin/users/${user.id}/financials`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch financial data');
       }
-    };
+      
+      const data = await response.json();
+      
+      // Map the API response to MonthlyPayment objects
+      const payments: MonthlyPayment[] = data.payments.map((payment: any) => ({
+        id: payment.id,
+        subscriptionId: payment.subscriptionId,
+        userId: user.id,
+        amount: payment.amount,
+        dueDate: new Date(payment.dueDate),
+        paidAt: payment.paidAt ? new Date(payment.paidAt) : undefined,
+        status: payment.status,
+        paymentMethod: payment.paymentMethod,
+        mercadoPagoPaymentId: payment.mercadoPagoPaymentId,
+        pixCode: payment.pixCode,
+        pixQrCode: payment.pixQrCode,
+        pixExpiresAt: payment.pixExpiresAt ? new Date(payment.pixExpiresAt) : undefined,
+        receipt: payment.receipt,
+        createdAt: new Date(payment.createdAt),
+        updatedAt: payment.updatedAt ? new Date(payment.updatedAt) : new Date(),
+        paymentNumber: payment.paymentNumber,
+        description: payment.description || 'Pagamento mensal'
+      }));
+      
+      console.log('Fetched payments from API:', payments);
+      
+      setStudentFinancialData({
+        paymentMethod: data.paymentMethod,
+        subscriptionStatus: data.subscriptionStatus,
+        payments
+      });
+      
+    } catch (error) {
+      console.error('Error fetching student financials:', error);
+      setStudentFinancialData({
+        paymentMethod: 'Não definido',
+        subscriptionStatus: 'inactive',
+        payments: []
+      });
+    }
+  };
 
-    fetchPaymentHistory();
-  }, [userId, userRole, enabled]);
+  const renderTeacherView = () => {
+    const currentMonth = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    const totalClasses = teacherStats.reduce((sum, student) => sum + student.completedClasses, 0);
+    const totalEarnings = teacherStats.reduce((sum, student) => sum + student.earnings, 0);
 
-  return { payments, isLoading };
-};
-
-export default function UserFinancialTab({ user }: UserFinancialTabProps) {
-  const { data: session } = useSession();
-  const isAdmin =
-    session?.user?.role === UserRoles.ADMIN ||
-    session?.user?.role === UserRoles.MANAGER;
-
-  const {
-    classes,
-    isLoading: isClassesLoading,
-    selectedMonth,
-    setSelectedMonth,
-    availableMonths,
-    studentCount,
-  } = useTeacherClasses(user.id, user.role);
-
-  const { payments: studentPayments, isLoading: isStudentPaymentsLoading } =
-    useStudentPaymentHistory(user.id, user.role, !isAdmin);
-
-  const {
-    payments: adminStudentPayments,
-    isLoading: isAdminStudentPaymentsLoading,
-  } = useAdminStudentPaymentHistory(user.id, user.role, isAdmin);
-
-  // Calculate classes per month for teacher
-  const classesPerMonth = classes.length;
-
-  if (
-    isClassesLoading ||
-    isStudentPaymentsLoading ||
-    isAdminStudentPaymentsLoading
-  ) {
-    return <Loading />;
-  }
-
-  // For teachers, show Stripe connection and class statistics
-  if (user.role === UserRoles.TEACHER) {
     return (
-      <Card className="p-6">
-        <Text variant="title" size="lg" weight="semibold" className="mb-4">
-          Informações Financeiras do Professor
-        </Text>
+      <div className="space-y-6">
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Aulas Concluídas</p>
+                  <p className="text-2xl font-bold">{totalClasses}</p>
+                </div>
+                <Calendar className="h-8 w-8 text-muted-foreground" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Ganhos Totais</p>
+                  <p className="text-2xl font-bold">R$ {totalEarnings.toFixed(2)}</p>
+                </div>
+                <Dollar className="h-8 w-8 text-muted-foreground" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Valor por Aula</p>
+                  <p className="text-2xl font-bold">R$ 25,00</p>
+                </div>
+                <ClockCircle className="h-8 w-8 text-muted-foreground" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-        <div className="mb-6 p-4 bg-surface-1 rounded-lg">
-          <h3 className="font-medium mb-2">Integração com Stripe</h3>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <p className="text-sm text-subtitle">Status da Conexão</p>
-              <Badge variant={user.stripeCustomerId ? "success" : "warning"}>
-                {user.stripeCustomerId ? "Conectado" : "Não Conectado"}
+        {/* Detailed Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Dollar className="h-5 w-5" />
+              Ganhos por Aluno - {currentMonth}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {teacherStats.length === 0 ? (
+              <div className="text-center py-8">
+                <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">Nenhuma aula concluída neste mês.</p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Aluno</TableHead>
+                    <TableHead>Aulas Concluídas</TableHead>
+                    <TableHead>Ganhos (R$)</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {teacherStats.map((student) => (
+                    <TableRow key={student.studentId}>
+                      <TableCell className="font-medium">{student.studentName}</TableCell>
+                      <TableCell>{student.completedClasses}</TableCell>
+                      <TableCell>R$ {student.earnings.toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+                  <TableRow className="font-semibold bg-muted/50">
+                    <TableCell>Total</TableCell>
+                    <TableCell>{totalClasses}</TableCell>
+                    <TableCell>R$ {totalEarnings.toFixed(2)}</TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
+  const renderStudentView = () => {
+    console.log('Rendering student view. User data:', {
+      subscriptionPaymentMethod: user.subscriptionPaymentMethod,
+      subscriptionStatus: user.subscriptionStatus,
+      subscriptionBillingDay: user.subscriptionBillingDay
+    });
+    console.log('Student financial data:', studentFinancialData);
+    
+    return (
+      <div className="space-y-6">
+        {/* Payment Method Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MoneyBag className="h-5 w-5" />
+              Método de Pagamento
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+              <div>
+                <p className="font-medium">
+                  {studentFinancialData?.paymentMethod === 'pix' ? 'PIX' : 
+                   studentFinancialData?.paymentMethod === 'credit_card' ? 'Cartão de Crédito' : 
+                   studentFinancialData?.paymentMethod || 'Não definido'}
+                </p>
+                {user.subscriptionBillingDay && (
+                  <p className="text-sm text-muted-foreground">
+                    Cobrança no dia {user.subscriptionBillingDay} de cada mês
+                  </p>
+                )}
+              </div>
+              <Badge variant={studentFinancialData?.subscriptionStatus === 'active' ? 'success' : 'secondary'}>
+                {studentFinancialData?.subscriptionStatus === 'active' ? 'Ativo' : 
+                 studentFinancialData?.subscriptionStatus === 'canceled' ? 'Cancelado' : 
+                 studentFinancialData?.subscriptionStatus || 'Indefinido'}
               </Badge>
             </div>
-            {user.stripeCustomerId && (
-              <div>
-                <p className="text-sm text-subtitle">ID do Cliente Stripe</p>
-                <p className="text-xs font-mono">{user.stripeCustomerId}</p>
-              </div>
-            )}
-          </div>
-        </div>
+           </CardContent>
+         </Card>
 
-        <Text variant="title" size="lg" weight="semibold" className="mb-4">
-          Estatísticas de Aulas
-        </Text>
-
-        <div className="mb-4 flex items-center gap-2">
-          <span className="text-subtitle">Filtrar por mês:</span>
-          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {availableMonths.map((month) => (
-                <SelectOption key={month} value={month}>
-                  {new Date(`${month}-01`).toLocaleDateString("pt-BR", {
-                    year: "numeric",
-                    month: "long",
-                  })}
-                </SelectOption>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="p-4 bg-surface-1 rounded-lg">
-            <p className="text-subtitle">Aulas Dadas</p>
-            <p className="text-2xl font-bold">{classesPerMonth}</p>
-          </div>
-          <div className="p-4 bg-surface-1 rounded-lg">
-            <p className="text-subtitle">Alunos Únicos</p>
-            <p className="text-2xl font-bold">{studentCount}</p>
-          </div>
-          <div className="p-4 bg-surface-1 rounded-lg">
-            <p className="text-subtitle">Média de Alunos</p>
-            <p className="text-2xl font-bold">
-              {classesPerMonth > 0
-                ? (studentCount / classesPerMonth).toFixed(2)
-                : "0.00"}
-            </p>
-          </div>
-        </div>
-
-        <Text variant="title" size="base" weight="semibold" className="mb-2">
-          Aulas do Mês
-        </Text>
-        {classes.length === 0 ? (
-          <Text>Nenhuma aula encontrada para este mês.</Text>
-        ) : (
-          <div className="rounded-lg border border-surface-2 overflow-hidden">
-            <Table>
-              <TableHeader className="bg-surface-1">
-                <TableRow>
-                  <TableHead className="text-subtitle">Data</TableHead>
-                  <TableHead className="text-subtitle">Aluno</TableHead>
-                  <TableHead className="text-subtitle">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody className="bg-container divide-y divide-surface-2">
-                {classes.map((cls) => (
-                  <TableRow key={cls.id}>
-                    <TableCell>
-                      {new Date(cls.scheduledAt).toLocaleDateString("pt-BR")}
-                    </TableCell>
-                    <TableCell>
-                      {cls.studentName || "Aluno Desconhecido"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          cls.status === ClassStatus.COMPLETED
-                            ? "success"
-                            : cls.status === ClassStatus.CANCELED_STUDENT ||
-                                cls.status === ClassStatus.CANCELED_TEACHER ||
-                                cls.status ===
-                                  ClassStatus.CANCELED_TEACHER_MAKEUP ||
-                                cls.status === ClassStatus.CANCELED_CREDIT
-                              ? "danger"
-                              : "warning"
-                        }
-                      >
-                        {cls.status}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </Card>
-    );
-  }
-
-  // For regular students, show subscription payment history
-  if (
-    user.role === UserRoles.STUDENT ||
-    user.role === UserRoles.GUARDED_STUDENT
-  ) {
-    return (
-      <Card className="p-6">
-        <Text variant="title" size="lg" weight="semibold" className="mb-4">
-          Histórico de Pagamentos
-        </Text>
-
-        {user.subscriptionStatus && !isAdmin && (
-          <div className="mb-6 p-4 bg-surface-1 rounded-lg">
-            <h3 className="font-medium mb-2">Assinatura Atual</h3>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <p className="text-sm text-subtitle">Status</p>
-                <Badge
-                  variant={
-                    user.subscriptionStatus === "active" ? "success" : "warning"
-                  }
-                >
-                  {user.subscriptionStatus}
-                </Badge>
-              </div>
-              <div>
-                <p className="text-sm text-subtitle">Método de Pagamento</p>
-                <p>{user.subscriptionPaymentMethod || "Não definido"}</p>
-              </div>
-              {user.subscriptionNextBilling && (
-                <div>
-                  <p className="text-sm text-subtitle">Próxima Cobrança</p>
-                  <p>
-                    {new Date(user.subscriptionNextBilling).toLocaleDateString(
-                      "pt-BR"
-                    )}
-                  </p>
-                </div>
-              )}
+        {/* Payment History */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Dollar className="h-5 w-5" />
+            Histórico de Pagamentos
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!studentFinancialData?.payments || studentFinancialData.payments.length === 0 ? (
+            <div className="text-center py-8">
+              <HandMoney className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">Nenhum histórico de pagamentos disponível.</p>
             </div>
-          </div>
-        )}
-
-        {/* Show admin-specific payment history or student payment history */}
-        {isAdmin && adminStudentPayments.length > 0 ? (
-          <div className="rounded-lg border border-surface-2 overflow-hidden">
+          ) : (
             <Table>
-              <TableHeader className="bg-surface-1">
+              <TableHeader>
                 <TableRow>
-                  <TableHead className="text-subtitle">Data</TableHead>
-                  <TableHead className="text-subtitle">Descrição</TableHead>
-                  <TableHead className="text-subtitle">Valor</TableHead>
-                  <TableHead className="text-subtitle">Status</TableHead>
-                  <TableHead className="text-subtitle">Provedor</TableHead>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead>Valor</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Método</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody className="bg-container divide-y divide-surface-2">
-                {adminStudentPayments.map((payment) => (
+              <TableBody>
+                {studentFinancialData.payments.map((payment: MonthlyPayment) => (
                   <TableRow key={payment.id}>
                     <TableCell>
-                      {new Date(payment.createdAt).toLocaleDateString("pt-BR")}
+                      {new Date(payment.createdAt).toLocaleDateString('pt-BR')}
                     </TableCell>
-                    <TableCell>{payment.description}</TableCell>
+                    <TableCell>{payment.description || 'Pagamento mensal'}</TableCell>
                     <TableCell>
-                      {new Intl.NumberFormat("pt-BR", {
-                        style: "currency",
-                        currency: payment.currency,
-                      }).format(payment.amount)}
+                      R$ {((payment.amount || 0) / 100).toFixed(2)}
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        variant={
-                          payment.status === "completed" ? "success" : "warning"
-                        }
-                      >
-                        {payment.status}
+                      <Badge variant={payment.status === 'paid' ? 'success' : 'secondary'}>
+                        {payment.status === 'paid' ? 'Pago' : 
+                         payment.status === 'pending' ? 'Pendente' : 
+                         payment.status === 'available' ? 'Disponível' :
+                         payment.status === 'overdue' ? 'Vencido' :
+                         payment.status === 'failed' ? 'Falhou' :
+                         payment.status === 'canceled' ? 'Cancelado' :
+                         payment.status || 'Indefinido'}
                       </Badge>
                     </TableCell>
-                    <TableCell>{payment.provider}</TableCell>
+                    <TableCell>
+                      {payment.paymentMethod === 'pix' ? 'PIX' : 
+                       payment.paymentMethod === 'credit_card' ? 'Cartão de Crédito' : 
+                       payment.paymentMethod || 'Não definido'}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-          </div>
-        ) : !isAdmin && studentPayments.length > 0 ? (
-          <div className="rounded-lg border border-surface-2 overflow-hidden">
-            <Table>
-              <TableHeader className="bg-surface-1">
-                <TableRow>
-                  <TableHead className="text-subtitle">
-                    Data de Vencimento
-                  </TableHead>
-                  <TableHead className="text-subtitle">Descrição</TableHead>
-                  <TableHead className="text-subtitle">Valor</TableHead>
-                  <TableHead className="text-subtitle">Status</TableHead>
-                  <TableHead className="text-subtitle">Método</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody className="bg-container divide-y divide-surface-2">
-                {studentPayments.map((payment) => (
-                  <TableRow key={payment.id}>
-                    <TableCell>
-                      {new Date(payment.dueDate).toLocaleDateString("pt-BR")}
-                    </TableCell>
-                    <TableCell>{payment.description}</TableCell>
-                    <TableCell>
-                      {new Intl.NumberFormat("pt-BR", {
-                        style: "currency",
-                        currency: "BRL", // MonthlyPayment uses BRL by default
-                      }).format(payment.amount / 100)}{" "}
-                      {/* Convert from centavos */}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          payment.status === "paid"
-                            ? "success"
-                            : payment.status === "overdue"
-                              ? "danger"
-                              : "warning"
-                        }
-                      >
-                        {payment.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{payment.paymentMethod}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        ) : (
-          <Text>Nenhum pagamento encontrado para este utilizador.</Text>
-        )}
+          )}
+        </CardContent>
       </Card>
+      </div>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
     );
   }
 
-  // For other roles, show nothing for now
   return (
-    <Card className="p-6">
-      <Text>
-        Nenhuma informação financeira disponível para este tipo de usuário.
-      </Text>
-    </Card>
+    <div className="space-y-6">
+      {user.role === 'teacher' ? renderTeacherView() : renderStudentView()}
+    </div>
   );
-}
+};
+
+export default UserFinancialTab;

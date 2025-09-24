@@ -1,11 +1,11 @@
 // services/emailService.ts
 
-import { Resend } from 'resend';
-import { WelcomeEmail } from '@/emails/templates/WelcomeEmail';
-import { ClassRescheduledEmail } from '@/emails/templates/ClassRescheduledEmail';
-import { ClassCanceledEmail } from '@/emails/templates/ClassCanceledEmail';
-import { TeacherVacationEmail } from '@/emails/templates/TeacherVacationEmail';
-import TeacherVacationCancellationEmail from '@/emails/templates/TeacherVacationCancellationEmail';
+import { Resend } from "resend";
+import { WelcomeEmail } from "@/emails/templates/WelcomeEmail";
+import { ClassRescheduledEmail } from "@/emails/templates/ClassRescheduledEmail";
+import { ClassCanceledEmail } from "@/emails/templates/ClassCanceledEmail";
+import { TeacherVacationEmail } from "@/emails/templates/TeacherVacationEmail";
+import TeacherVacationCancellationEmail from "@/emails/templates/TeacherVacationCancellationEmail";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -16,14 +16,19 @@ interface AffectedClass {
 }
 
 export class EmailService {
-  async sendWelcomeAndSetPasswordEmail(email: string, name: string, actionLink: string, studentInfo?: string) {
+  async sendWelcomeAndSetPasswordEmail(
+    email: string,
+    name: string,
+    actionLink: string,
+    studentInfo?: string
+  ) {
     try {
-      const subject = studentInfo 
-        ? 'Bem-vindo(a) à Fluency Lab! Defina sua senha para acessar a conta do estudante.'
-        : 'Bem-vindo(a) à Fluency Lab! Defina sua senha.';
+      const subject = studentInfo
+        ? "Bem-vindo(a) à Fluency Lab! Defina sua senha para acessar a conta do estudante."
+        : "Bem-vindo(a) à Fluency Lab! Defina sua senha.";
 
       await resend.emails.send({
-        from: 'Matheus Fernandes <contato@matheusfernandes.me>',
+        from: "Matheus Fernandes <contato@matheusfernandes.me>",
         to: email,
         subject,
         react: await WelcomeEmail({ name, actionLink, studentInfo }),
@@ -32,7 +37,9 @@ export class EmailService {
       console.log(`E-mail de boas-vindas enviado para ${email}`);
     } catch (error) {
       console.error("Falha ao enviar e-mail de boas-vindas:", error);
-      throw new Error("Usuário criado, mas falha ao enviar o e-mail de boas-vindas.");
+      throw new Error(
+        "Usuário criado, mas falha ao enviar o e-mail de boas-vindas."
+      );
     }
   }
 
@@ -47,7 +54,7 @@ export class EmailService {
     newTime,
     reason,
     rescheduleBy,
-    platformLink
+    platformLink,
   }: {
     email: string;
     recipientName: string;
@@ -62,12 +69,13 @@ export class EmailService {
     platformLink: string;
   }) {
     try {
-      const subject = recipientType === "student" 
-        ? "Sua aula foi reagendada - Fluency Lab"
-        : "Aula reagendada - Fluency Lab";
+      const subject =
+        recipientType === "student"
+          ? "Sua aula foi reagendada - Fluency Lab"
+          : "Aula reagendada - Fluency Lab";
 
       await resend.emails.send({
-        from: 'Reagendamento <contato@matheusfernandes.me>',
+        from: "Reagendamento <contato@matheusfernandes.me>",
         to: [email],
         subject,
         react: await ClassRescheduledEmail({
@@ -80,7 +88,7 @@ export class EmailService {
           newTime,
           reason,
           rescheduleBy,
-          platformLink
+          platformLink,
         }),
       });
 
@@ -103,7 +111,7 @@ export class EmailService {
     creditRefunded,
     makeupCreditGranted,
     platformLink,
-    classId
+    classId,
   }: {
     email: string;
     recipientName: string;
@@ -119,12 +127,13 @@ export class EmailService {
     classId?: string;
   }) {
     try {
-      const subject = recipientType === "student" 
-        ? "Sua aula foi cancelada - Fluency Lab"
-        : "Aula cancelada - Fluency Lab";
+      const subject =
+        recipientType === "student"
+          ? "Sua aula foi cancelada - Fluency Lab"
+          : "Aula cancelada - Fluency Lab";
 
       await resend.emails.send({
-        from: 'Cancelamento <contato@matheusfernandes.me>',
+        from: "Cancelamento <contato@matheusfernandes.me>",
         to: [email],
         subject,
         react: await ClassCanceledEmail({
@@ -138,7 +147,7 @@ export class EmailService {
           creditRefunded,
           makeupCreditGranted,
           platformLink,
-          classId
+          classId,
         }),
       });
 
@@ -156,7 +165,7 @@ export class EmailService {
     vacationStartDate,
     vacationEndDate,
     affectedClasses,
-    platformLink
+    platformLink,
   }: {
     email: string;
     studentName: string;
@@ -168,16 +177,17 @@ export class EmailService {
   }) {
     try {
       await resend.emails.send({
-        from: 'Férias <contato@matheusfernandes.me>',
+        from: "Férias <contato@matheusfernandes.me>",
         to: [email],
-        subject: 'Suas aulas foram afetadas por férias do professor - Fluency Lab',
+        subject:
+          "Suas aulas foram afetadas por férias do professor - Fluency Lab",
         react: await TeacherVacationEmail({
           studentName,
           teacherName,
           vacationStartDate,
           vacationEndDate,
           affectedClasses,
-          platformLink
+          platformLink,
         }),
       });
 
@@ -195,7 +205,7 @@ export class EmailService {
     vacationStartDate,
     vacationEndDate,
     affectedClasses,
-    platformLink
+    platformLink,
   }: {
     email: string;
     studentName: string;
@@ -207,25 +217,31 @@ export class EmailService {
   }) {
     try {
       await resend.emails.send({
-        from: 'Férias Canceladas <contato@matheusfernandes.me>',
+        from: "Férias Canceladas <contato@matheusfernandes.me>",
         to: [email],
-        subject: 'Férias do professor canceladas - Suas aulas foram reagendadas - Fluency Lab',
+        subject:
+          "Férias do professor canceladas - Suas aulas foram reagendadas - Fluency Lab",
         react: await TeacherVacationCancellationEmail({
           studentName,
           teacherName,
           vacationStartDate,
           vacationEndDate,
           affectedClasses,
-          platformLink
+          platformLink,
         }),
       });
 
-      console.log(`E-mail de cancelamento de férias do professor enviado para ${email}`);
+      console.log(
+        `E-mail de cancelamento de férias do professor enviado para ${email}`
+      );
     } catch (error) {
-      console.error("Falha ao enviar e-mail de cancelamento de férias do professor:", error);
-      throw new Error("Falha ao enviar o e-mail de cancelamento de férias do professor.");
+      console.error(
+        "Falha ao enviar e-mail de cancelamento de férias do professor:",
+        error
+      );
+      throw new Error(
+        "Falha ao enviar o e-mail de cancelamento de férias do professor."
+      );
     }
   }
 }
-
-

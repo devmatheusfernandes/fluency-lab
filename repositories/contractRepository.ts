@@ -1,15 +1,15 @@
-import { adminDb } from '@/lib/firebase/admin';
-import { 
-  ContractLog, 
-  ContractStatus, 
-  Student, 
+import { adminDb } from "@/lib/firebase/admin";
+import {
+  ContractLog,
+  ContractStatus,
+  Student,
   ContractValidationError,
-  ContractOperationResponse
-} from '@/components/contract/contrato-types';
+  ContractOperationResponse,
+} from "@/components/contract/contrato-types";
 
 export class ContractRepository {
-  private readonly USERS_COLLECTION = 'users';
-  private readonly CONTRACTS_SUBCOLLECTION = 'Contratos';
+  private readonly USERS_COLLECTION = "users";
+  private readonly CONTRACTS_SUBCOLLECTION = "Contratos";
   private readonly CONTRACT_VALIDITY_MONTHS = 6;
 
   /**
@@ -21,13 +21,13 @@ export class ContractRepository {
       const userSnap = await userRef.get();
 
       if (!userSnap.exists) {
-        throw new Error('User not found');
+        throw new Error("User not found");
       }
 
       const userData = userSnap.data();
       return userData?.ContratosAssinados || null;
     } catch (error) {
-      console.error('Error fetching contract status:', error);
+      console.error("Error fetching contract status:", error);
       throw error;
     }
   }
@@ -35,9 +35,16 @@ export class ContractRepository {
   /**
    * Get contract log by ID
    */
-  async getContractLog(userId: string, logId: string): Promise<ContractLog | null> {
+  async getContractLog(
+    userId: string,
+    logId: string
+  ): Promise<ContractLog | null> {
     try {
-      const logRef = adminDb.collection(this.USERS_COLLECTION).doc(userId).collection(this.CONTRACTS_SUBCOLLECTION).doc(logId);
+      const logRef = adminDb
+        .collection(this.USERS_COLLECTION)
+        .doc(userId)
+        .collection(this.CONTRACTS_SUBCOLLECTION)
+        .doc(logId);
       const logSnap = await logRef.get();
 
       if (!logSnap.exists) {
@@ -46,7 +53,7 @@ export class ContractRepository {
 
       return logSnap.data() as ContractLog;
     } catch (error) {
-      console.error('Error fetching contract log:', error);
+      console.error("Error fetching contract log:", error);
       throw error;
     }
   }
@@ -54,11 +61,18 @@ export class ContractRepository {
   /**
    * Create a new contract log
    */
-  async createContractLog(userId: string, contractData: Omit<ContractLog, 'logID'>): Promise<string> {
+  async createContractLog(
+    userId: string,
+    contractData: Omit<ContractLog, "logID">
+  ): Promise<string> {
     try {
-      const contractRef = adminDb.collection(this.USERS_COLLECTION).doc(userId).collection(this.CONTRACTS_SUBCOLLECTION).doc();
+      const contractRef = adminDb
+        .collection(this.USERS_COLLECTION)
+        .doc(userId)
+        .collection(this.CONTRACTS_SUBCOLLECTION)
+        .doc();
       const logId = contractRef.id;
-      
+
       const contractLog: ContractLog = {
         ...contractData,
         logID: logId,
@@ -66,13 +80,13 @@ export class ContractRepository {
         signedAt: new Date().toISOString(),
         isValid: true,
         expiresAt: this.calculateExpirationDate(),
-        contractVersion: '1.0'
+        contractVersion: "1.0",
       };
 
       await contractRef.set(contractLog);
       return logId;
     } catch (error) {
-      console.error('Error creating contract log:', error);
+      console.error("Error creating contract log:", error);
       throw error;
     }
   }
@@ -80,18 +94,23 @@ export class ContractRepository {
   /**
    * Update contract status in user document
    */
-  async updateContractStatus(userId: string, status: ContractStatus): Promise<void> {
+  async updateContractStatus(
+    userId: string,
+    status: ContractStatus
+  ): Promise<void> {
     try {
       const userRef = adminDb.collection(this.USERS_COLLECTION).doc(userId);
-      await userRef.update({ 
+      await userRef.update({
         ContratosAssinados: {
           ...status,
           isValid: this.isContractValid(status.signedAt),
-          expiresAt: status.signedAt ? this.calculateExpirationDate(status.signedAt) : null
-        }
+          expiresAt: status.signedAt
+            ? this.calculateExpirationDate(status.signedAt)
+            : null,
+        },
       });
     } catch (error) {
-      console.error('Error updating contract status:', error);
+      console.error("Error updating contract status:", error);
       throw error;
     }
   }
@@ -100,8 +119,8 @@ export class ContractRepository {
    * Sign contract as admin
    */
   async signContractAsAdmin(
-    userId: string, 
-    logId: string, 
+    userId: string,
+    logId: string,
     adminData: {
       name: string;
       cpf: string;
@@ -110,7 +129,11 @@ export class ContractRepository {
     }
   ): Promise<void> {
     try {
-      const logRef = adminDb.collection(this.USERS_COLLECTION).doc(userId).collection(this.CONTRACTS_SUBCOLLECTION).doc(logId);
+      const logRef = adminDb
+        .collection(this.USERS_COLLECTION)
+        .doc(userId)
+        .collection(this.CONTRACTS_SUBCOLLECTION)
+        .doc(logId);
       const adminSignedAt = new Date().toISOString();
 
       // Update contract log
@@ -118,19 +141,19 @@ export class ContractRepository {
         adminSigned: true,
         adminName: adminData.name,
         adminCPF: adminData.cpf,
-        adminIP: adminData.ip || 'N/A',
-        adminBrowser: adminData.browser || 'N/A',
-        adminSignedAt
+        adminIP: adminData.ip || "N/A",
+        adminBrowser: adminData.browser || "N/A",
+        adminSignedAt,
       });
 
       // Update user contract status
       const userRef = adminDb.collection(this.USERS_COLLECTION).doc(userId);
       await userRef.update({
-        'ContratosAssinados.signedByAdmin': true,
-        'ContratosAssinados.adminSignedAt': adminSignedAt
+        "ContratosAssinados.signedByAdmin": true,
+        "ContratosAssinados.adminSignedAt": adminSignedAt,
       });
     } catch (error) {
-      console.error('Error signing contract as admin:', error);
+      console.error("Error signing contract as admin:", error);
       throw error;
     }
   }
@@ -149,12 +172,12 @@ export class ContractRepository {
         adminSignedAt: undefined,
         isValid: false,
         expiresAt: undefined,
-        contractVersion: undefined
+        contractVersion: undefined,
       };
 
       await userRef.update({ ContratosAssinados: invalidatedStatus });
     } catch (error) {
-      console.error('Error invalidating contract:', error);
+      console.error("Error invalidating contract:", error);
       throw error;
     }
   }
@@ -162,17 +185,23 @@ export class ContractRepository {
   /**
    * Get all contract logs for a user
    */
-  async getUserContractLogs(userId: string, limitCount: number = 10): Promise<ContractLog[]> {
+  async getUserContractLogs(
+    userId: string,
+    limitCount: number = 10
+  ): Promise<ContractLog[]> {
     try {
-      const contractsRef = adminDb.collection(this.USERS_COLLECTION).doc(userId).collection(this.CONTRACTS_SUBCOLLECTION);
+      const contractsRef = adminDb
+        .collection(this.USERS_COLLECTION)
+        .doc(userId)
+        .collection(this.CONTRACTS_SUBCOLLECTION);
       const querySnapshot = await contractsRef
-        .orderBy('signedAt', 'desc')
+        .orderBy("signedAt", "desc")
         .limit(limitCount)
         .get();
 
-      return querySnapshot.docs.map(doc => doc.data() as ContractLog);
+      return querySnapshot.docs.map((doc) => doc.data() as ContractLog);
     } catch (error) {
-      console.error('Error fetching user contract logs:', error);
+      console.error("Error fetching user contract logs:", error);
       throw error;
     }
   }
@@ -180,20 +209,22 @@ export class ContractRepository {
   /**
    * Get users with pending contracts (admin function)
    */
-  async getUsersWithPendingContracts(): Promise<{ userId: string; status: ContractStatus }[]> {
+  async getUsersWithPendingContracts(): Promise<
+    { userId: string; status: ContractStatus }[]
+  > {
     try {
       const usersRef = adminDb.collection(this.USERS_COLLECTION);
       const querySnapshot = await usersRef
-        .where('ContratosAssinados.signed', '==', true)
-        .where('ContratosAssinados.signedByAdmin', '==', false)
+        .where("ContratosAssinados.signed", "==", true)
+        .where("ContratosAssinados.signedByAdmin", "==", false)
         .get();
 
-      return querySnapshot.docs.map(doc => ({
+      return querySnapshot.docs.map((doc) => ({
         userId: doc.id,
-        status: doc.data().ContratosAssinados as ContractStatus
+        status: doc.data().ContratosAssinados as ContractStatus,
       }));
     } catch (error) {
-      console.error('Error fetching pending contracts:', error);
+      console.error("Error fetching pending contracts:", error);
       throw error;
     }
   }
@@ -206,8 +237,9 @@ export class ContractRepository {
 
     const signedDate = new Date(signedAt);
     const currentDate = new Date();
-    const monthsDiff = (currentDate.getFullYear() - signedDate.getFullYear()) * 12 + 
-                      (currentDate.getMonth() - signedDate.getMonth());
+    const monthsDiff =
+      (currentDate.getFullYear() - signedDate.getFullYear()) * 12 +
+      (currentDate.getMonth() - signedDate.getMonth());
 
     return monthsDiff < this.CONTRACT_VALIDITY_MONTHS;
   }
@@ -218,69 +250,73 @@ export class ContractRepository {
   private calculateExpirationDate(fromDate?: string): string {
     const baseDate = fromDate ? new Date(fromDate) : new Date();
     const expirationDate = new Date(baseDate);
-    expirationDate.setMonth(expirationDate.getMonth() + this.CONTRACT_VALIDITY_MONTHS);
+    expirationDate.setMonth(
+      expirationDate.getMonth() + this.CONTRACT_VALIDITY_MONTHS
+    );
     return expirationDate.toISOString();
   }
 
   /**
    * Validate contract data before saving
    */
-  validateContractData(contractData: Partial<ContractLog>): ContractValidationError[] {
+  validateContractData(
+    contractData: Partial<ContractLog>
+  ): ContractValidationError[] {
     const errors: ContractValidationError[] = [];
 
     if (!contractData.name || contractData.name.trim().length < 2) {
       errors.push({
-        field: 'name',
-        message: 'Nome deve ter pelo menos 2 caracteres',
-        code: 'INVALID_NAME'
+        field: "name",
+        message: "Nome deve ter pelo menos 2 caracteres",
+        code: "INVALID_NAME",
       });
     }
 
     if (!contractData.cpf || !this.validateCPF(contractData.cpf)) {
       errors.push({
-        field: 'cpf',
-        message: 'CPF inválido',
-        code: 'INVALID_CPF'
+        field: "cpf",
+        message: "CPF inválido",
+        code: "INVALID_CPF",
       });
     }
 
     if (!contractData.birthDate || !this.isAdult(contractData.birthDate)) {
       errors.push({
-        field: 'birthDate',
-        message: 'É necessário ter 18 anos ou mais',
-        code: 'UNDERAGE'
+        field: "birthDate",
+        message: "É necessário ter 18 anos ou mais",
+        code: "UNDERAGE",
       });
     }
 
     if (!contractData.address || contractData.address.trim().length < 5) {
       errors.push({
-        field: 'address',
-        message: 'Endereço deve ter pelo menos 5 caracteres',
-        code: 'INVALID_ADDRESS'
+        field: "address",
+        message: "Endereço deve ter pelo menos 5 caracteres",
+        code: "INVALID_ADDRESS",
       });
     }
 
     if (!contractData.city || contractData.city.trim().length < 2) {
       errors.push({
-        field: 'city',
-        message: 'Cidade deve ter pelo menos 2 caracteres',
-        code: 'INVALID_CITY'
+        field: "city",
+        message: "Cidade deve ter pelo menos 2 caracteres",
+        code: "INVALID_CITY",
       });
     }
 
     if (!contractData.state || contractData.state.trim().length < 2) {
       errors.push({
-        field: 'state',
-        message: 'Estado deve ter pelo menos 2 caracteres',
-        code: 'INVALID_STATE'
+        field: "state",
+        message: "Estado deve ter pelo menos 2 caracteres",
+        code: "INVALID_STATE",
       });
     }
 
     if (!contractData.zipCode || contractData.zipCode.trim().length < 8) {
       errors.push({
-        field: 'zipCode',
-        message: 'CEP deve ter 8 dígitos',
-        code: 'INVALID_ZIPCODE'
+        field: "zipCode",
+        message: "CEP deve ter 8 dígitos",
+        code: "INVALID_ZIPCODE",
       });
     }
 
@@ -291,8 +327,8 @@ export class ContractRepository {
    * Validate CPF format and checksum
    */
   private validateCPF(cpf: string): boolean {
-    cpf = cpf.replace(/[^\d]+/g, '');
-    
+    cpf = cpf.replace(/[^\d]+/g, "");
+
     if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) {
       return false;
     }
@@ -329,10 +365,13 @@ export class ContractRepository {
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
 
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
       age--;
     }
-    
+
     return age >= 18;
   }
 }

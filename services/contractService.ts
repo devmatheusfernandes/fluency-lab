@@ -1,6 +1,6 @@
-import { contractRepository } from '@/repositories/contractRepository';
-import { userRepository } from '@/repositories/userRepository';
-import { 
+import { contractRepository } from "@/repositories/contractRepository";
+import { userRepository } from "@/repositories/userRepository";
+import {
   ContractLog,
   ContractStatus,
   SignatureFormData,
@@ -9,15 +9,15 @@ import {
   ValidateContractRequest,
   AdminSignContractRequest,
   Student,
-  ContractValidationError
-} from '@/components/contract/contrato-types';
-import { AuditService } from '@/services/auditService';
+  ContractValidationError,
+} from "@/components/contract/contrato-types";
+import { AuditService } from "@/services/auditService";
 
 export class ContractService {
   private readonly ADMIN_DATA = {
-    name: 'Matheus de Souza Fernandes',
-    cpf: '70625181158',
-    birthDate: '1999-10-02'
+    name: "Matheus de Souza Fernandes",
+    cpf: "70625181158",
+    birthDate: "1999-10-02",
   };
 
   /**
@@ -32,17 +32,20 @@ export class ContractService {
       // Get student data
       const userData = await userRepository.findById(userId);
       if (!userData) {
-        throw new Error('Student not found');
+        throw new Error("Student not found");
       }
       const student = userData as Student;
 
       // Get contract status
       const contractStatus = await contractRepository.getContractStatus(userId);
-      
+
       // Get contract log if exists
       let contractLog: ContractLog | null = null;
       if (contractStatus?.logId) {
-        contractLog = await contractRepository.getContractLog(userId, contractStatus.logId);
+        contractLog = await contractRepository.getContractLog(
+          userId,
+          contractStatus.logId
+        );
       }
 
       // Check contract validity
@@ -56,16 +59,16 @@ export class ContractService {
             contractStatus: {
               signed: false,
               signedByAdmin: false,
-              isValid: false
+              isValid: false,
             },
-            contractLog: null
+            contractLog: null,
           };
         }
       }
 
       return { student, contractStatus, contractLog };
     } catch (error) {
-      console.error('Error getting student contract:', error);
+      console.error("Error getting student contract:", error);
       throw error;
     }
   }
@@ -73,7 +76,9 @@ export class ContractService {
   /**
    * Create and sign a contract
    */
-  async createContract(request: CreateContractRequest): Promise<ContractOperationResponse> {
+  async createContract(
+    request: CreateContractRequest
+  ): Promise<ContractOperationResponse> {
     try {
       const { studentId, signatureData } = request;
 
@@ -82,17 +87,22 @@ export class ContractService {
       if (validationErrors.length > 0) {
         return {
           success: false,
-          message: 'Dados de assinatura inválidos',
-          errors: validationErrors
+          message: "Dados de assinatura inválidos",
+          errors: validationErrors,
         };
       }
 
       // Check if student already has a valid contract
-      const existingStatus = await contractRepository.getContractStatus(studentId);
-      if (existingStatus?.signed && existingStatus?.signedByAdmin && this.isContractValid(existingStatus.signedAt)) {
+      const existingStatus =
+        await contractRepository.getContractStatus(studentId);
+      if (
+        existingStatus?.signed &&
+        existingStatus?.signedByAdmin &&
+        this.isContractValid(existingStatus.signedAt)
+      ) {
         return {
           success: false,
-          message: 'Contrato já assinado e válido'
+          message: "Contrato já assinado e válido",
         };
       }
 
@@ -100,7 +110,7 @@ export class ContractService {
       const clientInfo = await this.getClientInfo();
 
       // Prepare contract log data
-      const contractLogData: Omit<ContractLog, 'logID'> = {
+      const contractLogData: Omit<ContractLog, "logID"> = {
         name: signatureData.name,
         cpf: signatureData.cpf,
         birthDate: signatureData.birthDate,
@@ -119,11 +129,14 @@ export class ContractService {
         adminCPF: this.ADMIN_DATA.cpf,
         adminIP: clientInfo.ip,
         adminBrowser: clientInfo.browser,
-        adminSignedAt: new Date().toISOString()
+        adminSignedAt: new Date().toISOString(),
       };
 
       // Create contract log
-      const logId = await contractRepository.createContractLog(studentId, contractLogData);
+      const logId = await contractRepository.createContractLog(
+        studentId,
+        contractLogData
+      );
 
       // Update contract status
       const contractStatus: ContractStatus = {
@@ -134,32 +147,27 @@ export class ContractService {
         adminSignedAt: contractLogData.adminSignedAt,
         isValid: true,
         expiresAt: this.calculateExpirationDate(contractLogData.signedAt),
-        contractVersion: '1.0'
+        contractVersion: "1.0",
       };
 
       await contractRepository.updateContractStatus(studentId, contractStatus);
 
       // Log the contract signing event
-      await AuditService.logEvent(
-        studentId,
-        'CONTRACT_SIGNED',
-        'contract',
-        {
-          contractId: logId,
-          ipAddress: clientInfo.ip
-        }
-      );
+      await AuditService.logEvent(studentId, "CONTRACT_SIGNED", "contract", {
+        contractId: logId,
+        ipAddress: clientInfo.ip,
+      });
 
       return {
         success: true,
-        message: 'Contrato assinado com sucesso',
-        data: contractStatus
+        message: "Contrato assinado com sucesso",
+        data: contractStatus,
       };
     } catch (error) {
-      console.error('Error creating contract:', error);
+      console.error("Error creating contract:", error);
       return {
         success: false,
-        message: 'Erro interno do servidor'
+        message: "Erro interno do servidor",
       };
     }
   }
@@ -167,39 +175,42 @@ export class ContractService {
   /**
    * Validate contract status
    */
-  async validateContract(request: ValidateContractRequest): Promise<ContractOperationResponse> {
+  async validateContract(
+    request: ValidateContractRequest
+  ): Promise<ContractOperationResponse> {
     try {
       const { studentId, contractId } = request;
 
-      const contractStatus = await contractRepository.getContractStatus(studentId);
-      
+      const contractStatus =
+        await contractRepository.getContractStatus(studentId);
+
       if (!contractStatus) {
         return {
           success: false,
-          message: 'Contrato não encontrado'
+          message: "Contrato não encontrado",
         };
       }
 
       const isValid = this.isContractValid(contractStatus.signedAt);
-      
+
       if (!isValid) {
         await this.invalidateExpiredContract(studentId);
         return {
           success: false,
-          message: 'Contrato expirado'
+          message: "Contrato expirado",
         };
       }
 
       return {
         success: true,
-        message: 'Contrato válido',
-        data: contractStatus
+        message: "Contrato válido",
+        data: contractStatus,
       };
     } catch (error) {
-      console.error('Error validating contract:', error);
+      console.error("Error validating contract:", error);
       return {
         success: false,
-        message: 'Erro ao validar contrato'
+        message: "Erro ao validar contrato",
       };
     }
   }
@@ -207,36 +218,43 @@ export class ContractService {
   /**
    * Admin sign contract (if needed separately)
    */
-  async adminSignContract(request: AdminSignContractRequest): Promise<ContractOperationResponse> {
+  async adminSignContract(
+    request: AdminSignContractRequest
+  ): Promise<ContractOperationResponse> {
     try {
       const { studentId, contractId, adminData } = request;
 
-      await contractRepository.signContractAsAdmin(studentId, contractId, adminData);
+      await contractRepository.signContractAsAdmin(
+        studentId,
+        contractId,
+        adminData
+      );
 
-      const updatedStatus = await contractRepository.getContractStatus(studentId);
+      const updatedStatus =
+        await contractRepository.getContractStatus(studentId);
 
       // Log the admin contract signing event
       await AuditService.logEvent(
-        'admin', // Using a generic admin identifier since we don't have the specific admin ID
-        'CONTRACT_ADMIN_SIGNED',
-        'contract',
+        "admin", // Using a generic admin identifier since we don't have the specific admin ID
+        "CONTRACT_ADMIN_SIGNED",
+        "contract",
         {
           studentId,
           contractId,
-          ipAddress: adminData.ip
+          ipAddress: adminData.ip,
         }
       );
 
       return {
         success: true,
-        message: 'Contrato assinado pelo administrador',
-        data: updatedStatus || undefined
+        message: "Contrato assinado pelo administrador",
+        data: updatedStatus || undefined,
       };
     } catch (error) {
-      console.error('Error admin signing contract:', error);
+      console.error("Error admin signing contract:", error);
       return {
         success: false,
-        message: 'Erro ao assinar contrato como administrador'
+        message: "Erro ao assinar contrato como administrador",
       };
     }
   }
@@ -255,10 +273,10 @@ export class ContractService {
       return {
         signed: [],
         pending: [],
-        expired: []
+        expired: [],
       };
     } catch (error) {
-      console.error('Error getting all contracts:', error);
+      console.error("Error getting all contracts:", error);
       throw error;
     }
   }
@@ -269,19 +287,14 @@ export class ContractService {
   private async invalidateExpiredContract(userId: string): Promise<void> {
     try {
       await contractRepository.invalidateContract(userId);
-      console.log('Contract expired and invalidated for user:', userId);
-      
+      console.log("Contract expired and invalidated for user:", userId);
+
       // Log the contract invalidation event
-      await AuditService.logEvent(
-        'system',
-        'CONTRACT_EXPIRED',
-        'contract',
-        {
-          userId
-        }
-      );
+      await AuditService.logEvent("system", "CONTRACT_EXPIRED", "contract", {
+        userId,
+      });
     } catch (error) {
-      console.error('Error invalidating expired contract:', error);
+      console.error("Error invalidating expired contract:", error);
       throw error;
     }
   }
@@ -289,13 +302,16 @@ export class ContractService {
   /**
    * Update user contract length in user document
    */
-  async updateUserContractLength(userId: string, contractLengthMonths: number): Promise<void> {
+  async updateUserContractLength(
+    userId: string,
+    contractLengthMonths: number
+  ): Promise<void> {
     try {
       // This should be handled by the user repository or contract repository
       // For now, we'll leave this to be handled in the API route directly
       // since it's not part of the core contract functionality
     } catch (error) {
-      console.error('Error updating user contract length:', error);
+      console.error("Error updating user contract length:", error);
       throw error;
     }
   }
@@ -326,7 +342,9 @@ export class ContractService {
   /**
    * Validate signature form data
    */
-  private validateSignatureData(data: SignatureFormData): ContractValidationError[] {
+  private validateSignatureData(
+    data: SignatureFormData
+  ): ContractValidationError[] {
     return contractRepository.validateContractData(data);
   }
 
@@ -334,22 +352,22 @@ export class ContractService {
    * Get client IP and browser information
    */
   private async getClientInfo(): Promise<{ ip: string; browser: string }> {
-    let ip = 'N/A';
-    let browser = 'N/A';
+    let ip = "N/A";
+    let browser = "N/A";
 
     try {
       // Try to get IP from external service
-      const ipResponse = await fetch('https://api.ipify.org?format=json');
+      const ipResponse = await fetch("https://api.ipify.org?format=json");
       if (ipResponse.ok) {
         const ipData = await ipResponse.json();
         ip = ipData.ip;
       }
     } catch (error) {
-      console.warn('Could not fetch IP address:', error);
+      console.warn("Could not fetch IP address:", error);
     }
 
     // Browser info would typically come from client
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       browser = navigator.userAgent;
     }
 
@@ -362,14 +380,14 @@ export class ContractService {
   async shouldShowContractNotification(userId: string): Promise<boolean> {
     try {
       const contractStatus = await contractRepository.getContractStatus(userId);
-      
+
       if (!contractStatus) return true;
       if (!contractStatus.signed) return true;
       if (!this.isContractValid(contractStatus.signedAt)) return true;
 
       return false;
     } catch (error) {
-      console.error('Error checking contract notification status:', error);
+      console.error("Error checking contract notification status:", error);
       return true; // Show notification on error to be safe
     }
   }
@@ -384,18 +402,18 @@ export class ContractService {
   }> {
     try {
       const result = await this.getStudentContract(userId);
-      
+
       if (!result.student) {
-        throw new Error('Student data not found');
+        throw new Error("Student data not found");
       }
 
       return {
         student: result.student,
         contractStatus: result.contractStatus,
-        contractLog: result.contractLog
+        contractLog: result.contractLog,
       };
     } catch (error) {
-      console.error('Error getting contract PDF data:', error);
+      console.error("Error getting contract PDF data:", error);
       throw error;
     }
   }

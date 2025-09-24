@@ -26,7 +26,7 @@ import {
   CreditTransaction,
 } from "@/types/credits/regularClassCredits";
 import { TextArea } from "../ui/TextArea";
-import { Calendar, Card2, Gift, ShieldWarning, User } from "@solar-icons/react";
+import { Calendar, Card2, Gift, ShieldWarning, User, CloseCircle } from "@solar-icons/react";
 import { Alert, AlertDescription } from "../ui/Shadcn/alert";
 
 interface UserCreditsTabProps {
@@ -163,7 +163,7 @@ export default function UserCreditsTab({ studentId }: UserCreditsTabProps) {
   return (
     <div className="space-y-6">
       {/* Credit Balance Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -202,6 +202,20 @@ export default function UserCreditsTab({ studentId }: UserCreditsTabProps) {
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
               {balance?.lateStudentCredits || 0}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Aulas Canceladas
+            </CardTitle>
+            <CloseCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">
+              {balance?.credits?.filter(credit => credit.type === RegularCreditType.TEACHER_CANCELLATION && !credit.usedAt).length || 0}
             </div>
           </CardContent>
         </Card>
@@ -268,6 +282,9 @@ export default function UserCreditsTab({ studentId }: UserCreditsTabProps) {
                     </SelectOption>
                     <SelectOption value={RegularCreditType.LATE_STUDENTS}>
                       Alunos Tardios
+                    </SelectOption>
+                    <SelectOption value={RegularCreditType.TEACHER_CANCELLATION}>
+                      Aulas Canceladas
                     </SelectOption>
                   </SelectContent>
                 </Select>

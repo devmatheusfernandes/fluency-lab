@@ -47,7 +47,7 @@ export type User = {
   birthDate?: Date; //Required
   gender?: "male" | "female";
   phoneNumber?: string;
-  
+
   // Guardian info for minors (GUARDED_STUDENT)
   guardian?: {
     name: string;
@@ -55,7 +55,7 @@ export type User = {
     phoneNumber?: string;
     relationship?: string; // "pai", "mãe", "responsável legal", etc.
   };
-  
+
   address?: {
     //Required
     street: string;
@@ -89,9 +89,7 @@ export type User = {
   // REGULAR STUDENTS - Extra class credits system
   regularClassCredits?: RegularClassCredit[];
 
-  // PAYMENT / STRIPE FIELDS
-  stripeCustomerId?: string | null;
-  stripeSubscriptionId?: string | null;
+  // PAYMENT
   subscriptionStatus?: "active" | "canceled" | "incomplete" | null;
   lastPaymentIntentId?: string | null;
 

@@ -1,5 +1,6 @@
 import { contractRepository } from "@/repositories/contractRepository";
 import { userRepository } from "@/repositories/userRepository";
+import { userAdminRepository } from "@/repositories";
 import {
   ContractLog,
   ContractStatus,
@@ -10,6 +11,11 @@ import {
   AdminSignContractRequest,
   Student,
   ContractValidationError,
+  ContractRenewalRequest,
+  ContractCancellationRequest,
+  ContractRenewalResponse,
+  ContractRenewalEmailData,
+  ContractRenewalJob,
 } from "@/components/contract/contrato-types";
 import { AuditService } from "@/services/auditService";
 
@@ -268,11 +274,13 @@ export class ContractService {
     expired: any[];
   }> {
     try {
-      // This would need a more comprehensive implementation
-      // For now, return empty arrays
+      const pendingContracts = await contractRepository.getUsersWithPendingContracts();
+      
+      // For now, return pending contracts and empty arrays for others
+      // This can be expanded to include more comprehensive contract data
       return {
         signed: [],
-        pending: [],
+        pending: pendingContracts,
         expired: [],
       };
     } catch (error) {
@@ -415,6 +423,304 @@ export class ContractService {
     } catch (error) {
       console.error("Error getting contract PDF data:", error);
       throw error;
+    }
+  }
+
+  /**
+   * Renew a contract automatically or manually
+   */
+  async renewContract(request: ContractRenewalRequest): Promise<ContractRenewalResponse> {
+    try {
+      const { studentId, renewalType, adminId } = request;
+
+      // Get current contract status
+      const contractStatus = await contractRepository.getContractStatus(studentId);
+      
+      if (!contractStatus) {
+        return {
+          success: false,
+          message: 'Contrato não encontrado'
+        };
+      }
+
+      if (!contractStatus.signed || !contractStatus.signedByAdmin) {
+        return {
+          success: false,
+          message: 'Contrato não está totalmente assinado'
+        };
+      }
+
+      if (contractStatus.cancelledAt) {
+        return {
+          success: false,
+          message: 'Contrato foi cancelado e não pode ser renovado'
+        };
+      }
+
+      const currentExpirationDate = contractStatus.expiresAt;
+      if (!currentExpirationDate) {
+        return {
+          success: false,
+          message: 'Data de expiração não encontrada'
+        };
+      }
+
+      // Calculate new expiration date (6 months from current expiration)
+      const newExpirationDate = this.calculateRenewalExpirationDate(currentExpirationDate);
+      const renewalCount = (contractStatus.renewalCount || 0) + 1;
+
+      // Update contract status with renewal information
+      const updatedStatus: ContractStatus = {
+        ...contractStatus,
+        expiresAt: newExpirationDate,
+        isValid: true,
+        renewalCount,
+        lastRenewalAt: new Date().toISOString(),
+        autoRenewal: renewalType === 'automatic'
+      };
+
+      await contractRepository.updateContractStatus(studentId, updatedStatus);
+
+      // Log the renewal event
+      await AuditService.logEvent(
+        adminId || 'system',
+        'CONTRACT_RENEWED',
+        'contract',
+        {
+          studentId,
+          renewalType,
+          previousExpirationDate: currentExpirationDate,
+          newExpirationDate,
+          renewalCount
+        }
+      );
+
+      // Send renewal email notification
+      const userData = await userRepository.findById(studentId);
+      if (userData) {
+        const emailData: ContractRenewalEmailData = {
+          studentName: userData.name || 'Estudante',
+          studentEmail: userData.email,
+          previousExpirationDate: currentExpirationDate,
+          newExpirationDate,
+          renewalCount,
+          contractId: contractStatus.logId || studentId
+        };
+
+        await this.sendRenewalEmail(emailData);
+      }
+
+      return {
+        success: true,
+        message: 'Contrato renovado com sucesso',
+        data: updatedStatus,
+        renewalData: {
+          previousExpirationDate: currentExpirationDate,
+          newExpirationDate,
+          renewalCount,
+          renewalType
+        }
+      };
+    } catch (error) {
+      console.error('Error renewing contract:', error);
+      return {
+        success: false,
+        message: 'Erro ao renovar contrato'
+      };
+    }
+  }
+
+  /**
+   * Cancel a contract
+   */
+  async cancelContract(request: ContractCancellationRequest): Promise<ContractOperationResponse> {
+    try {
+      const { studentId, cancelledBy, reason, isAdminCancellation } = request;
+
+      // Get current contract status
+      const contractStatus = await contractRepository.getContractStatus(studentId);
+      
+      if (!contractStatus) {
+        return {
+          success: false,
+          message: 'Contrato não encontrado'
+        };
+      }
+
+      if (contractStatus.cancelledAt) {
+        return {
+          success: false,
+          message: 'Contrato já foi cancelado'
+        };
+      }
+
+      // Update contract status with cancellation information
+      const updatedStatus: ContractStatus = {
+        ...contractStatus,
+        cancelledAt: new Date().toISOString(),
+        cancelledBy,
+        cancellationReason: reason,
+        isValid: false,
+        autoRenewal: false
+      };
+
+      await contractRepository.updateContractStatus(studentId, updatedStatus);
+
+      // Log the cancellation event
+      await AuditService.logEvent(
+        cancelledBy,
+        'CONTRACT_CANCELLED',
+        'contract',
+        {
+          studentId,
+          reason,
+          isAdminCancellation,
+          cancelledAt: updatedStatus.cancelledAt
+        }
+      );
+
+      return {
+        success: true,
+        message: 'Contrato cancelado com sucesso',
+        data: updatedStatus
+      };
+    } catch (error) {
+      console.error('Error cancelling contract:', error);
+      return {
+        success: false,
+        message: 'Erro ao cancelar contrato'
+      };
+    }
+  }
+
+  /**
+   * Process contracts for automatic renewal (called by cron job)
+   */
+  async processContractRenewals(): Promise<ContractRenewalJob[]> {
+    try {
+      // Get all users by fetching from all roles
+      const studentUsers = await userAdminRepository.findUsersByRole('student');
+      const guardedStudentUsers = await userAdminRepository.findUsersByRole('guarded_student');
+      const teacherUsers = await userAdminRepository.findUsersByRole('teacher');
+      const managerUsers = await userAdminRepository.findUsersByRole('manager');
+      const adminUsers = await userAdminRepository.findUsersByRole('admin');
+      const materialManagerUsers = await userAdminRepository.findUsersByRole('material_manager');
+      
+      const allUsers = [
+        ...studentUsers,
+        ...guardedStudentUsers,
+        ...teacherUsers,
+        ...managerUsers,
+        ...adminUsers,
+        ...materialManagerUsers
+      ];
+      
+      const renewalJobs: ContractRenewalJob[] = [];
+
+      for (const user of allUsers) {
+        const contractStatus = await contractRepository.getContractStatus(user.id);
+        
+        if (!contractStatus || !contractStatus.expiresAt || contractStatus.cancelledAt) {
+          continue;
+        }
+
+        const daysUntilExpiration = this.getDaysUntilExpiration(contractStatus.expiresAt);
+        
+        // Check if contract should be renewed (expires in 7 days or less)
+        const shouldRenew = daysUntilExpiration <= 7 && daysUntilExpiration >= 0 && 
+                           contractStatus.signed && contractStatus.signedByAdmin && 
+                           contractStatus.autoRenewal !== false;
+
+        // Check if cancel button should be shown (30 days before expiration)
+        const shouldShowCancelButton = daysUntilExpiration <= 30 && daysUntilExpiration > 0;
+
+        const job: ContractRenewalJob = {
+          userId: user.id,
+          contractStatus,
+          daysUntilExpiration,
+          shouldRenew,
+          shouldShowCancelButton
+        };
+
+        renewalJobs.push(job);
+
+        // Automatically renew if conditions are met
+        if (shouldRenew) {
+          await this.renewContract({
+            studentId: user.id,
+            renewalType: 'automatic'
+          });
+        }
+      }
+
+      return renewalJobs;
+    } catch (error) {
+      console.error('Error processing contract renewals:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Check if user can cancel their contract (30 days before expiration)
+   */
+  async canUserCancelContract(userId: string): Promise<boolean> {
+    try {
+      const contractStatus = await contractRepository.getContractStatus(userId);
+      
+      if (!contractStatus || !contractStatus.expiresAt || contractStatus.cancelledAt) {
+        return false;
+      }
+
+      const daysUntilExpiration = this.getDaysUntilExpiration(contractStatus.expiresAt);
+      return daysUntilExpiration <= 30 && daysUntilExpiration > 0;
+    } catch (error) {
+      console.error('Error checking if user can cancel contract:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Calculate renewal expiration date (6 months from current expiration)
+   */
+  private calculateRenewalExpirationDate(currentExpirationDate: string): string {
+    const currentExpiration = new Date(currentExpirationDate);
+    const newExpiration = new Date(currentExpiration);
+    newExpiration.setMonth(newExpiration.getMonth() + 6);
+    return newExpiration.toISOString();
+  }
+
+  /**
+   * Get days until contract expiration
+   */
+  private getDaysUntilExpiration(expirationDate: string): number {
+    const expiration = new Date(expirationDate);
+    const now = new Date();
+    const diffTime = expiration.getTime() - now.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  }
+
+  /**
+   * Send contract renewal email notification
+   */
+  private async sendRenewalEmail(emailData: ContractRenewalEmailData): Promise<void> {
+    try {
+      const { EmailService } = await import('./emailService');
+      const emailService = new EmailService();
+      
+      await emailService.sendContractRenewalEmail({
+        email: emailData.studentEmail,
+        studentName: emailData.studentName,
+        previousExpirationDate: emailData.previousExpirationDate,
+        newExpirationDate: emailData.newExpirationDate,
+        renewalCount: emailData.renewalCount,
+        contractId: emailData.contractId,
+        platformLink: "https://app.fluencylab.com"
+      });
+      
+      console.log('Renewal email sent successfully to:', emailData.studentEmail);
+    } catch (error) {
+      console.error('Error sending renewal email:', error);
+      // Don't throw error here as email failure shouldn't stop the renewal process
     }
   }
 }

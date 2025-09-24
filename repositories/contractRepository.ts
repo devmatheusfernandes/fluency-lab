@@ -5,6 +5,9 @@ import {
   Student,
   ContractValidationError,
   ContractOperationResponse,
+  ContractRenewalRequest,
+  ContractCancellationRequest,
+  ContractRenewalResponse,
 } from "@/components/contract/contrato-types";
 
 export class ContractRepository {
@@ -373,6 +376,213 @@ export class ContractRepository {
     }
 
     return age >= 18;
+  }
+
+  /**
+   * Update contract status with renewal information
+   */
+  async updateContractForRenewal(
+    userId: string,
+    renewalData: {
+      newExpirationDate: string;
+      renewalCount: number;
+      lastRenewalAt: string;
+      autoRenewal: boolean;
+    }
+  ): Promise<void> {
+    try {
+      const userRef = adminDb.collection(this.USERS_COLLECTION).doc(userId);
+      await userRef.update({
+        "ContratosAssinados.expiresAt": renewalData.newExpirationDate,
+        "ContratosAssinados.renewalCount": renewalData.renewalCount,
+        "ContratosAssinados.lastRenewalAt": renewalData.lastRenewalAt,
+        "ContratosAssinados.autoRenewal": renewalData.autoRenewal,
+        "ContratosAssinados.isValid": true,
+      });
+    } catch (error) {
+      console.error("Error updating contract for renewal:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update contract status with cancellation information
+   */
+  async updateContractForCancellation(
+    userId: string,
+    cancellationData: {
+      cancelledAt: string;
+      cancelledBy: string;
+      cancellationReason: string;
+    }
+  ): Promise<void> {
+    try {
+      const userRef = adminDb.collection(this.USERS_COLLECTION).doc(userId);
+      await userRef.update({
+        "ContratosAssinados.cancelledAt": cancellationData.cancelledAt,
+        "ContratosAssinados.cancelledBy": cancellationData.cancelledBy,
+        "ContratosAssinados.cancellationReason": cancellationData.cancellationReason,
+        "ContratosAssinados.isValid": false,
+        "ContratosAssinados.autoRenewal": false,
+      });
+    } catch (error) {
+      console.error("Error updating contract for cancellation:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all users with active contracts for renewal processing
+   */
+  async getAllUsersWithActiveContracts(): Promise<
+    { userId: string; status: ContractStatus }[]
+  > {
+    try {
+      const usersRef = adminDb.collection(this.USERS_COLLECTION);
+      const querySnapshot = await usersRef
+        .where("ContratosAssinados.signed", "==", true)
+        .where("ContratosAssinados.signedByAdmin", "==", true)
+        .get();
+
+      const results: { userId: string; status: ContractStatus }[] = [];
+
+      for (const doc of querySnapshot.docs) {
+        const contractStatus = doc.data().ContratosAssinados as ContractStatus;
+        
+        // Only include contracts that are not cancelled and have expiration date
+        if (!contractStatus.cancelledAt && contractStatus.expiresAt) {
+          results.push({
+            userId: doc.id,
+            status: contractStatus,
+          });
+        }
+      }
+
+      return results;
+    } catch (error) {
+      console.error("Error fetching users with active contracts:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a renewal log entry in the contract subcollection
+   */
+  async createRenewalLog(
+    userId: string,
+    renewalData: {
+      previousExpirationDate: string;
+      newExpirationDate: string;
+      renewalCount: number;
+      renewalType: 'automatic' | 'manual';
+      renewedBy?: string;
+    }
+  ): Promise<string> {
+    try {
+      const renewalLogRef = adminDb
+        .collection(this.USERS_COLLECTION)
+        .doc(userId)
+        .collection("ContractRenewals")
+        .doc();
+      
+      const renewalLogId = renewalLogRef.id;
+      
+      const renewalLog = {
+        renewalId: renewalLogId,
+        previousExpirationDate: renewalData.previousExpirationDate,
+        newExpirationDate: renewalData.newExpirationDate,
+        renewalCount: renewalData.renewalCount,
+        renewalType: renewalData.renewalType,
+        renewedBy: renewalData.renewedBy || 'system',
+        renewedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+      };
+
+      await renewalLogRef.set(renewalLog);
+      return renewalLogId;
+    } catch (error) {
+      console.error("Error creating renewal log:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a cancellation log entry in the contract subcollection
+   */
+  async createCancellationLog(
+    userId: string,
+    cancellationData: {
+      cancelledBy: string;
+      cancellationReason: string;
+      isAdminCancellation: boolean;
+    }
+  ): Promise<string> {
+    try {
+      const cancellationLogRef = adminDb
+        .collection(this.USERS_COLLECTION)
+        .doc(userId)
+        .collection("ContractCancellations")
+        .doc();
+      
+      const cancellationLogId = cancellationLogRef.id;
+      
+      const cancellationLog = {
+        cancellationId: cancellationLogId,
+        cancelledBy: cancellationData.cancelledBy,
+        cancellationReason: cancellationData.cancellationReason,
+        isAdminCancellation: cancellationData.isAdminCancellation,
+        cancelledAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+      };
+
+      await cancellationLogRef.set(cancellationLog);
+      return cancellationLogId;
+    } catch (error) {
+      console.error("Error creating cancellation log:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get renewal history for a user
+   */
+  async getUserRenewalHistory(userId: string): Promise<any[]> {
+    try {
+      const renewalsRef = adminDb
+        .collection(this.USERS_COLLECTION)
+        .doc(userId)
+        .collection("ContractRenewals");
+      
+      const querySnapshot = await renewalsRef
+        .orderBy("renewedAt", "desc")
+        .get();
+
+      return querySnapshot.docs.map((doc) => doc.data());
+    } catch (error) {
+      console.error("Error fetching user renewal history:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get cancellation history for a user
+   */
+  async getUserCancellationHistory(userId: string): Promise<any[]> {
+    try {
+      const cancellationsRef = adminDb
+        .collection(this.USERS_COLLECTION)
+        .doc(userId)
+        .collection("ContractCancellations");
+      
+      const querySnapshot = await cancellationsRef
+        .orderBy("cancelledAt", "desc")
+        .get();
+
+      return querySnapshot.docs.map((doc) => doc.data());
+    } catch (error) {
+      console.error("Error fetching user cancellation history:", error);
+      throw error;
+    }
   }
 }
 

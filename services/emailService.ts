@@ -6,6 +6,7 @@ import { ClassRescheduledEmail } from "@/emails/templates/ClassRescheduledEmail"
 import { ClassCanceledEmail } from "@/emails/templates/ClassCanceledEmail";
 import { TeacherVacationEmail } from "@/emails/templates/TeacherVacationEmail";
 import TeacherVacationCancellationEmail from "@/emails/templates/TeacherVacationCancellationEmail";
+import { ContractRenewalEmail } from "@/emails/templates/ContractRenewalEmail";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -242,6 +243,45 @@ export class EmailService {
       throw new Error(
         "Falha ao enviar o e-mail de cancelamento de férias do professor."
       );
+    }
+  }
+
+  async sendContractRenewalEmail({
+    email,
+    studentName,
+    previousExpirationDate,
+    newExpirationDate,
+    renewalCount,
+    contractId,
+    platformLink = "https://app.fluencylab.com",
+  }: {
+    email: string;
+    studentName: string;
+    previousExpirationDate: string;
+    newExpirationDate: string;
+    renewalCount: number;
+    contractId: string;
+    platformLink?: string;
+  }) {
+    try {
+      await resend.emails.send({
+        from: "Renovação de Contrato <contato@matheusfernandes.me>",
+        to: [email],
+        subject: "🎉 Seu contrato foi renovado automaticamente - Fluency Lab",
+        react: await ContractRenewalEmail({
+          studentName,
+          previousExpirationDate,
+          newExpirationDate,
+          renewalCount,
+          contractId,
+          platformLink,
+        }),
+      });
+
+      console.log(`E-mail de renovação de contrato enviado para ${email}`);
+    } catch (error) {
+      console.error("Falha ao enviar e-mail de renovação de contrato:", error);
+      throw new Error("Falha ao enviar o e-mail de renovação de contrato.");
     }
   }
 }

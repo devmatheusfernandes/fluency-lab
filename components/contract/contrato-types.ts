@@ -60,6 +60,12 @@ export interface ContractStatus {
   isValid?: boolean; // Contract validity status
   expiresAt?: string; // Contract expiration date
   contractVersion?: string; // Contract version for tracking changes
+  autoRenewal?: boolean; // Whether contract should auto-renew
+  cancelledAt?: string; // ISO String Date when contract was cancelled
+  cancelledBy?: string; // User ID who cancelled the contract
+  cancellationReason?: string; // Reason for cancellation
+  renewalCount?: number; // Number of times contract has been renewed
+  lastRenewalAt?: string; // ISO String Date of last renewal
 }
 
 // Extended student interface for admin operations
@@ -127,4 +133,47 @@ export interface AdminSignContractRequest {
     ip?: string;
     browser?: string;
   };
+}
+
+// Contract renewal types
+export interface ContractRenewalRequest {
+  studentId: string;
+  renewalType: 'automatic' | 'manual';
+  adminId?: string; // For manual renewals
+}
+
+export interface ContractCancellationRequest {
+  studentId: string;
+  cancelledBy: string; // User ID who is cancelling
+  reason: string;
+  isAdminCancellation: boolean;
+}
+
+export interface ContractRenewalResponse extends ContractOperationResponse {
+  renewalData?: {
+    previousExpirationDate: string;
+    newExpirationDate: string;
+    renewalCount: number;
+    renewalType: 'automatic' | 'manual';
+  };
+}
+
+// Email notification types
+export interface ContractRenewalEmailData {
+  studentName: string;
+  studentEmail: string;
+  previousExpirationDate: string;
+  newExpirationDate: string;
+  renewalCount: number;
+  contractId: string;
+  platformLink?: string;
+}
+
+// Cron job processing types
+export interface ContractRenewalJob {
+  userId: string;
+  contractStatus: ContractStatus;
+  daysUntilExpiration: number;
+  shouldRenew: boolean;
+  shouldShowCancelButton: boolean;
 }

@@ -97,10 +97,24 @@ function TwoFactorForm() {
       });
 
       if (result?.error) {
+        console.error("SignIn error:", result.error);
+        
         if (result.error === "Invalid 2FA code") {
           setError("Código 2FA inválido. Tente novamente.");
+        } else if (result.error === "2FA_REQUIRED") {
+          setError("Código 2FA é obrigatório. Digite o código do seu aplicativo autenticador.");
+        } else if (result.error === "CredentialsSignin") {
+          setError("Erro de autenticação. Verifique suas credenciais e tente novamente.");
+        } else if (result.error.includes("fetch")) {
+          setError("Erro de conexão. Verifique sua internet e tente novamente.");
+        } else if (result.error.includes("timeout")) {
+          setError("Tempo limite excedido. Tente novamente.");
+        } else if (result.error.includes("500") || result.error.includes("Internal Server Error")) {
+          setError("Erro interno do servidor. Tente novamente em alguns instantes.");
+        } else if (result.error.includes("401") || result.error.includes("Unauthorized")) {
+          setError("Não autorizado. Faça login novamente.");
         } else {
-          setError("Erro na verificação. Tente novamente.");
+          setError(`Erro na verificação: ${result.error}. Tente novamente.`);
         }
       } else if (result?.ok) {
         // Clear stored credentials on successful verification
@@ -116,10 +130,25 @@ function TwoFactorForm() {
         // Redirect to the intended destination
         router.push(callbackUrl);
         router.refresh();
+      } else {
+        // Handle case where result is null/undefined
+        setError("Resposta inválida do servidor. Tente novamente.");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("2FA verification error:", err);
-      setError("Erro na verificação. Tente novamente.");
+      
+      // Handle different types of network/fetch errors
+      if (err.name === "TypeError" && err.message.includes("fetch")) {
+        setError("Erro de conexão de rede. Verifique sua internet e tente novamente.");
+      } else if (err.name === "AbortError") {
+        setError("Requisição cancelada. Tente novamente.");
+      } else if (err.message?.includes("JSON")) {
+        setError("Erro de formato de resposta do servidor. Tente novamente.");
+      } else if (err.message?.includes("timeout")) {
+        setError("Tempo limite da requisição excedido. Tente novamente.");
+      } else {
+        setError(`Erro inesperado: ${err.message || "Tente novamente."}`);
+      }
     } finally {
       setIsLoading(false);
     }

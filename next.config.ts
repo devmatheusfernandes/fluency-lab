@@ -4,8 +4,8 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        // Apply restrictive security headers to all routes except payment-related ones
-        source: "/((?!api/payment|api/subscription|api/checkout-sessions).*)",
+        // Apply restrictive security headers to all routes except payment and auth-related ones
+        source: "/((?!api/payment|api/subscription|api/checkout-sessions|api/auth).*)",
         headers: [
           {
             key: "X-Frame-Options",
@@ -82,6 +82,37 @@ const nextConfig: NextConfig = {
           {
             key: "Referrer-Policy",
             value: "strict-origin-when-cross-origin",
+          },
+        ],
+      },
+      {
+        // Permissive headers for auth APIs to allow authentication flows
+        source: "/api/auth/:path*",
+        headers: [
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+          {
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin",
+          },
+          {
+            key: "Content-Security-Policy",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              "style-src 'self' 'unsafe-inline'",
+              "font-src 'self'",
+              "img-src 'self' data: blob:",
+              "media-src 'self' blob:",
+              "connect-src 'self' https://firestore.googleapis.com https://firebase.googleapis.com",
+              "frame-src 'self'",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+              "frame-ancestors 'self'"
+            ].join("; ")
           },
         ],
       },

@@ -50,16 +50,6 @@ const envSchema = z.object({
     .min(1, "NEXT_PUBLIC_FIREBASE_APP_ID é obrigatório"),
 
   // Payment Configuration
-  STRIPE_SECRET_KEY: z
-    .string()
-    .regex(/^sk_/, "STRIPE_SECRET_KEY deve começar com sk_"),
-  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z
-    .string()
-    .regex(/^pk_/, "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY deve começar com pk_"),
-  STRIPE_WEBHOOK_SECRET: z
-    .string()
-    .regex(/^whsec_/, "STRIPE_WEBHOOK_SECRET deve começar com whsec_"),
-
   MERCADO_PAGO_ACCESS_TOKEN: z
     .string()
     .min(1, "MERCADO_PAGO_ACCESS_TOKEN é obrigatório"),
@@ -147,7 +137,6 @@ export function checkCriticalEnvVars(): string[] {
     "FIREBASE_ADMIN_PROJECT_ID",
     "FIREBASE_ADMIN_CLIENT_EMAIL",
     "FIREBASE_ADMIN_PRIVATE_KEY",
-    "STRIPE_SECRET_KEY",
     "ENCRYPTION_SECRET",
   ];
 
@@ -167,7 +156,6 @@ export function checkCriticalEnvVars(): string[] {
 //   const secretVars = [
 //     'NEXTAUTH_SECRET',
 //     'ENCRYPTION_SECRET',
-//     'STRIPE_SECRET_KEY',
 //     'FIREBASE_ADMIN_PRIVATE_KEY'
 //   ];
 

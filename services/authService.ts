@@ -68,17 +68,41 @@ export class AuthService {
    * Verifica o token 2FA do usuário
    */
   async verifyTwoFactorToken(userId: string, token: string): Promise<boolean> {
-    const secret = await twoFactorService.getTwoFactorSecret(userId);
-    if (!secret) return false;
+    try {
+      console.log(`[AuthService] Verificando token 2FA para usuário: ${userId}`);
+      
+      const secret = await twoFactorService.getTwoFactorSecret(userId);
+      if (!secret) {
+        console.log(`[AuthService] Nenhum segredo 2FA encontrado para usuário: ${userId}`);
+        return false;
+      }
 
-    return twoFactorService.verifyToken(secret, token);
+      console.log(`[AuthService] Segredo 2FA encontrado, verificando token...`);
+      const isValid = await twoFactorService.verifyToken(secret, token);
+      
+      console.log(`[AuthService] Resultado da verificação 2FA: ${isValid ? 'VÁLIDO' : 'INVÁLIDO'}`);
+      return isValid;
+    } catch (error) {
+      console.error(`[AuthService] Erro na verificação do token 2FA:`, error);
+      return false;
+    }
   }
 
   /**
    * Verifica um código de backup 2FA
    */
   async verifyBackupCode(userId: string, code: string): Promise<boolean> {
-    return twoFactorService.verifyBackupCode(userId, code);
+    try {
+      console.log(`[AuthService] Verificando código de backup 2FA para usuário: ${userId}`);
+      
+      const isValid = await twoFactorService.verifyBackupCode(userId, code);
+      
+      console.log(`[AuthService] Resultado da verificação do código de backup: ${isValid ? 'VÁLIDO' : 'INVÁLIDO'}`);
+      return isValid;
+    } catch (error) {
+      console.error(`[AuthService] Erro na verificação do código de backup:`, error);
+      return false;
+    }
   }
 
   /**

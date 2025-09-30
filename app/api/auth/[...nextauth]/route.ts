@@ -14,35 +14,59 @@ export const authOptions: NextAuthOptions = {
         twoFactorCode: { label: "2FA Code", type: "text", placeholder: "000000" }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
-        
-        // First step: validate email and password
-        const user = await authService.validateUser(credentials.email, credentials.password);
-        if (!user) return null;
-        
-        // If 2FA is enabled, we need to verify the 2FA code
-        if (user.twoFactorEnabled) {
-          // Check if 2FA code is provided
-          if (!credentials.twoFactorCode) {
-            // Return a special response indicating 2FA is required
-            throw new Error('2FA_REQUIRED');
+        try {
+          console.log(`[NextAuth] Iniciando autorização para email: ${credentials?.email}`);
+          
+          if (!credentials?.email || !credentials?.password) {
+            console.log(`[NextAuth] Credenciais incompletas`);
+            return null;
           }
           
-          // Verify the 2FA token
-          const isValid = await authService.verifyTwoFactorToken(user.id, credentials.twoFactorCode);
-          if (!isValid) {
-            // Try to verify as backup code
-            const isBackupValid = await authService.verifyBackupCode(user.id, credentials.twoFactorCode);
-            if (isBackupValid) {
-              // Invalidate the used backup code
-              await authService.invalidateBackupCode(user.id, credentials.twoFactorCode);
+          console.log(`[NextAuth] Validando usuário...`);
+          const user = await authService.validateUser(credentials.email, credentials.password);
+          if (!user) {
+            console.log(`[NextAuth] Usuário não encontrado ou credenciais inválidas`);
+            return null;
+          }
+          
+          console.log(`[NextAuth] Usuário validado. 2FA habilitado: ${user.twoFactorEnabled}`);
+          
+          // If 2FA is enabled, we need to verify the 2FA code
+          if (user.twoFactorEnabled) {
+            // Check if 2FA code is provided
+            if (!credentials.twoFactorCode) {
+              console.log(`[NextAuth] 2FA habilitado mas código não fornecido`);
+              // Return a special response indicating 2FA is required
+              throw new Error('2FA_REQUIRED');
+            }
+            
+            console.log(`[NextAuth] Verificando código 2FA: ${credentials.twoFactorCode}`);
+            
+            // Verify the 2FA token
+            const isValid = await authService.verifyTwoFactorToken(user.id, credentials.twoFactorCode);
+            if (!isValid) {
+              console.log(`[NextAuth] Token 2FA inválido, tentando código de backup...`);
+              // Try to verify as backup code
+              const isBackupValid = await authService.verifyBackupCode(user.id, credentials.twoFactorCode);
+              if (isBackupValid) {
+                console.log(`[NextAuth] Código de backup válido, invalidando...`);
+                // Invalidate the used backup code
+                await authService.invalidateBackupCode(user.id, credentials.twoFactorCode);
+              } else {
+                console.log(`[NextAuth] Código de backup também inválido`);
+                throw new Error('Invalid 2FA code');
+              }
             } else {
-              throw new Error('Invalid 2FA code');
+              console.log(`[NextAuth] Token 2FA válido`);
             }
           }
+          
+          console.log(`[NextAuth] Autorização bem-sucedida para usuário: ${user.id}`);
+          return user;
+        } catch (error) {
+          console.error(`[NextAuth] Erro na autorização:`, error);
+          throw error;
         }
-        
-        return user;
       }
     })
   ],
@@ -58,8 +82,7 @@ export const authOptions: NextAuthOptions = {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: process.env.NODE_ENV === 'production',
-        domain: process.env.NODE_ENV === 'production' ? process.env.NEXTAUTH_URL?.replace(/https?:\/\//, '') : undefined
+        secure: process.env.NODE_ENV === 'production'
       }
     },
     callbackUrl: {

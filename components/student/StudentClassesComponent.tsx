@@ -217,7 +217,7 @@ export default function StudentClassesComponent({
   };
 
   return (
-    <SubContainer className={`space-y-6 ${className}`}>
+    <SubContainer className={`space-y-4 ${className}`}>
       {/* Modals */}
       {classToCancel && (
         <ClassCancellationModal
@@ -308,7 +308,7 @@ export default function StudentClassesComponent({
 
       {/* Filter Controls */}
       <div className="w-full flex flex-col sm:flex-row gap-2">
-        <Card className="w-full">
+        <Card className="w-full flex flex-row gap-2">
           <div className="space-y-1">
             <Text size="sm" variant="subtitle">
               Mês
@@ -319,13 +319,17 @@ export default function StudentClassesComponent({
                 setSelectedMonth(val === "all" ? "all" : Number(val))
               }
             >
-              <SelectTrigger>
+              <SelectTrigger className="capitalize w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectOption value="all">Todos os Meses</SelectOption>
                 {monthOptions.map((m) => (
-                  <SelectOption key={m.value} value={String(m.value)}>
+                  <SelectOption
+                    key={m.value}
+                    value={String(m.value)}
+                    className="capitalize"
+                  >
                     {m.label}
                   </SelectOption>
                 ))}
@@ -371,28 +375,28 @@ export default function StudentClassesComponent({
           {!isCurrentMonth &&
             selectedMonth !== "all" &&
             selectedYear !== "all" && (
-              <Text size="xs" className="text-subtitle mt-1">
+              <Text size="xs" className="text-subtitle/30 mt-1">
                 Histórico do mês selecionado
               </Text>
             )}
         </Card>
 
         {/* Teacher Cancellation Credits Card */}
-        <Card className="w-full p-3 bg-yellow-50 border-yellow-200">
+        <Card className="w-full p-3 bg-amber-50 border-amber-200">
           <Text size="sm" className="font-medium text-subtitle mb-1">
             Créditos de Reposição
           </Text>
-          <Text className="font-bold text-lg text-yellow-800">
+          <Text className="font-bold text-lg text-amber-800">
             {teacherCancellationCredits}
           </Text>
-          <Text size="xs" className="text-subtitle mt-1">
-            Aulas canceladas pelo professor
+          <Text size="xs" className="text-subtitle/30 mt-1">
+            Para aulas canceladas pelo professor
           </Text>
         </Card>
       </div>
 
       {filteredClasses.length > 0 ? (
-        <div className="space-y-4">
+        <div className="space-y-2">
           {filteredClasses.map((cls, index) => (
             <StudentClassCard
               key={`${cls.id}-${cls.scheduledAt}-${index}`}

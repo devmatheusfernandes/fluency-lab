@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { StudentClass } from "@/types/classes/class";
-import { Card } from "@/components/ui/Card";
 import { Text } from "@/components/ui/Text";
 import { Button } from "@/components/ui/Button";
 import { Calendar, ClockSquare, Refresh } from "@solar-icons/react/ssr";
 import { useStudent } from "@/hooks/useStudent";
 import SkeletonLoader from "@/components/shared/Skeleton/SkeletonLoader";
+import { toast } from "sonner";
 
 interface NextClassCardProps {
   className?: string;
@@ -23,18 +22,27 @@ export default function NextClassCard({ className = "" }: NextClassCardProps) {
     time: string;
     daysUntil: number;
   } | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const findNextClass = () => {
     if (!myClasses || myClasses.length === 0) return null;
 
-    // Filter only scheduled classes and sort by date
+    const now = new Date();
+
+    // Filter only scheduled classes that are in the future and sort by date
     const scheduledClasses = myClasses
-      .filter(
-        (cls) =>
-          cls.status === "scheduled" ||
-          cls.status === "rescheduled" ||
-          !cls.status.includes("canceled")
-      )
+      .filter((cls) => {
+        // Check if class is scheduled/rescheduled and not canceled
+        const isValidStatus =
+          (cls.status === "scheduled" || cls.status === "rescheduled") &&
+          !cls.status.includes("completed");
+
+        // Check if class is in the future
+        const classDate = new Date(cls.scheduledAt);
+        const isFuture = classDate.getTime() > now.getTime();
+
+        return isValidStatus && isFuture;
+      })
       .sort(
         (a, b) =>
           new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime()
@@ -85,10 +93,14 @@ export default function NextClassCard({ className = "" }: NextClassCardProps) {
   };
 
   const handleRefresh = async () => {
+    setIsRefreshing(true);
     try {
       await fetchMyClasses();
+      toast.success("Aulas atualizadas com sucesso!");
+      setIsRefreshing(false);
     } catch (error) {
       console.error("Failed to refresh classes:", error);
+      setIsRefreshing(false);
     }
   };
 
@@ -160,7 +172,11 @@ export default function NextClassCard({ className = "" }: NextClassCardProps) {
           aria-label="Atualizar"
           title="Atualizar"
         >
-          <Refresh className="w-4 h-4" />
+          {isRefreshing ? (
+            <Refresh className="w-4 h-4 animate-spin" />
+          ) : (
+            <Refresh className="w-4 h-4" />
+          )}
         </Button>
       </div>
 

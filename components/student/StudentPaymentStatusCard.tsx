@@ -264,7 +264,7 @@ export function StudentPaymentStatusCard({
         </Badge>
       </div>
 
-      <p className={`text-sm text-center text-${statusInfo.color} mb-4`}>
+      <p className={`hidden text-sm text-center text-${statusInfo.color} mb-4`}>
         {statusInfo.description}
       </p>
 
@@ -349,12 +349,12 @@ export function StudentPaymentStatusCard({
               )}
             </>
           ) : (
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
+            <div className="text-center p-20">
               <Calendar className="w-6 h-6 text-gray-600 mx-auto mb-2" />
-              <p className="text-sm text-gray-700">
+              <p className="hidden text-sm text-gray-700">
                 Próximo vencimento em {daysUntilDue} dias
               </p>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-700 dark:text-gray-300 font-bold mt-1">
                 O código PIX será disponibilizado 2 dias antes do vencimento
               </p>
             </div>

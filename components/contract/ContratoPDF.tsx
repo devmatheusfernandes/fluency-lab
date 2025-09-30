@@ -34,11 +34,11 @@ const ContratoPDF: React.FC<ContratoPDFProps> = ({
   alunoData,
   contractStatus,
 }) => {
+  const [isVisible, setIsVisible] = React.useState(false);
+
   useEffect(() => {
-    // Add animation class on mount
-    document
-      .querySelector(".contract-container")
-      ?.classList.add("animate-fade-in");
+    // Set visible after component mounts to trigger animation
+    setIsVisible(true);
   }, []);
 
   if (!alunoData) {
@@ -58,7 +58,7 @@ const ContratoPDF: React.FC<ContratoPDFProps> = ({
   const adminSignedShortDate = formatShortDate(contractStatus?.adminSignedAt);
 
   return (
-    <div className="contract-container contract-print opacity-0 transition-opacity duration-500">
+    <div className={`contract-container contract-print transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
       <div className="max-w-4xl mx-auto p-12 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 shadow-lg print:shadow-none print:rounded-none print:p-0 transition-colors duration-300">
         <h1 className="text-xl md:text-2xl font-bold text-center mb-6 pb-4 border-b border-gray-300 dark:border-gray-600">
           CONTRATO DE PRESTAÇÃO DE SERVIÇOS EDUCACIONAIS

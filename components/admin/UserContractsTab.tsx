@@ -13,6 +13,7 @@ import {
 } from "@/components/contract/contrato-types";
 import { User } from "@/types/users/users";
 import { UserRoles } from "@/types/users/userRoles";
+import ContratoPDF from "@/components/contract/ContratoPDF";
 
 interface UserContractsTabProps {
   user: User;
@@ -31,6 +32,7 @@ export default function UserContractsTab({
   const [error, setError] = useState<string | null>(null);
   const [canCancel, setCanCancel] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [showContract, setShowContract] = useState(false);
 
   useEffect(() => {
     const fetchContractData = async () => {
@@ -69,6 +71,87 @@ export default function UserContractsTab({
 
     fetchContractData();
   }, [user.id]);
+
+  // Handle contract printing
+  const handlePrintContract = () => {
+    if (!log) return;
+
+    // Get the contract content
+    const contractElement = document.querySelector(".contract-print");
+    if (!contractElement) return;
+
+    // Create a new window for printing
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    // Write the HTML content to the new window
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Contrato - ${log.name}</title>
+          <style>
+            body {
+              font-family: 'Arial', sans-serif;
+              font-size: 12px;
+              line-height: 1.5;
+              color: black;
+              background: white;
+              margin: 0;
+              padding: 20px;
+            }
+            .contract-print {
+              max-width: 800px;
+              margin: 0 auto;
+            }
+            h1 {
+              text-align: center;
+              font-size: 18px;
+              margin-bottom: 20px;
+              border-bottom: 1px solid #ccc;
+              padding-bottom: 10px;
+            }
+            h2 {
+              font-size: 16px;
+              margin-top: 20px;
+              margin-bottom: 10px;
+              border-bottom: 1px solid #eee;
+              padding-bottom: 5px;
+            }
+            p {
+              margin-bottom: 10px;
+              text-align: justify;
+            }
+            .signature-section {
+              margin-top: 40px;
+              page-break-inside: avoid;
+            }
+            .signature-line {
+              border-top: 1px solid black;
+              margin-top: 60px;
+              padding-top: 5px;
+              text-align: center;
+            }
+            @media print {
+              body { margin: 0; padding: 15px; }
+              .contract-print { max-width: none; }
+            }
+          </style>
+        </head>
+        <body>
+          ${contractElement.innerHTML}
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+
+    // Wait for content to load, then print
+    printWindow.onload = () => {
+      printWindow.print();
+      printWindow.close();
+    };
+  };
 
   // Handle contract cancellation
   const handleCancelContract = async () => {
@@ -237,13 +320,47 @@ export default function UserContractsTab({
           </div>
         </Card>
 
-        <Button
-          variant="danger"
-          onClick={handleCancelContract}
-          disabled={isCancelling}
-        >
-          {isCancelling ? "Cancelando..." : "Cancelar Contrato"}
-        </Button>
+        <div className="flex gap-4">
+          <Button
+            variant="primary"
+            onClick={() => setShowContract(!showContract)}
+          >
+            {showContract ? "Ocultar Contrato" : "Visualizar Contrato"}
+          </Button>
+
+          {showContract && (
+            <Button variant="secondary" onClick={handlePrintContract}>
+              Imprimir Contrato
+            </Button>
+          )}
+
+          <Button
+            variant="danger"
+            onClick={handleCancelContract}
+            disabled={isCancelling}
+          >
+            {isCancelling ? "Cancelando..." : "Cancelar Contrato"}
+          </Button>
+        </div>
+
+        {showContract && log && (
+          <Card className="p-6 mt-6">
+            <ContratoPDF
+              alunoData={{
+                id: user.id,
+                name: log.name,
+                cpf: log.cpf,
+                email: user.email,
+                birthDate: log.birthDate,
+                address: log.address,
+                city: log.city,
+                state: log.state,
+                zipCode: log.zipCode,
+              }}
+              contractStatus={status}
+            />
+          </Card>
+        )}
       </div>
     );
   }
@@ -414,14 +531,51 @@ export default function UserContractsTab({
         <Text variant="title" size="lg" className="mb-4">
           Ações
         </Text>
-        <Button
-          variant="danger"
-          onClick={handleCancelContract}
-          disabled={isCancelling}
-        >
-          {isCancelling ? "Cancelando..." : "Cancelar Contrato"}
-        </Button>
+        <div className="flex gap-4">
+          <Button
+            variant="primary"
+            onClick={() => setShowContract(!showContract)}
+          >
+            {showContract ? "Ocultar Contrato" : "Visualizar Contrato"}
+          </Button>
+
+          {showContract && (
+            <Button variant="secondary" onClick={handlePrintContract}>
+              Imprimir Contrato
+            </Button>
+          )}
+
+          <Button
+            variant="danger"
+            onClick={handleCancelContract}
+            disabled={isCancelling}
+          >
+            {isCancelling ? "Cancelando..." : "Cancelar Contrato"}
+          </Button>
+        </div>
       </Card>
+
+      {showContract && log && (
+        <Card className="p-6">
+          <Text variant="title" size="lg" className="mb-4">
+            Contrato Completo
+          </Text>
+          <ContratoPDF
+            alunoData={{
+              id: user.id,
+              name: log.name,
+              cpf: log.cpf,
+              email: user.email,
+              birthDate: log.birthDate,
+              address: log.address,
+              city: log.city,
+              state: log.state,
+              zipCode: log.zipCode,
+            }}
+            contractStatus={status}
+          />
+        </Card>
+      )}
     </div>
   );
 }

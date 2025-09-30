@@ -35,15 +35,16 @@ const getBadgeClasses = ({
     },
     outline: {
       primary:
-        "text-indigo-800 dark:text-indigo-500 border-primary bg-primary/20 dark:bg-primary/40 hover:bg-primary/20",
+        "font-semibold text-indigo-700 dark:text-indigo-200 border-primary bg-primary/20 dark:bg-primary/40 hover:bg-primary/20",
       secondary:
-        "text-amber-800 dark:text-secondary border-secondary bg-secondary/30 dark:bg-secondary/10 hover:bg-secondary/20",
+        "font-semibold text-amber-800 dark:text-secondary border-secondary bg-secondary/30 dark:bg-secondary/10 hover:bg-secondary/20",
       success:
-        "text-teal-900 dark:text-teal-500 border-success bg-success/25 hover:bg-success/20",
-      info: "text-info border-info bg-info/10 hover:bg-info/20",
-      warning: "text-warning border-warning bg-warning/10 hover:bg-warning/20",
+        "font-semibold text-teal-900 dark:text-teal-500 border-success bg-success/25 hover:bg-success/20",
+      info: "font-semibold text-info border-info bg-info/10 hover:bg-info/20",
+      warning:
+        "font-semibold text-warning border-warning bg-warning/10 hover:bg-warning/20",
       danger:
-        "text-rose-700 dark:text-danger border-danger bg-danger/20 dark:bg-danger/10 hover:bg-danger/20",
+        "font-semibold text-rose-700 dark:text-danger border-danger bg-danger/20 dark:bg-danger/10 hover:bg-danger/20",
     },
   };
 

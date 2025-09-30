@@ -63,6 +63,10 @@ export default function StudentClassCard({
 
   const isTeacherMakeup = cls.status === ClassStatus.CANCELED_TEACHER_MAKEUP;
 
+  const isOverdue =
+    cls.status === ClassStatus.SCHEDULED &&
+    new Date(cls.scheduledAt) < new Date(new Date().setHours(0, 0, 0, 0));
+
   const handleRescheduleClick = () => {
     if (onReschedule) {
       onReschedule(cls);
@@ -147,7 +151,7 @@ export default function StudentClassCard({
               )}
               {isTeacherMakeup && (
                 <p className="text-center text-xs text-warning font-medium mt-1">
-                  ⚠️ Aula de reposição - Cancelada pelo professor
+                  ⚠️ Cancelada pelo professor
                 </p>
               )}
             </div>
@@ -155,28 +159,30 @@ export default function StudentClassCard({
           <div className="flex items-center gap-2">{getStatusBadge()}</div>
         </div>
 
-        <div className="flex justify-center sm:justify-end gap-2">
-          {isCancelable && onCancel && (
-            <Button
-              size="sm"
-              variant="warning"
-              onClick={handleCancelClick}
-              disabled={isCanceling}
-            >
-              {isCanceling ? "Cancelando..." : "Cancelar"}
-            </Button>
-          )}
-          {isReschedulable && (
-            <Button
-              size="sm"
-              onClick={handleRescheduleClick}
-              disabled={!isReschedulable}
-              variant={isTeacherMakeup ? "success" : "primary"}
-            >
-              {isTeacherMakeup ? "Reagendar com crédito" : "Reagendar"}
-            </Button>
-          )}
-        </div>
+        {!isOverdue && (
+          <div className="flex justify-center sm:justify-end gap-2">
+            {isCancelable && onCancel && (
+              <Button
+                size="sm"
+                variant="warning"
+                onClick={handleCancelClick}
+                disabled={isCanceling}
+              >
+                {isCanceling ? "Cancelando..." : "Cancelar"}
+              </Button>
+            )}
+            {isReschedulable && (
+              <Button
+                size="sm"
+                onClick={handleRescheduleClick}
+                disabled={!isReschedulable}
+                variant={isTeacherMakeup ? "success" : "primary"}
+              >
+                {isTeacherMakeup ? "Reagendar com crédito" : "Reagendar"}
+              </Button>
+            )}
+          </div>
+        )}
       </Card>
 
       <RescheduleModal

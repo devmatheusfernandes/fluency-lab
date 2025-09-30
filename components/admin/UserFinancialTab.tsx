@@ -1,12 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Shadcn/table';
-import { User } from '@/types/users/users';
-import { Payment } from '@/types/financial/payments';
-import { MonthlyPayment } from '@/types/financial/subscription';
-import { StudentClass, ClassStatus } from '@/types/classes/class';
-import { Calendar, ClockCircle, Dollar, HandMoney, MoneyBag } from '@solar-icons/react/ssr';
+import React, { useState, useEffect, useCallback } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/Shadcn/table";
+import { User } from "@/types/users/users";
+import { Payment } from "@/types/financial/payments";
+import { MonthlyPayment } from "@/types/financial/subscription";
+import { StudentClass, ClassStatus } from "@/types/classes/class";
+import {
+  Calendar,
+  ClockCircle,
+  Dollar,
+  HandMoney,
+  MoneyBag,
+} from "@solar-icons/react/ssr";
 
 interface UserFinancialTabProps {
   user: User;
@@ -28,137 +41,144 @@ interface StudentFinancialData {
 const RATE_PER_CLASS = 25; // 25 reais per class
 
 const UserFinancialTab: React.FC<UserFinancialTabProps> = ({ user }) => {
+  const [loading, setLoading] = useState(false);
   const [teacherStats, setTeacherStats] = useState<TeacherClassStats[]>([]);
-  const [studentFinancialData, setStudentFinancialData] = useState<StudentFinancialData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [studentFinancials, setStudentFinancials] =
+    useState<StudentFinancialData | null>(null);
 
-  useEffect(() => {
-    fetchFinancialData();
-  }, [user.id, user.role]);
-
-  const fetchFinancialData = async () => {
-    try {
-      setLoading(true);
-      
-      if (user.role === 'teacher') {
-        await fetchTeacherFinancials();
-      } else {
-        await fetchStudentFinancials();
-      }
-    } catch (error) {
-      console.error('Error fetching financial data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchTeacherFinancials = async () => {
+  const fetchTeacherFinancials = useCallback(async () => {
     try {
       // Fetch real data from the API
       const currentMonth = new Date().getMonth();
       const currentYear = new Date().getFullYear();
       const startOfMonth = new Date(currentYear, currentMonth, 1).toISOString();
-      const endOfMonth = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59).toISOString();
-      
+      const endOfMonth = new Date(
+        currentYear,
+        currentMonth + 1,
+        0,
+        23,
+        59,
+        59,
+        999
+      ).toISOString();
+
       const response = await fetch(
-        `/api/admin/teachers/${user.id}/classes?status=completed&startDate=${startOfMonth}&endDate=${endOfMonth}`
+        `/api/admin/teachers/${user.id}/classes?startDate=${startOfMonth}&endDate=${endOfMonth}`
       );
-      
+
       if (!response.ok) {
-        console.warn('Teacher classes endpoint not available, using empty data');
-        setTeacherStats([]);
-        return;
+        throw new Error("Failed to fetch teacher classes");
       }
-      
-      const data = await response.json();
-      const classes = data.classes || [];
-      
-      // Group classes by student and calculate earnings
-      const statsMap = new Map<string, { studentName: string; completedClasses: number; earnings: number }>();
-      
+
+      const classes = await response.json();
+
+      // Process the classes to calculate earnings per student
+      const statsMap = new Map<
+        string,
+        { studentName: string; completedClasses: number; earnings: number }
+      >();
+
       classes.forEach((cls: any) => {
-        if (cls.status !== 'completed' || !cls.completedAt) return;
-        
+        if (cls.status !== "completed" || !cls.completedAt) return;
+
         const studentId = cls.studentId;
         const existing = statsMap.get(studentId) || {
           studentName: cls.studentName || `Aluno ${studentId}`,
           completedClasses: 0,
-          earnings: 0
+          earnings: 0,
         };
-        
+
         existing.completedClasses++;
         existing.earnings = existing.completedClasses * RATE_PER_CLASS;
-        
+
         statsMap.set(studentId, existing);
       });
-      
+
       // Convert to array format
-      const stats: TeacherClassStats[] = Array.from(statsMap.entries()).map(([studentId, data]) => ({
-        studentId,
-        ...data
-      }));
-      
+      const stats: TeacherClassStats[] = Array.from(statsMap.entries()).map(
+        ([studentId, data]) => ({
+          studentId,
+          ...data,
+        })
+      );
+
       setTeacherStats(stats);
     } catch (error) {
-      console.error('Error fetching teacher earnings:', error);
+      console.error("Error fetching teacher earnings:", error);
       setTeacherStats([]);
     }
-  };
+  }, [user.id]);
 
-  const fetchStudentFinancials = async () => {
+  const fetchStudentFinancials = useCallback(async () => {
     try {
       const response = await fetch(`/api/admin/users/${user.id}/financials`);
-      
+
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch financial data');
+        throw new Error(errorData.error || "Failed to fetch financial data");
       }
-      
+
       const data = await response.json();
-      
+
       // Map the API response to MonthlyPayment objects
       const payments: MonthlyPayment[] = data.payments.map((payment: any) => ({
         id: payment.id,
         subscriptionId: payment.subscriptionId,
-        userId: user.id,
         amount: payment.amount,
-        dueDate: new Date(payment.dueDate),
-        paidAt: payment.paidAt ? new Date(payment.paidAt) : undefined,
+        currency: payment.currency,
         status: payment.status,
         paymentMethod: payment.paymentMethod,
-        mercadoPagoPaymentId: payment.mercadoPagoPaymentId,
-        pixCode: payment.pixCode,
-        pixQrCode: payment.pixQrCode,
-        pixExpiresAt: payment.pixExpiresAt ? new Date(payment.pixExpiresAt) : undefined,
-        receipt: payment.receipt,
+        paidAt: payment.paidAt ? new Date(payment.paidAt) : null,
+        dueDate: new Date(payment.dueDate),
         createdAt: new Date(payment.createdAt),
-        updatedAt: payment.updatedAt ? new Date(payment.updatedAt) : new Date(),
-        paymentNumber: payment.paymentNumber,
-        description: payment.description || 'Pagamento mensal'
+        updatedAt: new Date(payment.updatedAt),
+        metadata: payment.metadata || {},
       }));
-      
-      console.log('Fetched payments from API:', payments);
-      
-      setStudentFinancialData({
-        paymentMethod: data.paymentMethod,
-        subscriptionStatus: data.subscriptionStatus,
-        payments
+
+      setStudentFinancials({
+        paymentMethod: data.paymentMethod || "N/A",
+        subscriptionStatus: data.subscriptionStatus || "inactive",
+        payments,
       });
-      
     } catch (error) {
-      console.error('Error fetching student financials:', error);
-      setStudentFinancialData({
-        paymentMethod: 'Não definido',
-        subscriptionStatus: 'inactive',
-        payments: []
-      });
+      console.error("Error fetching student financials:", error);
+      setStudentFinancials(null);
     }
-  };
+  }, [user.id]);
+
+  const fetchFinancialData = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      if (user.role === "teacher") {
+        await fetchTeacherFinancials();
+      } else {
+        await fetchStudentFinancials();
+      }
+    } catch (error) {
+      console.error("Error fetching financial data:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user.role, fetchTeacherFinancials, fetchStudentFinancials]);
+
+  useEffect(() => {
+    fetchFinancialData();
+  }, [fetchFinancialData]);
 
   const renderTeacherView = () => {
-    const currentMonth = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-    const totalClasses = teacherStats.reduce((sum, student) => sum + student.completedClasses, 0);
-    const totalEarnings = teacherStats.reduce((sum, student) => sum + student.earnings, 0);
+    const currentMonth = new Date().toLocaleDateString("pt-BR", {
+      month: "long",
+      year: "numeric",
+    });
+    const totalClasses = teacherStats.reduce(
+      (sum, student) => sum + student.completedClasses,
+      0
+    );
+    const totalEarnings = teacherStats.reduce(
+      (sum, student) => sum + student.earnings,
+      0
+    );
 
     return (
       <div className="space-y-6">
@@ -168,31 +188,39 @@ const UserFinancialTab: React.FC<UserFinancialTabProps> = ({ user }) => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Aulas Concluídas</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Aulas Concluídas
+                  </p>
                   <p className="text-2xl font-bold">{totalClasses}</p>
                 </div>
                 <Calendar className="h-8 w-8 text-muted-foreground" />
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Ganhos Totais</p>
-                  <p className="text-2xl font-bold">R$ {totalEarnings.toFixed(2)}</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Ganhos Totais
+                  </p>
+                  <p className="text-2xl font-bold">
+                    R$ {totalEarnings.toFixed(2)}
+                  </p>
                 </div>
                 <Dollar className="h-8 w-8 text-muted-foreground" />
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Valor por Aula</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Valor por Aula
+                  </p>
                   <p className="text-2xl font-bold">R$ 25,00</p>
                 </div>
                 <ClockCircle className="h-8 w-8 text-muted-foreground" />
@@ -213,7 +241,9 @@ const UserFinancialTab: React.FC<UserFinancialTabProps> = ({ user }) => {
             {teacherStats.length === 0 ? (
               <div className="text-center py-8">
                 <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">Nenhuma aula concluída neste mês.</p>
+                <p className="text-muted-foreground">
+                  Nenhuma aula concluída neste mês.
+                </p>
               </div>
             ) : (
               <Table>
@@ -227,7 +257,9 @@ const UserFinancialTab: React.FC<UserFinancialTabProps> = ({ user }) => {
                 <TableBody>
                   {teacherStats.map((student) => (
                     <TableRow key={student.studentId}>
-                      <TableCell className="font-medium">{student.studentName}</TableCell>
+                      <TableCell className="font-medium">
+                        {student.studentName}
+                      </TableCell>
                       <TableCell>{student.completedClasses}</TableCell>
                       <TableCell>R$ {student.earnings.toFixed(2)}</TableCell>
                     </TableRow>
@@ -247,13 +279,13 @@ const UserFinancialTab: React.FC<UserFinancialTabProps> = ({ user }) => {
   };
 
   const renderStudentView = () => {
-    console.log('Rendering student view. User data:', {
+    console.log("Rendering student view. User data:", {
       subscriptionPaymentMethod: user.subscriptionPaymentMethod,
       subscriptionStatus: user.subscriptionStatus,
-      subscriptionBillingDay: user.subscriptionBillingDay
+      subscriptionBillingDay: user.subscriptionBillingDay,
     });
-    console.log('Student financial data:', studentFinancialData);
-    
+    console.log("Student financial data:", studentFinancials);
+
     return (
       <div className="space-y-6">
         {/* Payment Method Card */}
@@ -268,9 +300,11 @@ const UserFinancialTab: React.FC<UserFinancialTabProps> = ({ user }) => {
             <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
               <div>
                 <p className="font-medium">
-                  {studentFinancialData?.paymentMethod === 'pix' ? 'PIX' : 
-                   studentFinancialData?.paymentMethod === 'credit_card' ? 'Cartão de Crédito' : 
-                   studentFinancialData?.paymentMethod || 'Não definido'}
+                  {studentFinancials?.paymentMethod === "pix"
+                    ? "PIX"
+                    : studentFinancials?.paymentMethod === "credit_card"
+                      ? "Cartão de Crédito"
+                      : studentFinancials?.paymentMethod || "Não definido"}
                 </p>
                 {user.subscriptionBillingDay && (
                   <p className="text-sm text-muted-foreground">
@@ -278,73 +312,100 @@ const UserFinancialTab: React.FC<UserFinancialTabProps> = ({ user }) => {
                   </p>
                 )}
               </div>
-              <Badge variant={studentFinancialData?.subscriptionStatus === 'active' ? 'success' : 'secondary'}>
-                {studentFinancialData?.subscriptionStatus === 'active' ? 'Ativo' : 
-                 studentFinancialData?.subscriptionStatus === 'canceled' ? 'Cancelado' : 
-                 studentFinancialData?.subscriptionStatus || 'Indefinido'}
+              <Badge
+                variant={
+                  studentFinancials?.subscriptionStatus === "active"
+                    ? "success"
+                    : "secondary"
+                }
+              >
+                {studentFinancials?.subscriptionStatus === "active"
+                  ? "Ativo"
+                  : studentFinancials?.subscriptionStatus === "canceled"
+                    ? "Cancelado"
+                    : studentFinancials?.subscriptionStatus || "Indefinido"}
               </Badge>
             </div>
-           </CardContent>
-         </Card>
+          </CardContent>
+        </Card>
 
         {/* Payment History */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Dollar className="h-5 w-5" />
-            Histórico de Pagamentos
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {!studentFinancialData?.payments || studentFinancialData.payments.length === 0 ? (
-            <div className="text-center py-8">
-              <HandMoney className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">Nenhum histórico de pagamentos disponível.</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Método</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {studentFinancialData.payments.map((payment: MonthlyPayment) => (
-                  <TableRow key={payment.id}>
-                    <TableCell>
-                      {new Date(payment.createdAt).toLocaleDateString('pt-BR')}
-                    </TableCell>
-                    <TableCell>{payment.description || 'Pagamento mensal'}</TableCell>
-                    <TableCell>
-                      R$ {((payment.amount || 0) / 100).toFixed(2)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={payment.status === 'paid' ? 'success' : 'secondary'}>
-                        {payment.status === 'paid' ? 'Pago' : 
-                         payment.status === 'pending' ? 'Pendente' : 
-                         payment.status === 'available' ? 'Disponível' :
-                         payment.status === 'overdue' ? 'Vencido' :
-                         payment.status === 'failed' ? 'Falhou' :
-                         payment.status === 'canceled' ? 'Cancelado' :
-                         payment.status || 'Indefinido'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {payment.paymentMethod === 'pix' ? 'PIX' : 
-                       payment.paymentMethod === 'credit_card' ? 'Cartão de Crédito' : 
-                       payment.paymentMethod || 'Não definido'}
-                    </TableCell>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Dollar className="h-5 w-5" />
+              Histórico de Pagamentos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {!studentFinancials?.payments ||
+            studentFinancials.payments.length === 0 ? (
+              <div className="text-center py-8">
+                <HandMoney className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">
+                  Nenhum histórico de pagamentos disponível.
+                </p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead>Valor</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Método</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {studentFinancials.payments.map((payment: MonthlyPayment) => (
+                    <TableRow key={payment.id}>
+                      <TableCell>
+                        {new Date(payment.createdAt).toLocaleDateString(
+                          "pt-BR"
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {payment.description || "Pagamento mensal"}
+                      </TableCell>
+                      <TableCell>
+                        R$ {((payment.amount || 0) / 100).toFixed(2)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            payment.status === "paid" ? "success" : "secondary"
+                          }
+                        >
+                          {payment.status === "paid"
+                            ? "Pago"
+                            : payment.status === "pending"
+                              ? "Pendente"
+                              : payment.status === "available"
+                                ? "Disponível"
+                                : payment.status === "overdue"
+                                  ? "Vencido"
+                                  : payment.status === "failed"
+                                    ? "Falhou"
+                                    : payment.status === "canceled"
+                                      ? "Cancelado"
+                                      : payment.status || "Indefinido"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {payment.paymentMethod === "pix"
+                          ? "PIX"
+                          : payment.paymentMethod === "credit_card"
+                            ? "Cartão de Crédito"
+                            : payment.paymentMethod || "Não definido"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
       </div>
     );
   };
@@ -359,7 +420,7 @@ const UserFinancialTab: React.FC<UserFinancialTabProps> = ({ user }) => {
 
   return (
     <div className="space-y-6">
-      {user.role === 'teacher' ? renderTeacherView() : renderStudentView()}
+      {user.role === "teacher" ? renderTeacherView() : renderStudentView()}
     </div>
   );
 };

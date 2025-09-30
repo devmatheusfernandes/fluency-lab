@@ -97,6 +97,15 @@ export default function UserClassesTab({
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loadingTeachers, setLoadingTeachers] = useState(true);
   const [classes, setClasses] = useState<StudentClass[]>(initialClasses || []);
+  
+  // State for confirmation modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [pendingTeacherUpdate, setPendingTeacherUpdate] = useState<{
+    classId: string;
+    teacherId: string;
+    teacherName: string;
+    currentTeacherName: string;
+  } | null>(null);
 
   // Fetch available teachers
   useEffect(() => {
@@ -161,15 +170,6 @@ export default function UserClassesTab({
   if (!classes || classes.length === 0) {
     return <Text>Este utilizador não tem nenhuma aula agendada.</Text>;
   }
-
-  // State for confirmation modal
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [pendingTeacherUpdate, setPendingTeacherUpdate] = useState<{
-    classId: string;
-    teacherId: string;
-    teacherName: string;
-    currentTeacherName: string;
-  } | null>(null);
 
   // Function to update class teacher
   const updateClassTeacher = async (classId: string, teacherId: string) => {

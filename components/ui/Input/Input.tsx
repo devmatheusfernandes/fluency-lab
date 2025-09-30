@@ -50,7 +50,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     ref
   ) => {
     // Generate unique ID if not provided
-    const inputId = id || React.useId();
+    const generatedId = React.useId();
+    const inputId = id || generatedId;
 
     // Modern base classes with glass morphism and enhanced styling
     const baseClasses = "input-base flex w-full";

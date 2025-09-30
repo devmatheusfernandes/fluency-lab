@@ -270,8 +270,8 @@ export default function TeacherSettingsForm({
                     size="sm"
                     className="text-amber-700 dark:text-amber-300"
                   >
-                    Você tem alterações não salvas. Clique em "Salvar
-                    Configurações" para aplicar.
+                    Você tem alterações não salvas. Clique em Salvar
+                    Configurações para aplicar.
                   </Text>
                 </div>
               </div>

@@ -4,11 +4,10 @@ import {
   ModalBody,
   ModalClose,
   ModalContent,
-  ModalFooter,
   ModalHeader,
   ModalTitle,
 } from "@/components/ui/Modal";
-import { Button } from "@/components/ui/Button";
+import Image from "next/image";
 import { Text } from "@/components/ui/Text";
 import { Card } from "@/components/ui/Card";
 import { format } from "date-fns";
@@ -148,10 +147,12 @@ export default function ClassDetailsModal({
 
               {classData.studentAvatarUrl && (
                 <div className="mt-3">
-                  <img
+                  <Image
                     src={classData.studentAvatarUrl}
-                    alt={classData.studentName}
+                    alt={"Imagem do aluno"}
                     className="w-12 h-12 rounded-full object-cover"
+                    width={12}
+                    height={12}
                   />
                 </div>
               )}

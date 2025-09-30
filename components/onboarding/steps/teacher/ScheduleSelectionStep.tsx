@@ -6,9 +6,9 @@ import { Card } from "@/components/ui/Card";
 import { Text } from "@/components/ui/Text";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { 
-  Calendar, 
-  InfoCircle, 
+import {
+  Calendar,
+  InfoCircle,
   CheckCircle,
   CloseCircle,
   Pulse,
@@ -43,9 +43,28 @@ const DAYS_OF_WEEK = [
 ];
 
 const TIME_SLOTS = [
-  "06:00", "06:45", "07:30", "08:15", "09:00", "09:45", "10:30", "11:15",
-  "12:00", "12:45", "13:30", "14:15", "15:00", "15:45", "16:30", "17:15",
-  "18:00", "18:45", "19:30", "20:15", "21:00", "21:45"
+  "06:00",
+  "06:45",
+  "07:30",
+  "08:15",
+  "09:00",
+  "09:45",
+  "10:30",
+  "11:15",
+  "12:00",
+  "12:45",
+  "13:30",
+  "14:15",
+  "15:00",
+  "15:45",
+  "16:30",
+  "17:15",
+  "18:00",
+  "18:45",
+  "19:30",
+  "20:15",
+  "21:00",
+  "21:45",
 ];
 
 export const ScheduleSelectionStep: React.FC<ScheduleSelectionStepProps> = ({
@@ -61,7 +80,7 @@ export const ScheduleSelectionStep: React.FC<ScheduleSelectionStepProps> = ({
     startTime: "09:00",
     endTime: "09:45", // Duração padrão de 45 minutos
     title: "",
-    type: AvailabilityType.REGULAR // Sempre REGULAR no onboarding
+    type: AvailabilityType.REGULAR, // Sempre REGULAR no onboarding
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -74,24 +93,24 @@ export const ScheduleSelectionStep: React.FC<ScheduleSelectionStepProps> = ({
     const [hours, minutes] = startTime.split(":").map(Number);
     const startDate = new Date();
     startDate.setHours(hours, minutes, 0, 0);
-    
+
     // Adicionar 45 minutos
     const endDate = new Date(startDate.getTime() + 45 * 60 * 1000);
-    
+
     return `${endDate.getHours().toString().padStart(2, "0")}:${endDate.getMinutes().toString().padStart(2, "0")}`;
   };
 
   const validateNewSlot = (): boolean => {
     const newErrors: Record<string, string> = {};
-    
+
     if (!newSlot.title?.trim()) {
       newErrors.title = "Título é obrigatório";
     }
-    
+
     if (!newSlot.startTime) {
       newErrors.startTime = "Horário de início é obrigatório";
     }
-    
+
     // Validar se o horário de fim está correto (45 minutos após o início)
     if (newSlot.startTime) {
       const expectedEndTime = calculateEndTime(newSlot.startTime);
@@ -99,21 +118,29 @@ export const ScheduleSelectionStep: React.FC<ScheduleSelectionStepProps> = ({
         newErrors.endTime = "Duração deve ser de 45 minutos";
       }
     }
-    
+
     // Check for conflicts with existing slots
-    if (newSlot.dayOfWeek !== undefined && newSlot.startTime && newSlot.endTime) {
-      const conflicts = data.filter(slot => 
-        slot.dayOfWeek === newSlot.dayOfWeek &&
-        ((newSlot.startTime! >= slot.startTime && newSlot.startTime! < slot.endTime) ||
-         (newSlot.endTime! > slot.startTime && newSlot.endTime! <= slot.endTime) ||
-         (newSlot.startTime! <= slot.startTime && newSlot.endTime! >= slot.endTime))
+    if (
+      newSlot.dayOfWeek !== undefined &&
+      newSlot.startTime &&
+      newSlot.endTime
+    ) {
+      const conflicts = data.filter(
+        (slot) =>
+          slot.dayOfWeek === newSlot.dayOfWeek &&
+          ((newSlot.startTime! >= slot.startTime &&
+            newSlot.startTime! < slot.endTime) ||
+            (newSlot.endTime! > slot.startTime &&
+              newSlot.endTime! <= slot.endTime) ||
+            (newSlot.startTime! <= slot.startTime &&
+              newSlot.endTime! >= slot.endTime))
       );
-      
+
       if (conflicts.length > 0) {
         newErrors.startTime = "Conflito com horário existente";
       }
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -126,16 +153,16 @@ export const ScheduleSelectionStep: React.FC<ScheduleSelectionStepProps> = ({
         startTime: newSlot.startTime!,
         endTime: newSlot.endTime!,
         title: newSlot.title!.trim(),
-        type: AvailabilityType.REGULAR // Sempre REGULAR no onboarding
+        type: AvailabilityType.REGULAR, // Sempre REGULAR no onboarding
       };
-      
+
       onDataChange([...data, slot]);
       setNewSlot({
         dayOfWeek: 1,
         startTime: "09:00",
         endTime: "09:45",
         title: "",
-        type: AvailabilityType.REGULAR
+        type: AvailabilityType.REGULAR,
       });
       setShowAddForm(false);
       setErrors({});
@@ -143,16 +170,16 @@ export const ScheduleSelectionStep: React.FC<ScheduleSelectionStepProps> = ({
   };
 
   const handleRemoveSlot = (slotId: string) => {
-    onDataChange(data.filter(slot => slot.id !== slotId));
+    onDataChange(data.filter((slot) => slot.id !== slotId));
   };
 
   // Atualizar horário de fim quando o horário de início mudar
   const handleStartTimeChange = (startTime: string) => {
     const endTime = calculateEndTime(startTime);
-    setNewSlot(prev => ({ 
-      ...prev, 
-      startTime, 
-      endTime 
+    setNewSlot((prev) => ({
+      ...prev,
+      startTime,
+      endTime,
     }));
   };
 
@@ -161,26 +188,31 @@ export const ScheduleSelectionStep: React.FC<ScheduleSelectionStepProps> = ({
   };
 
   const getDayLabel = (dayOfWeek: number) => {
-    return DAYS_OF_WEEK.find(day => day.value === dayOfWeek)?.label || "";
+    return DAYS_OF_WEEK.find((day) => day.value === dayOfWeek)?.label || "";
   };
 
   const getDayShort = (dayOfWeek: number) => {
-    return DAYS_OF_WEEK.find(day => day.value === dayOfWeek)?.short || "";
+    return DAYS_OF_WEEK.find((day) => day.value === dayOfWeek)?.short || "";
   };
 
   const canProceed = data.length >= 5;
 
-  const groupedSlots = data.reduce((acc, slot) => {
-    if (!acc[slot.dayOfWeek]) {
-      acc[slot.dayOfWeek] = [];
-    }
-    acc[slot.dayOfWeek].push(slot);
-    return acc;
-  }, {} as Record<number, ScheduleSlot[]>);
+  const groupedSlots = data.reduce(
+    (acc, slot) => {
+      if (!acc[slot.dayOfWeek]) {
+        acc[slot.dayOfWeek] = [];
+      }
+      acc[slot.dayOfWeek].push(slot);
+      return acc;
+    },
+    {} as Record<number, ScheduleSlot[]>
+  );
 
   // Sort slots within each day by start time
-  Object.keys(groupedSlots).forEach(day => {
-    groupedSlots[parseInt(day)].sort((a, b) => a.startTime.localeCompare(b.startTime));
+  Object.keys(groupedSlots).forEach((day) => {
+    groupedSlots[parseInt(day)].sort((a, b) =>
+      a.startTime.localeCompare(b.startTime)
+    );
   });
 
   return (
@@ -197,8 +229,9 @@ export const ScheduleSelectionStep: React.FC<ScheduleSelectionStepProps> = ({
             Seus Horários Regulares
           </Text>
           <Text variant="subtitle" className="max-w-2xl mx-auto">
-            Configure seus horários de disponibilidade regulares. 
-            Cada período tem duração de 45 minutos. Você precisa de pelo menos 5 horários para começar.
+            Configure seus horários de disponibilidade regulares. Cada período
+            tem duração de 45 minutos. Você precisa de pelo menos 5 horários
+            para começar.
           </Text>
         </div>
 
@@ -207,7 +240,11 @@ export const ScheduleSelectionStep: React.FC<ScheduleSelectionStepProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <InfoCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              <Text size="sm" weight="medium" className="text-blue-800 dark:text-blue-200">
+              <Text
+                size="sm"
+                weight="medium"
+                className="text-blue-800 dark:text-blue-200"
+              >
                 Progresso: {data.length} de 5 horários mínimos (45 min cada)
               </Text>
             </div>
@@ -250,22 +287,25 @@ export const ScheduleSelectionStep: React.FC<ScheduleSelectionStepProps> = ({
                 Nenhum horário adicionado ainda
               </Text>
               <Text size="sm" className="text-gray-400 mt-1">
-                Clique em "Adicionar Horário" para começar
+                Clique em Adicionar Horário para começar
               </Text>
             </div>
           ) : (
             <div className="space-y-4">
-              {DAYS_OF_WEEK.map(day => {
+              {DAYS_OF_WEEK.map((day) => {
                 const daySlots = groupedSlots[day.value] || [];
                 if (daySlots.length === 0) return null;
-                
+
                 return (
-                  <div key={day.value} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                  <div
+                    key={day.value}
+                    className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+                  >
                     <Text weight="semibold" className="mb-3">
                       {day.label}
                     </Text>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {daySlots.map(slot => (
+                      {daySlots.map((slot) => (
                         <div
                           key={slot.id}
                           className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
@@ -275,7 +315,8 @@ export const ScheduleSelectionStep: React.FC<ScheduleSelectionStepProps> = ({
                               {slot.title}
                             </Text>
                             <Text size="xs" className="text-gray-500">
-                              {formatTime(slot.startTime)} - {formatTime(slot.endTime)} (45min)
+                              {formatTime(slot.startTime)} -{" "}
+                              {formatTime(slot.endTime)} (45min)
                             </Text>
                           </div>
                           <Button
@@ -322,10 +363,15 @@ export const ScheduleSelectionStep: React.FC<ScheduleSelectionStepProps> = ({
                 </label>
                 <select
                   value={newSlot.dayOfWeek}
-                  onChange={(e) => setNewSlot(prev => ({ ...prev, dayOfWeek: parseInt(e.target.value) }))}
+                  onChange={(e) =>
+                    setNewSlot((prev) => ({
+                      ...prev,
+                      dayOfWeek: parseInt(e.target.value),
+                    }))
+                  }
                   className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
                 >
-                  {DAYS_OF_WEEK.map(day => (
+                  {DAYS_OF_WEEK.map((day) => (
                     <option key={day.value} value={day.value}>
                       {day.label}
                     </option>
@@ -342,7 +388,7 @@ export const ScheduleSelectionStep: React.FC<ScheduleSelectionStepProps> = ({
                   onChange={(e) => handleStartTimeChange(e.target.value)}
                   className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
                 >
-                  {TIME_SLOTS.map(time => (
+                  {TIME_SLOTS.map((time) => (
                     <option key={time} value={time}>
                       {time}
                     </option>
@@ -362,7 +408,9 @@ export const ScheduleSelectionStep: React.FC<ScheduleSelectionStepProps> = ({
                 <input
                   type="text"
                   value={newSlot.title}
-                  onChange={(e) => setNewSlot(prev => ({ ...prev, title: e.target.value }))}
+                  onChange={(e) =>
+                    setNewSlot((prev) => ({ ...prev, title: e.target.value }))
+                  }
                   placeholder="Ex: Aula Regular"
                   className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
                 />
@@ -377,7 +425,8 @@ export const ScheduleSelectionStep: React.FC<ScheduleSelectionStepProps> = ({
             {/* Mostrar horário de fim calculado automaticamente */}
             <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
               <Text size="sm" className="text-blue-800 dark:text-blue-200">
-                <strong>Horário de fim:</strong> {newSlot.endTime} (duração de 45 minutos)
+                <strong>Horário de fim:</strong> {newSlot.endTime} (duração de
+                45 minutos)
               </Text>
             </div>
 
@@ -391,27 +440,20 @@ export const ScheduleSelectionStep: React.FC<ScheduleSelectionStepProps> = ({
               >
                 Cancelar
               </Button>
-              <Button onClick={handleAddSlot}>
-                Adicionar
-              </Button>
+              <Button onClick={handleAddSlot}>Adicionar</Button>
             </div>
           </Card>
         )}
 
         {/* Navigation */}
         <div className="flex justify-between mt-8">
-          <Button
-            variant="secondary"
-            onClick={onBack}
-            disabled={isLoading}
-          >
+          <Button variant="secondary" onClick={onBack} disabled={isLoading}>
             Voltar
           </Button>
-          <Button
-            onClick={onNext}
-            disabled={isLoading || !canProceed}
-          >
-            {canProceed ? "Continuar" : `Adicione mais ${5 - data.length} horário(s)`}
+          <Button onClick={onNext} disabled={isLoading || !canProceed}>
+            {canProceed
+              ? "Continuar"
+              : `Adicione mais ${5 - data.length} horário(s)`}
           </Button>
         </div>
       </div>

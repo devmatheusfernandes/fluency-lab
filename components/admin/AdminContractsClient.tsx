@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Text } from "@/components/ui/Text";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Loading } from "@/components/ui/Loading";
 import { Input } from "@/components/ui/Input";
-import { ContractStatus, Student } from "@/components/contract/contrato-types";
+import { ContractStatus } from "@/components/contract/contrato-types";
 
 interface ContractWithUser {
   userId: string;
@@ -19,69 +19,52 @@ interface ContractWithUser {
 
 export default function AdminContractsClient() {
   const [contracts, setContracts] = useState<ContractWithUser[]>([]);
-  const [filteredContracts, setFilteredContracts] = useState<ContractWithUser[]>([]);
+  const [filteredContracts, setFilteredContracts] = useState<
+    ContractWithUser[]
+  >([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [selectedContracts, setSelectedContracts] = useState<Set<string>>(new Set());
+  const [selectedContracts, setSelectedContracts] = useState<Set<string>>(
+    new Set()
+  );
   const [isBulkCancelling, setIsBulkCancelling] = useState(false);
 
-  useEffect(() => {
-    fetchContracts();
-  }, []);
-
-  useEffect(() => {
-    filterContracts();
-  }, [contracts, searchTerm, statusFilter]);
-
-  const fetchContracts = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // Fetch all users with contracts
-      const response = await fetch('/api/admin/contracts/all');
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch contracts');
-      }
-
-      const data = await response.json();
-      setContracts(data.contracts || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const filterContracts = () => {
+  const filterContracts = useCallback(() => {
     let filtered = contracts;
 
     // Filter by search term
     if (searchTerm) {
-      filtered = filtered.filter(contract =>
-        contract.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        contract.userEmail.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (contract) =>
+          contract.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          contract.userEmail.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     // Filter by status
     if (statusFilter !== "all") {
-      filtered = filtered.filter(contract => {
+      filtered = filtered.filter((contract) => {
         switch (statusFilter) {
           case "active":
-            return contract.contractStatus.signed && 
-                   contract.contractStatus.signedByAdmin && 
-                   contract.contractStatus.isValid && 
-                   !contract.contractStatus.cancelledAt;
+            return (
+              contract.contractStatus.signed &&
+              contract.contractStatus.signedByAdmin &&
+              contract.contractStatus.isValid &&
+              !contract.contractStatus.cancelledAt
+            );
           case "pending":
-            return contract.contractStatus.signed && !contract.contractStatus.signedByAdmin;
+            return (
+              contract.contractStatus.signed &&
+              !contract.contractStatus.signedByAdmin
+            );
           case "expired":
-            return contract.contractStatus.expiresAt && 
-                   new Date(contract.contractStatus.expiresAt) < new Date() &&
-                   !contract.contractStatus.cancelledAt;
+            return (
+              contract.contractStatus.expiresAt &&
+              new Date(contract.contractStatus.expiresAt) < new Date() &&
+              !contract.contractStatus.cancelledAt
+            );
           case "cancelled":
             return !!contract.contractStatus.cancelledAt;
           case "cancellable":
@@ -93,6 +76,35 @@ export default function AdminContractsClient() {
     }
 
     setFilteredContracts(filtered);
+  }, [contracts, searchTerm, statusFilter]);
+
+  useEffect(() => {
+    fetchContracts();
+  }, []);
+
+  useEffect(() => {
+    filterContracts();
+  }, [filterContracts]);
+
+  const fetchContracts = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Fetch all users with contracts
+      const response = await fetch("/api/admin/contracts/all");
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch contracts");
+      }
+
+      const data = await response.json();
+      setContracts(data.contracts || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSelectContract = (userId: string) => {
@@ -109,7 +121,7 @@ export default function AdminContractsClient() {
     if (selectedContracts.size === filteredContracts.length) {
       setSelectedContracts(new Set());
     } else {
-      setSelectedContracts(new Set(filteredContracts.map(c => c.userId)));
+      setSelectedContracts(new Set(filteredContracts.map((c) => c.userId)));
     }
   };
 
@@ -128,11 +140,11 @@ export default function AdminContractsClient() {
     setIsBulkCancelling(true);
 
     try {
-      const promises = Array.from(selectedContracts).map(userId =>
+      const promises = Array.from(selectedContracts).map((userId) =>
         fetch(`/api/contract/cancel/${userId}`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             reason,
@@ -142,12 +154,16 @@ export default function AdminContractsClient() {
       );
 
       const results = await Promise.allSettled(promises);
-      
-      const successful = results.filter(result => result.status === 'fulfilled').length;
+
+      const successful = results.filter(
+        (result) => result.status === "fulfilled"
+      ).length;
       const failed = results.length - successful;
 
       if (failed > 0) {
-        alert(`${successful} contratos cancelados com sucesso. ${failed} falharam.`);
+        alert(
+          `${successful} contratos cancelados com sucesso. ${failed} falharam.`
+        );
       } else {
         alert(`${successful} contratos cancelados com sucesso!`);
       }
@@ -162,7 +178,9 @@ export default function AdminContractsClient() {
   };
 
   const handleSingleCancel = async (userId: string, userName: string) => {
-    const reason = prompt(`Digite o motivo do cancelamento do contrato de ${userName}:`);
+    const reason = prompt(
+      `Digite o motivo do cancelamento do contrato de ${userName}:`
+    );
     if (!reason) return;
 
     const confirmMessage = `Tem certeza que deseja cancelar o contrato de ${userName}?\n\nMotivo: ${reason}`;
@@ -170,9 +188,9 @@ export default function AdminContractsClient() {
 
     try {
       const response = await fetch(`/api/contract/cancel/${userId}`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           reason,
@@ -197,20 +215,30 @@ export default function AdminContractsClient() {
     if (contract.contractStatus.cancelledAt) {
       return <Badge variant="danger">Cancelado</Badge>;
     }
-    if (contract.contractStatus.signed && contract.contractStatus.signedByAdmin && contract.contractStatus.isValid) {
+    if (
+      contract.contractStatus.signed &&
+      contract.contractStatus.signedByAdmin &&
+      contract.contractStatus.isValid
+    ) {
       return <Badge variant="success">Ativo</Badge>;
     }
-    if (contract.contractStatus.signed && !contract.contractStatus.signedByAdmin) {
+    if (
+      contract.contractStatus.signed &&
+      !contract.contractStatus.signedByAdmin
+    ) {
       return <Badge variant="warning">Pendente Admin</Badge>;
     }
-    if (contract.contractStatus.expiresAt && new Date(contract.contractStatus.expiresAt) < new Date()) {
+    if (
+      contract.contractStatus.expiresAt &&
+      new Date(contract.contractStatus.expiresAt) < new Date()
+    ) {
       return <Badge variant="danger">Expirado</Badge>;
     }
     return <Badge variant="warning">Pendente</Badge>;
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR');
+    return new Date(dateString).toLocaleDateString("pt-BR");
   };
 
   if (isLoading) {
@@ -224,7 +252,7 @@ export default function AdminContractsClient() {
   if (error) {
     return (
       <Card className="p-6">
-        <Text   className="text-red-600">
+        <Text className="text-red-600">
           Erro ao carregar contratos: {error}
         </Text>
         <Button onClick={fetchContracts} className="mt-4">
@@ -259,7 +287,7 @@ export default function AdminContractsClient() {
               <option value="cancellable">Canceláveis</option>
             </select>
           </div>
-          
+
           <div className="flex gap-2">
             <Button onClick={fetchContracts} variant="outline">
               Atualizar
@@ -270,7 +298,9 @@ export default function AdminContractsClient() {
                 variant="danger"
                 disabled={isBulkCancelling}
               >
-                {isBulkCancelling ? "Cancelando..." : `Cancelar ${selectedContracts.size} Selecionados`}
+                {isBulkCancelling
+                  ? "Cancelando..."
+                  : `Cancelar ${selectedContracts.size} Selecionados`}
               </Button>
             )}
           </div>
@@ -291,16 +321,14 @@ export default function AdminContractsClient() {
                 onChange={handleSelectAll}
                 className="rounded"
               />
-              <Text  >Selecionar Todos</Text>
+              <Text>Selecionar Todos</Text>
             </label>
           )}
         </div>
 
         {filteredContracts.length === 0 ? (
           <div className="text-center py-8">
-            <Text   className="text-gray-500">
-              Nenhum contrato encontrado
-            </Text>
+            <Text className="text-gray-500">Nenhum contrato encontrado</Text>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -318,7 +346,10 @@ export default function AdminContractsClient() {
               </thead>
               <tbody>
                 {filteredContracts.map((contract) => (
-                  <tr key={contract.userId} className="border-b hover:bg-gray-50">
+                  <tr
+                    key={contract.userId}
+                    className="border-b hover:bg-gray-50"
+                  >
                     <td className="py-3 px-2">
                       <input
                         type="checkbox"
@@ -328,54 +359,57 @@ export default function AdminContractsClient() {
                       />
                     </td>
                     <td className="py-3 px-2">
-                      <Text   className="font-medium">
-                        {contract.userName}
-                      </Text>
+                      <Text className="font-medium">{contract.userName}</Text>
                     </td>
                     <td className="py-3 px-2">
-                      <Text   className="text-gray-600">
+                      <Text className="text-gray-600">
                         {contract.userEmail}
                       </Text>
                     </td>
+                    <td className="py-3 px-2">{getStatusBadge(contract)}</td>
                     <td className="py-3 px-2">
-                      {getStatusBadge(contract)}
-                    </td>
-                    <td className="py-3 px-2">
-                      <Text  >
-                        {contract.contractStatus.expiresAt 
+                      <Text>
+                        {contract.contractStatus.expiresAt
                           ? formatDate(contract.contractStatus.expiresAt)
-                          : "N/A"
-                        }
+                          : "N/A"}
                       </Text>
                     </td>
                     <td className="py-3 px-2">
-                      <Text  >
-                        {contract.contractStatus.renewalCount || 0}
-                      </Text>
+                      <Text>{contract.contractStatus.renewalCount || 0}</Text>
                     </td>
                     <td className="py-3 px-2">
                       <div className="flex gap-2">
-                        {contract.canCancel && !contract.contractStatus.cancelledAt && (
-                          <Button
-                            size="sm"
-                            variant="danger"
-                            onClick={() => handleSingleCancel(contract.userId, contract.userName)}
-                          >
-                            Cancelar
-                          </Button>
-                        )}
-                        {contract.contractStatus.signed && !contract.contractStatus.signedByAdmin && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              // Navigate to user details or handle admin signing
-                              window.open(`/hub/plataforma/admin/users/${contract.userId}`, '_blank');
-                            }}
-                          >
-                            Assinar
-                          </Button>
-                        )}
+                        {contract.canCancel &&
+                          !contract.contractStatus.cancelledAt && (
+                            <Button
+                              size="sm"
+                              variant="danger"
+                              onClick={() =>
+                                handleSingleCancel(
+                                  contract.userId,
+                                  contract.userName
+                                )
+                              }
+                            >
+                              Cancelar
+                            </Button>
+                          )}
+                        {contract.contractStatus.signed &&
+                          !contract.contractStatus.signedByAdmin && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                // Navigate to user details or handle admin signing
+                                window.open(
+                                  `/hub/plataforma/admin/users/${contract.userId}`,
+                                  "_blank"
+                                );
+                              }}
+                            >
+                              Assinar
+                            </Button>
+                          )}
                       </div>
                     </td>
                   </tr>

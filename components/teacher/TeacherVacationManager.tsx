@@ -110,7 +110,7 @@ export default function TeacherVacationManager() {
               className="text-slate-700 dark:text-slate-300 leading-relaxed"
             >
               Selecione o período em que estará ausente. Todas as aulas
-              agendadas neste intervalo serão marcadas como "Férias" e os alunos
+              agendadas neste intervalo serão marcadas como Férias e os alunos
               serão notificados automaticamente.
             </Text>
           </div>

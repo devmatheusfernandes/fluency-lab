@@ -22,7 +22,10 @@ import { WelcomeStep } from "./steps";
 import { TeacherBasicInfoStep } from "./steps/teacher/TeacherBasicInfoStep";
 import { TeacherEmailVerificationStep } from "./steps/teacher/TeacherEmailVerificationStep";
 import { BankingInfoStep, BankingInfo } from "./steps/teacher/BankingInfoStep";
-import { ScheduleSelectionStep, ScheduleSlot } from "./steps/teacher/ScheduleSelectionStep";
+import {
+  ScheduleSelectionStep,
+  ScheduleSlot,
+} from "./steps/teacher/ScheduleSelectionStep";
 
 // Types for teacher onboarding data
 export interface TeacherOnboardingData {
@@ -54,11 +57,17 @@ export interface TeacherOnboardingStepProps {
 
 // Wrapper components for steps that need data adaptation
 
-const BankingInfoStepWrapper: React.FC<TeacherOnboardingStepProps> = (props) => {
+const BankingInfoStepWrapper: React.FC<TeacherOnboardingStepProps> = (
+  props
+) => {
   return (
     <BankingInfoStep
       data={props.data.bankingInfo}
-      onDataChange={(updates) => props.onDataChange({ bankingInfo: { ...props.data.bankingInfo, ...updates } })}
+      onDataChange={(updates) =>
+        props.onDataChange({
+          bankingInfo: { ...props.data.bankingInfo, ...updates },
+        })
+      }
       onNext={props.onNext}
       onBack={props.onBack}
       isLoading={props.isLoading}
@@ -66,7 +75,9 @@ const BankingInfoStepWrapper: React.FC<TeacherOnboardingStepProps> = (props) => 
   );
 };
 
-const ScheduleSelectionStepWrapper: React.FC<TeacherOnboardingStepProps> = (props) => {
+const ScheduleSelectionStepWrapper: React.FC<TeacherOnboardingStepProps> = (
+  props
+) => {
   return (
     <ScheduleSelectionStep
       data={props.data.scheduleSlots}
@@ -79,7 +90,9 @@ const ScheduleSelectionStepWrapper: React.FC<TeacherOnboardingStepProps> = (prop
 };
 
 // Teacher-specific welcome step
-const TeacherWelcomeStep: React.FC<TeacherOnboardingStepProps> = ({ onNext }) => {
+const TeacherWelcomeStep: React.FC<TeacherOnboardingStepProps> = ({
+  onNext,
+}) => {
   const { data: session } = useSession();
   const firstName = session?.user?.name?.split(" ")[0] || "Professor";
 
@@ -92,7 +105,7 @@ const TeacherWelcomeStep: React.FC<TeacherOnboardingStepProps> = ({ onNext }) =>
             Bem-vindo ao Fluency Lab, {firstName}!
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            Estamos muito felizes em tê-lo como professor em nossa plataforma. 
+            Estamos muito felizes em tê-lo como professor em nossa plataforma.
             Vamos configurar seu perfil para que você possa começar a ensinar.
           </p>
         </div>
@@ -146,7 +159,8 @@ const TeacherFinishStep: React.FC<TeacherOnboardingStepProps> = ({ data }) => {
             Parabéns, {firstName}!
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            Seu perfil está configurado e você está pronto para começar a ensinar no Fluency Lab.
+            Seu perfil está configurado e você está pronto para começar a
+            ensinar no Fluency Lab.
           </p>
         </div>
 
@@ -156,7 +170,10 @@ const TeacherFinishStep: React.FC<TeacherOnboardingStepProps> = ({ data }) => {
               ✅ Informações Bancárias
             </h3>
             <p className="text-sm text-green-700 dark:text-green-300">
-              {data.bankingInfo.bankName} • Conta {data.bankingInfo.accountType === "checking" ? "Corrente" : "Poupança"}
+              {data.bankingInfo.bankName} • Conta{" "}
+              {data.bankingInfo.accountType === "checking"
+                ? "Corrente"
+                : "Poupança"}
             </p>
           </div>
           <div className="p-6 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-700">
@@ -199,10 +216,26 @@ interface TeacherOnboardingModalProps {
 
 const TEACHER_STEPS = [
   { id: "welcome", title: "Bem-vindo", component: TeacherWelcomeStep },
-  { id: "basic-info", title: "Informações Básicas", component: TeacherBasicInfoStep },
-  { id: "email-verification", title: "Verificação de Email", component: TeacherEmailVerificationStep },
-  { id: "banking-info", title: "Informações Bancárias", component: BankingInfoStepWrapper },
-  { id: "schedule-selection", title: "Horários Regulares", component: ScheduleSelectionStepWrapper },
+  {
+    id: "basic-info",
+    title: "Informações Básicas",
+    component: TeacherBasicInfoStep,
+  },
+  {
+    id: "email-verification",
+    title: "Verificação de Email",
+    component: TeacherEmailVerificationStep,
+  },
+  {
+    id: "banking-info",
+    title: "Informações Bancárias",
+    component: BankingInfoStepWrapper,
+  },
+  {
+    id: "schedule-selection",
+    title: "Horários Regulares",
+    component: ScheduleSelectionStepWrapper,
+  },
   { id: "finish", title: "Finalização", component: TeacherFinishStep },
 ];
 
@@ -241,9 +274,12 @@ export const TeacherOnboardingModal: React.FC<TeacherOnboardingModalProps> = ({
     onboardingCompleted: false,
   });
 
-  const handleDataChange = useCallback((updates: Partial<TeacherOnboardingData>) => {
-    setData((prev) => ({ ...prev, ...updates }));
-  }, []);
+  const handleDataChange = useCallback(
+    (updates: Partial<TeacherOnboardingData>) => {
+      setData((prev) => ({ ...prev, ...updates }));
+    },
+    []
+  );
 
   const canGoNext = useCallback(() => {
     const step = TEACHER_STEPS[currentStep];
@@ -271,27 +307,7 @@ export const TeacherOnboardingModal: React.FC<TeacherOnboardingModalProps> = ({
         return true;
     }
   }, [currentStep, data]);
-
-  const handleNext = useCallback(async () => {
-    if (!canGoNext()) {
-      toast.error("Por favor, complete as informações necessárias para continuar.");
-      return;
-    }
-
-    if (currentStep < TEACHER_STEPS.length - 1) {
-      setCurrentStep((prev) => prev + 1);
-    } else {
-      await handleCompleteOnboarding();
-    }
-  }, [currentStep, canGoNext]);
-
-  const handleBack = useCallback(() => {
-    if (currentStep > 0) {
-      setCurrentStep((prev) => prev - 1);
-    }
-  }, [currentStep]);
-
-  const handleCompleteOnboarding = async () => {
+  const handleCompleteOnboarding = useCallback(async () => {
     try {
       setIsLoading(true);
 
@@ -307,14 +323,37 @@ export const TeacherOnboardingModal: React.FC<TeacherOnboardingModalProps> = ({
 
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      toast.success("Bem-vindo ao Fluency Lab! Seu perfil de professor foi configurado com sucesso.");
+      toast.success(
+        "Bem-vindo ao Fluency Lab! Seu perfil de professor foi configurado com sucesso."
+      );
       onComplete();
     } catch (error) {
       toast.error("Erro ao finalizar o processo de integração.");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [data, onComplete]);
+
+  const handleNext = useCallback(async () => {
+    if (!canGoNext()) {
+      toast.error(
+        "Por favor, complete as informações necessárias para continuar."
+      );
+      return;
+    }
+
+    if (currentStep < TEACHER_STEPS.length - 1) {
+      setCurrentStep((prev) => prev + 1);
+    } else {
+      await handleCompleteOnboarding();
+    }
+  }, [currentStep, canGoNext, handleCompleteOnboarding]);
+
+  const handleBack = useCallback(() => {
+    if (currentStep > 0) {
+      setCurrentStep((prev) => prev - 1);
+    }
+  }, [currentStep]);
 
   if (!isOpen) return null;
 
@@ -373,7 +412,12 @@ export const TeacherOnboardingModal: React.FC<TeacherOnboardingModalProps> = ({
                 disabled={!canGoNext() || isLoading}
                 className="flex flex-row items-center gap-1"
               >
-                {TEACHER_BUTTON_TEXTS[TEACHER_STEPS[currentStep].id as keyof typeof TEACHER_BUTTON_TEXTS]}
+                {
+                  TEACHER_BUTTON_TEXTS[
+                    TEACHER_STEPS[currentStep]
+                      .id as keyof typeof TEACHER_BUTTON_TEXTS
+                  ]
+                }
                 <ArrowRight className="w-5 h-5" />
               </ModalPrimaryButton>
             )}
@@ -383,7 +427,12 @@ export const TeacherOnboardingModal: React.FC<TeacherOnboardingModalProps> = ({
                 onClick={handleNext}
                 className="flex flex-row items-center gap-1"
               >
-                {TEACHER_BUTTON_TEXTS[TEACHER_STEPS[currentStep].id as keyof typeof TEACHER_BUTTON_TEXTS]}
+                {
+                  TEACHER_BUTTON_TEXTS[
+                    TEACHER_STEPS[currentStep]
+                      .id as keyof typeof TEACHER_BUTTON_TEXTS
+                  ]
+                }
                 <ArrowRight className="w-5 h-5" />
               </ModalPrimaryButton>
             )}

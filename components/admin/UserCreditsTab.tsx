@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -26,7 +26,14 @@ import {
   CreditTransaction,
 } from "@/types/credits/regularClassCredits";
 import { TextArea } from "../ui/TextArea";
-import { Calendar, Card2, Gift, ShieldWarning, User, CloseCircle } from "@solar-icons/react";
+import {
+  Calendar,
+  Card2,
+  Gift,
+  ShieldWarning,
+  User,
+  CloseCircle,
+} from "@solar-icons/react";
 import { Alert, AlertDescription } from "../ui/Shadcn/alert";
 
 interface UserCreditsTabProps {
@@ -49,11 +56,7 @@ export default function UserCreditsTab({ studentId }: UserCreditsTabProps) {
     reason: "",
   });
 
-  useEffect(() => {
-    loadCreditData();
-  }, [studentId]);
-
-  const loadCreditData = async () => {
+  const loadCreditData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -89,7 +92,11 @@ export default function UserCreditsTab({ studentId }: UserCreditsTabProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [studentId]);
+
+  useEffect(() => {
+    loadCreditData();
+  }, [loadCreditData]);
 
   const handleGrantCredits = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -215,7 +222,11 @@ export default function UserCreditsTab({ studentId }: UserCreditsTabProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-600">
-              {balance?.credits?.filter(credit => credit.type === RegularCreditType.TEACHER_CANCELLATION && !credit.usedAt).length || 0}
+              {balance?.credits?.filter(
+                (credit) =>
+                  credit.type === RegularCreditType.TEACHER_CANCELLATION &&
+                  !credit.usedAt
+              ).length || 0}
             </div>
           </CardContent>
         </Card>
@@ -283,7 +294,9 @@ export default function UserCreditsTab({ studentId }: UserCreditsTabProps) {
                     <SelectOption value={RegularCreditType.LATE_STUDENTS}>
                       Alunos Tardios
                     </SelectOption>
-                    <SelectOption value={RegularCreditType.TEACHER_CANCELLATION}>
+                    <SelectOption
+                      value={RegularCreditType.TEACHER_CANCELLATION}
+                    >
                       Aulas Canceladas
                     </SelectOption>
                   </SelectContent>

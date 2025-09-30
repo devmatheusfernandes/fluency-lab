@@ -16,8 +16,6 @@ export interface Student {
   ContratosAssinados?: ContractStatus;
 }
 
-// Legacy alias for backward compatibility
-export interface Aluno extends Student {}
 export interface ContractLog {
   // Student signature data
   cpf: string;
@@ -138,7 +136,7 @@ export interface AdminSignContractRequest {
 // Contract renewal types
 export interface ContractRenewalRequest {
   studentId: string;
-  renewalType: 'automatic' | 'manual';
+  renewalType: "automatic" | "manual";
   adminId?: string; // For manual renewals
 }
 
@@ -154,7 +152,7 @@ export interface ContractRenewalResponse extends ContractOperationResponse {
     previousExpirationDate: string;
     newExpirationDate: string;
     renewalCount: number;
-    renewalType: 'automatic' | 'manual';
+    renewalType: "automatic" | "manual";
   };
 }
 

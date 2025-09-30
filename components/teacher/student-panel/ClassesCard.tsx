@@ -98,7 +98,7 @@ export default function ClassesCard({
   // When month/year changes, fetch classes for that period
   useEffect(() => {
     onFetchClasses(selectedMonth, selectedYear);
-  }, [selectedMonth, selectedYear]);
+  }, [selectedMonth, selectedYear, onFetchClasses]);
 
   // Handle updating class status with optimistic updates
   const handleUpdateClassStatus = async (
@@ -379,8 +379,8 @@ export default function ClassesCard({
           <ModalBody>
             <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
               Tem certeza que deseja cancelar esta aula? Esta ação irá marcar a
-              aula como "Cancelada (Professor + Reposição)" e uma nova aula
-              deverá ser agendada para repor esta.
+              aula como Cancelada (Professor + Reposição) e uma nova aula deverá
+              ser agendada para repor esta.
             </p>
           </ModalBody>
           <ModalFooter className="flex gap-3">
@@ -428,7 +428,7 @@ export default function ClassesCard({
           </ModalHeader>
           <ModalBody>
             <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-              Tem certeza que deseja marcar esta aula como "Falta"? Esta ação
+              Tem certeza que deseja marcar esta aula como Falta? Esta ação
               indica que o aluno não compareceu à aula agendada.
             </p>
           </ModalBody>

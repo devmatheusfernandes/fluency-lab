@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Text } from "@/components/ui/Text";
 import { Button } from "@/components/ui/Button";
 import { Calendar, ClockSquare, Refresh } from "@solar-icons/react/ssr";
@@ -24,7 +24,7 @@ export default function NextClassCard({ className = "" }: NextClassCardProps) {
   } | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const findNextClass = () => {
+  const findNextClass = useCallback(() => {
     if (!myClasses || myClasses.length === 0) return null;
 
     const now = new Date();
@@ -90,7 +90,7 @@ export default function NextClassCard({ className = "" }: NextClassCardProps) {
       time,
       daysUntil,
     };
-  };
+  }, [myClasses]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -106,11 +106,11 @@ export default function NextClassCard({ className = "" }: NextClassCardProps) {
 
   useEffect(() => {
     setNextClass(findNextClass());
-  }, [myClasses]);
+  }, [myClasses, findNextClass]);
 
   useEffect(() => {
     fetchMyClasses();
-  }, []);
+  }, [fetchMyClasses]);
 
   if (isLoading && !nextClass) {
     return (

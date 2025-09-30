@@ -79,14 +79,16 @@ export default function UserScheduleManager({
   const [schedule, setSchedule] = useState<ClassTemplateDay[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  
+
   // Novos estados para o fluxo de seleção
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>("");
   const [selectedLanguage, setSelectedLanguage] = useState<string>("");
-  const [availableSlots, setAvailableSlots] = useState<UniqueScheduleSlot[]>([]);
+  const [availableSlots, setAvailableSlots] = useState<UniqueScheduleSlot[]>(
+    []
+  );
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [showScheduleSelection, setShowScheduleSelection] = useState(false);
-  
+
   // Estados para modal de exclusão (mantidos do código original)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteOption, setDeleteOption] = useState<
@@ -98,21 +100,14 @@ export default function UserScheduleManager({
     ClassTemplateDay[]
   >([]);
 
-  // Validação de pré-requisito
-  if (!user.contractStartDate || !user.contractLengthMonths) {
-    return (
-      <Card className="p-6 text-center">
-        <Text variant="subtitle">
-          Por favor, defina a <b>Data de Início</b> e a{" "}
-          <b>Duração do Contrato</b> na aba "Visão Geral" antes de configurar o
-          horário.
-        </Text>
-      </Card>
-    );
-  }
-
   // Efeito para buscar o horário do aluno
   useEffect(() => {
+    // Only fetch if user has contract details
+    if (!user.contractStartDate || !user.contractLengthMonths) {
+      setIsLoading(false);
+      return;
+    }
+
     const fetchSchedule = async () => {
       setIsLoading(true);
       try {
@@ -127,23 +122,41 @@ export default function UserScheduleManager({
         setIsLoading(false);
       }
     };
+
     fetchSchedule();
-  }, [user.id]);
+  }, [user.id, user.contractStartDate, user.contractLengthMonths]);
+
+  // Validação de pré-requisito
+  if (!user.contractStartDate || !user.contractLengthMonths) {
+    return (
+      <Card className="p-6 text-center">
+        <Text variant="subtitle">
+          Por favor, defina a <b>Data de Início</b> e a{" "}
+          <b>Duração do Contrato</b> na aba Visão Geral antes de configurar o
+          horário.
+        </Text>
+      </Card>
+    );
+  }
+
+
 
   // Função para buscar horários disponíveis do professor
   const fetchTeacherAvailability = async () => {
     if (!selectedTeacherId || !selectedLanguage) return;
-    
+
     setIsLoadingSlots(true);
     try {
-      const response = await fetch(`/api/admin/teacher-availability/${selectedTeacherId}`);
+      const response = await fetch(
+        `/api/admin/teacher-availability/${selectedTeacherId}`
+      );
       if (response.ok) {
         const data = await response.json();
-        
+
         // Agrupa os slots únicos por dia e horário
         const uniqueSlots: UniqueScheduleSlot[] = [];
         const seenSlots = new Set<string>();
-        
+
         data.slots.forEach((slot: TeacherAvailabilitySlot) => {
           const key = `${slot.day}-${slot.startTime}`;
           if (!seenSlots.has(key)) {
@@ -157,7 +170,7 @@ export default function UserScheduleManager({
             });
           }
         });
-        
+
         setAvailableSlots(uniqueSlots);
         setShowScheduleSelection(true);
       } else {
@@ -174,9 +187,9 @@ export default function UserScheduleManager({
   const handleSelectSchedule = async (slot: UniqueScheduleSlot) => {
     setIsSaving(true);
     try {
-      const response = await fetch('/api/admin/assign-schedule', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/admin/assign-schedule", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           studentId: user.id,
           teacherId: slot.teacherId,
@@ -189,7 +202,7 @@ export default function UserScheduleManager({
 
       if (response.ok) {
         toast.success("Horário atribuído com sucesso!");
-        
+
         // Atualiza a lista de horários do aluno
         const newEntry: ClassTemplateDay = {
           id: `temp-${Date.now()}`,
@@ -198,12 +211,14 @@ export default function UserScheduleManager({
           teacherId: slot.teacherId,
           language: slot.language!,
         };
-        
-        setSchedule(prev => [...prev, newEntry]);
-        
+
+        setSchedule((prev) => [...prev, newEntry]);
+
         // Remove o slot da lista de disponíveis
-        setAvailableSlots(prev => prev.filter(s => s.slotId !== slot.slotId));
-        
+        setAvailableSlots((prev) =>
+          prev.filter((s) => s.slotId !== slot.slotId)
+        );
+
         // Volta para a tela inicial
         setShowScheduleSelection(false);
         setSelectedTeacherId("");
@@ -526,103 +541,109 @@ export default function UserScheduleManager({
               <>
                 {/* --- SELEÇÃO DE PROFESSOR E IDIOMA --- */}
                 <div className="p-4 border border-surface-2 rounded-lg space-y-4">
-              <Text weight="semibold">Adicionar Novo Horário</Text>
-              <Text variant="subtitle">
-                Primeiro, selecione o professor e o idioma para ver os horários disponíveis.
-              </Text>
+                  <Text weight="semibold">Adicionar Novo Horário</Text>
+                  <Text variant="subtitle">
+                    Primeiro, selecione o professor e o idioma para ver os
+                    horários disponíveis.
+                  </Text>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Select
-                  value={selectedTeacherId}
-                  onValueChange={setSelectedTeacherId}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o professor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {allTeachers.map((teacher, index) => {
-                      const teacherValue =
-                        teacher.id && teacher.id.trim() !== ""
-                          ? teacher.id
-                          : `teacher-${index}`;
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Select
+                      value={selectedTeacherId}
+                      onValueChange={setSelectedTeacherId}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o professor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {allTeachers.map((teacher, index) => {
+                          const teacherValue =
+                            teacher.id && teacher.id.trim() !== ""
+                              ? teacher.id
+                              : `teacher-${index}`;
 
-                      return (
-                        <SelectOption key={teacherValue} value={teacherValue}>
-                          {teacher.name}
-                        </SelectOption>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
+                          return (
+                            <SelectOption
+                              key={teacherValue}
+                              value={teacherValue}
+                            >
+                              {teacher.name}
+                            </SelectOption>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
 
-                <Select
-                  value={selectedLanguage}
-                  onValueChange={setSelectedLanguage}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o idioma" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {languageOptions.map((lang) => (
-                      <SelectOption key={lang} value={lang}>
-                        {lang}
-                      </SelectOption>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <Button
-                onClick={fetchTeacherAvailability}
-                disabled={!selectedTeacherId || !selectedLanguage || isLoadingSlots}
-                className="w-full"
-              >
-                {isLoadingSlots ? (
-                  <Loading className="mr-2" />
-                ) : (
-                  <Calendar className="mr-2" />
-                )}
-                Ver Horários Disponíveis
-              </Button>
-            </div>
-
-            {/* --- LISTA DE HORÁRIOS ATUAIS --- */}
-            <div className="space-y-3">
-              <Text weight="semibold">Horário Semanal Atual</Text>
-              {schedule.length === 0 ? (
-                <Text variant="placeholder" className="text-center py-4">
-                  Nenhum horário definido.
-                </Text>
-              ) : (
-                schedule.map((entry) => (
-                  <div
-                    key={entry.id}
-                    className="flex items-center justify-between p-3 bg-surface-1 rounded-md border border-surface-2"
-                  >
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                      <Text weight="medium" className="min-w-[80px]">
-                        {entry.day}
-                      </Text>
-                      <Text variant="subtitle">{entry.hour}</Text>
-                      <Text variant="subtitle">
-                        {getTeacherName(entry.teacherId)}
-                      </Text>
-                      <Text variant="subtitle">({entry.language})</Text>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-danger"
-                        onClick={() => handleRemoveEntry(entry.id)}
-                      >
-                        <TrashBinMinimalistic />
-                      </Button>
-                    </div>
+                    <Select
+                      value={selectedLanguage}
+                      onValueChange={setSelectedLanguage}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o idioma" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {languageOptions.map((lang) => (
+                          <SelectOption key={lang} value={lang}>
+                            {lang}
+                          </SelectOption>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                ))
-              )}
-            </div>
+
+                  <Button
+                    onClick={fetchTeacherAvailability}
+                    disabled={
+                      !selectedTeacherId || !selectedLanguage || isLoadingSlots
+                    }
+                    className="w-full"
+                  >
+                    {isLoadingSlots ? (
+                      <Loading className="mr-2" />
+                    ) : (
+                      <Calendar className="mr-2" />
+                    )}
+                    Ver Horários Disponíveis
+                  </Button>
+                </div>
+
+                {/* --- LISTA DE HORÁRIOS ATUAIS --- */}
+                <div className="space-y-3">
+                  <Text weight="semibold">Horário Semanal Atual</Text>
+                  {schedule.length === 0 ? (
+                    <Text variant="placeholder" className="text-center py-4">
+                      Nenhum horário definido.
+                    </Text>
+                  ) : (
+                    schedule.map((entry) => (
+                      <div
+                        key={entry.id}
+                        className="flex items-center justify-between p-3 bg-surface-1 rounded-md border border-surface-2"
+                      >
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                          <Text weight="medium" className="min-w-[80px]">
+                            {entry.day}
+                          </Text>
+                          <Text variant="subtitle">{entry.hour}</Text>
+                          <Text variant="subtitle">
+                            {getTeacherName(entry.teacherId)}
+                          </Text>
+                          <Text variant="subtitle">({entry.language})</Text>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-danger"
+                            onClick={() => handleRemoveEntry(entry.id)}
+                          >
+                            <TrashBinMinimalistic />
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </>
             ) : (
               <>
@@ -638,11 +659,10 @@ export default function UserScheduleManager({
                     </Button>
                     <div>
                       <Text weight="semibold">
-                        Horários Disponíveis - {getTeacherName(selectedTeacherId)}
+                        Horários Disponíveis -{" "}
+                        {getTeacherName(selectedTeacherId)}
                       </Text>
-                      <Text variant="subtitle">
-                        Idioma: {selectedLanguage}
-                      </Text>
+                      <Text variant="subtitle">Idioma: {selectedLanguage}</Text>
                     </div>
                   </div>
 
@@ -671,9 +691,9 @@ export default function UserScheduleManager({
                       ))}
                     </div>
                   )}
-              </div>
-            </>
-          )}
+                </div>
+              </>
+            )}
           </>
         )}
 

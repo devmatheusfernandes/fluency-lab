@@ -1,7 +1,7 @@
 // components/onboarding/steps/EmailVerificationStep.tsx
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { OnboardingStepProps } from "../OnboardingModal";
 import { Card } from "@/components/ui/Card";
 import { Text } from "@/components/ui/Text";
@@ -33,30 +33,17 @@ export const EmailVerificationStep: React.FC<OnboardingStepProps> = ({
   const [isResending, setIsResending] = useState(false);
   const [cooldown, setCooldown] = useState(0);
 
-  // Check verification status on mount
-  useEffect(() => {
-    checkVerificationStatus();
-  }, []);
-
-  // Cooldown timer
-  useEffect(() => {
-    if (cooldown > 0) {
-      const timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [cooldown]);
-
-  const checkVerificationStatus = async () => {
+  const checkVerificationStatus = useCallback(async () => {
     try {
       const response = await fetch("/api/auth/verify-status");
-      
+
       if (!response.ok) {
         console.error(`HTTP error! status: ${response.status}`);
         setVerificationStatus("unverified");
         onDataChange({ emailVerified: false });
         return;
       }
-      
+
       const contentType = response.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
         console.error("Response is not JSON");
@@ -64,7 +51,7 @@ export const EmailVerificationStep: React.FC<OnboardingStepProps> = ({
         onDataChange({ emailVerified: false });
         return;
       }
-      
+
       const result = await response.json();
 
       setVerificationStatus(result.emailVerified ? "verified" : "unverified");
@@ -74,7 +61,20 @@ export const EmailVerificationStep: React.FC<OnboardingStepProps> = ({
       setVerificationStatus("unverified");
       onDataChange({ emailVerified: false });
     }
-  };
+  }, [onDataChange]);
+
+  // Check verification status on mount
+  useEffect(() => {
+    checkVerificationStatus();
+  }, [checkVerificationStatus]);
+
+  // Cooldown timer
+  useEffect(() => {
+    if (cooldown > 0) {
+      const timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [cooldown]);
 
   const resendVerificationEmail = async () => {
     if (cooldown > 0) return;
@@ -99,10 +99,16 @@ export const EmailVerificationStep: React.FC<OnboardingStepProps> = ({
         // Try to get error message from response
         try {
           const errorResult = await response.json();
-          toast.error(errorResult.error || errorResult.message || "Erro ao reenviar email de verificação");
+          toast.error(
+            errorResult.error ||
+              errorResult.message ||
+              "Erro ao reenviar email de verificação"
+          );
         } catch {
           // If JSON parsing fails, show default error message
-          toast.error(`Erro ao reenviar email de verificação. Status: ${response.status}`);
+          toast.error(
+            `Erro ao reenviar email de verificação. Status: ${response.status}`
+          );
         }
       }
     } catch (error) {

@@ -82,7 +82,7 @@ export default function ClassDetailsView({
       {classDetails.notes && (
         <div className="mt-6 p-4 bg-gray-50 rounded-lg border">
           <h3 className="font-semibold text-lg mb-2">Tópico para esta Aula</h3>
-          <p className="text-gray-700 italic">"{classDetails.notes}"</p>
+          <p className="text-gray-700 italic">{classDetails.notes}</p>
         </div>
       )}
 

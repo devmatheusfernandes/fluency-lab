@@ -154,7 +154,7 @@ export class UserAdminRepository {
     const snapshot = await query.get();
     if (snapshot.empty) return [];
 
-    let users = snapshot.docs.map(doc => {
+    const users = snapshot.docs.map(doc => {
       const data = doc.data();
       const serializedData = serializeTimestamps(data);
       

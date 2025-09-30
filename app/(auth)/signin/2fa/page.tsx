@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Card } from "@/components/ui/Card";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Text } from "@/components/ui/Text";
 
-export default function TwoFactorVerificationPage() {
+function TwoFactorForm() {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -48,6 +48,8 @@ export default function TwoFactorVerificationPage() {
             sessionStorage.removeItem('temp-2fa-data');
           }
         }
+
+        // If no valid data found, redirect to signin
         router.push('/signin');
       } catch (error) {
         console.error('Erro ao carregar dados do 2FA:', error);
@@ -124,74 +126,97 @@ export default function TwoFactorVerificationPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <Card className="w-full max-w-md p-6">
-        <div className="text-center mb-6">
-          <Text variant="title" size="xl" weight="bold">
-            Verificação em Duas Etapas
+    <Card className="w-full max-w-md p-6">
+      <div className="text-center mb-6">
+        <Text variant="title" size="xl" weight="bold">
+          Verificação em Duas Etapas
+        </Text>
+        <Text className="mt-2 text-gray-600">
+          Digite o código de 6 dígitos do seu aplicativo autenticador
+        </Text>
+        {email && (
+          <Text className="mt-1 text-sm text-gray-500">
+            Fazendo login como: {email}
           </Text>
-          <Text className="mt-2 text-gray-600">
-            Digite o código de 6 dígitos do seu aplicativo autenticador
-          </Text>
-          {email && (
-            <Text className="mt-1 text-sm text-gray-500">
-              Fazendo login como: {email}
-            </Text>
-          )}
-        </div>
-
-        {error && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-            {error}
-          </div>
         )}
+      </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Input
-              type="text"
-              value={code}
-              onChange={(e) =>
-                setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
-              }
-              placeholder="000000"
-              maxLength={6}
-              className="text-center text-lg tracking-widest"
-              required
-              autoFocus
-            />
-          </div>
-
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={isLoading || code.length !== 6}
-          >
-            {isLoading ? "Verificando..." : "Verificar"}
-          </Button>
-        </form>
-
-        <div className="text-center mt-4">
-          <Button
-            variant="link"
-            onClick={async () => {
-              // Clear stored credentials when using a different account
-              try {
-                const { clearTwoFactorData } = await import(
-                  "@/lib/auth/twoFactorStorage"
-                );
-                await clearTwoFactorData();
-              } catch (error) {
-                console.error("Erro ao limpar dados do 2FA:", error);
-              }
-              router.push("/signin");
-            }}
-            className="text-sm"
-          >
-            Usar uma conta diferente
-          </Button>
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          {error}
         </div>
-      </Card>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <Input
+            type="text"
+            value={code}
+            onChange={(e) =>
+              setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+            }
+            placeholder="000000"
+            maxLength={6}
+            className="text-center text-lg tracking-widest"
+            required
+            autoFocus
+          />
+        </div>
+
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={isLoading || code.length !== 6}
+        >
+          {isLoading ? "Verificando..." : "Verificar"}
+        </Button>
+      </form>
+
+      <div className="text-center mt-4">
+        <Button
+          variant="link"
+          onClick={async () => {
+            // Clear stored credentials when using a different account
+            try {
+              const { clearTwoFactorData } = await import(
+                "@/lib/auth/twoFactorStorage"
+              );
+              await clearTwoFactorData();
+            } catch (error) {
+              console.error("Erro ao limpar dados do 2FA:", error);
+            }
+            router.push("/signin");
+          }}
+          className="text-sm"
+        >
+          Usar uma conta diferente
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <Card className="w-full max-w-md p-6">
+      <div className="text-center">
+        <Text variant="title" size="xl" weight="bold">
+          Carregando...
+        </Text>
+        <Text className="mt-2 text-gray-600">
+          Preparando verificação em duas etapas
+        </Text>
+      </div>
+    </Card>
+  );
+}
+
+export default function TwoFactorVerificationPage() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <Suspense fallback={<LoadingFallback />}>
+        <TwoFactorForm />
+      </Suspense>
     </div>
   );
 }

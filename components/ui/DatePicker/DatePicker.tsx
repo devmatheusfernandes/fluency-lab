@@ -143,7 +143,9 @@ export default function DatePicker({
     if (isDateDisabled(date)) return;
 
     setSelectedDate(date);
-    onChange && onChange(date);
+    if (onChange) {
+      onChange(date);
+    }
     setIsOpen(false);
   };
 
@@ -175,7 +177,9 @@ export default function DatePicker({
   const handleTodayClick = () => {
     const today = new Date();
     setSelectedDate(today);
-    onChange && onChange(today);
+    if (onChange) {
+      onChange(today);
+    }
     setCurrentDate(today);
     setIsOpen(false);
   };

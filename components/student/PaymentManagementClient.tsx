@@ -13,6 +13,7 @@ import { PaymentStatus, MonthlyPayment } from "@/types/financial/subscription";
 
 import { toast } from "sonner";
 import { LinkRoundAngle } from "@solar-icons/react/ssr";
+import Image from "next/image";
 
 export function PaymentManagementClient() {
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | null>(
@@ -467,10 +468,12 @@ export function PaymentManagementClient() {
                   {/* QR Code Image */}
                   {paymentStatus.pixQrCode && (
                     <div className="flex justify-center mb-4">
-                      <img
+                      <Image
                         src={`data:image/png;base64,${paymentStatus.pixQrCode}`}
                         alt="QR Code PIX"
                         className="w-48 h-48 border rounded-lg"
+                        width={48}
+                        height={48}
                       />
                     </div>
                   )}
@@ -705,10 +708,12 @@ export function PaymentManagementClient() {
                           {/* QR Code Image for Payment History */}
                           {payment.pixQrCode && (
                             <div className="flex justify-center mb-3">
-                              <img
+                              <Image
                                 src={`data:image/png;base64,${payment.pixQrCode}`}
                                 alt="QR Code PIX"
                                 className="w-32 h-32 border rounded-lg"
+                                width={32}
+                                height={32}
                               />
                             </div>
                           )}

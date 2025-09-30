@@ -1,52 +1,59 @@
 // app/api/admin/announcements/route.ts
-import { NextResponse } from 'next/server';
-import { adminAuth } from '@/lib/firebase/admin';
-import { AnnouncementService } from '@/services/announcementService';
-import { UserRoles } from '@/types/users/userRoles';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { NextResponse } from "next/server";
+import { AnnouncementService } from "@/services/announcementService";
+import { UserRoles } from "@/types/users/userRoles";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 const announcementService = new AnnouncementService();
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     if (session.user.role !== UserRoles.ADMIN) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const announcements = await announcementService.getAllAnnouncements();
     return NextResponse.json(announcements);
-  } catch (error: any) {
-    console.error('Error fetching announcements:', error);
+  } catch (error: unknown) {
+    console.error("Error fetching announcements:", error);
     // More detailed error logging
-    console.error('Error details:', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    const errorName = error instanceof Error ? error.name : "Unknown";
+    console.error("Error details:", {
+      message: errorMessage,
+      stack: errorStack,
+      name: errorName,
     });
-    return NextResponse.json({ 
-      error: 'Internal server error',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: "Internal server error",
+        details:
+          process.env.NODE_ENV === "development" ? errorMessage : undefined,
+      },
+      { status: 500 }
+    );
   }
 }
 
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     if (session.user.role !== UserRoles.ADMIN) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const body = await request.json();
@@ -63,17 +70,25 @@ export async function POST(request: Request) {
     );
 
     return NextResponse.json(announcement, { status: 201 });
-  } catch (error: any) {
-    console.error('Error creating announcement:', error);
+  } catch (error: unknown) {
+    console.error("Error creating announcement:", error);
     // More detailed error logging
-    console.error('Error details:', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    const errorName = error instanceof Error ? error.name : "Unknown";
+    console.error("Error details:", {
+      message: errorMessage,
+      stack: errorStack,
+      name: errorName,
     });
-    return NextResponse.json({ 
-      error: 'Internal server error',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: "Internal server error",
+        details:
+          process.env.NODE_ENV === "development" ? errorMessage : undefined,
+      },
+      { status: 500 }
+    );
   }
 }

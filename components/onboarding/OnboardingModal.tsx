@@ -150,29 +150,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
     }
   }, [currentStep, data]);
 
-  const handleNext = useCallback(async () => {
-    if (!canGoNext()) {
-      toast.error(
-        "Por favor, complete as informações necessárias para continuar."
-      );
-      return;
-    }
-
-    if (currentStep < STEPS.length - 1) {
-      setCurrentStep((prev) => prev + 1);
-    } else {
-      // Complete onboarding
-      await handleCompleteOnboarding();
-    }
-  }, [currentStep, canGoNext]);
-
-  const handleBack = useCallback(() => {
-    if (currentStep > 0) {
-      setCurrentStep((prev) => prev - 1);
-    }
-  }, [currentStep]);
-
-  const handleCompleteOnboarding = async () => {
+  const handleCompleteOnboarding = useCallback(async () => {
     try {
       setIsLoading(true);
 
@@ -197,7 +175,28 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [data, onComplete]);
+
+  const handleNext = useCallback(async () => {
+    if (!canGoNext()) {
+      toast.error(
+        "Por favor, complete as informações necessárias para continuar."
+      );
+      return;
+    }
+
+    if (currentStep < STEPS.length - 1) {
+      setCurrentStep((prev) => prev + 1);
+    } else {
+      await handleCompleteOnboarding();
+    }
+  }, [currentStep, canGoNext, handleCompleteOnboarding]);
+
+  const handleBack = useCallback(() => {
+    if (currentStep > 0) {
+      setCurrentStep((prev) => prev - 1);
+    }
+  }, [currentStep]);
 
   // Don't render if not open
   if (!isOpen) return null;

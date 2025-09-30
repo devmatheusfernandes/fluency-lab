@@ -1,7 +1,7 @@
 // components/onboarding/steps/teacher/TeacherEmailVerificationStep.tsx
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { TeacherOnboardingStepProps } from "../../TeacherOnboardingModal";
 import { Card } from "@/components/ui/Card";
 import { Text } from "@/components/ui/Text";
@@ -22,12 +22,9 @@ import {
 } from "@solar-icons/react/ssr";
 import { Loading } from "@/components/ui/Loading";
 
-export const TeacherEmailVerificationStep: React.FC<TeacherOnboardingStepProps> = ({
-  data,
-  onDataChange,
-  onNext,
-  isLoading: parentLoading,
-}) => {
+export const TeacherEmailVerificationStep: React.FC<
+  TeacherOnboardingStepProps
+> = ({ data, onDataChange, onNext, isLoading: parentLoading }) => {
   const { data: session } = useSession();
   const [verificationStatus, setVerificationStatus] = useState<
     "checking" | "verified" | "unverified"
@@ -35,32 +32,19 @@ export const TeacherEmailVerificationStep: React.FC<TeacherOnboardingStepProps> 
   const [isResending, setIsResending] = useState(false);
   const [cooldown, setCooldown] = useState(0);
 
-  // Check verification status on mount
-  useEffect(() => {
-    checkVerificationStatus();
-  }, []);
-
-  // Cooldown timer
-  useEffect(() => {
-    if (cooldown > 0) {
-      const timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [cooldown]);
-
-  const checkVerificationStatus = async () => {
+  const checkVerificationStatus = useCallback(async () => {
     try {
       setVerificationStatus("checking");
-      
+
       const response = await fetch("/api/auth/check-verification");
-      
+
       if (!response.ok) {
         console.error(`HTTP error! status: ${response.status}`);
         setVerificationStatus("unverified");
         onDataChange({ emailVerified: false });
         return;
       }
-      
+
       const contentType = response.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
         console.error("Response is not JSON");
@@ -68,9 +52,9 @@ export const TeacherEmailVerificationStep: React.FC<TeacherOnboardingStepProps> 
         onDataChange({ emailVerified: false });
         return;
       }
-      
+
       const result = await response.json();
-      
+
       if (result.verified || result.emailVerified) {
         setVerificationStatus("verified");
         onDataChange({ emailVerified: true });
@@ -83,34 +67,57 @@ export const TeacherEmailVerificationStep: React.FC<TeacherOnboardingStepProps> 
       setVerificationStatus("unverified");
       onDataChange({ emailVerified: false });
     }
-  };
+  }, [onDataChange]);
+  // Check verification status on mount
+  useEffect(() => {
+    checkVerificationStatus();
+  }, [checkVerificationStatus]);
+
+  // Cooldown timer
+  useEffect(() => {
+    if (cooldown > 0) {
+      const timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [cooldown]);
 
   const resendVerificationEmail = async () => {
     try {
       setIsResending(true);
-      
+
       const response = await fetch("/api/auth/resend-verification", {
         method: "POST",
       });
-      
+
       if (response.ok) {
         // Try to parse JSON response for success message
         try {
           const result = await response.json();
-          toast.success(result.message || "Email de verificação reenviado! Verifique sua caixa de entrada.");
+          toast.success(
+            result.message ||
+              "Email de verificação reenviado! Verifique sua caixa de entrada."
+          );
         } catch {
           // If JSON parsing fails, show default success message
-          toast.success("Email de verificação reenviado! Verifique sua caixa de entrada.");
+          toast.success(
+            "Email de verificação reenviado! Verifique sua caixa de entrada."
+          );
         }
         setCooldown(60); // 60 seconds cooldown
       } else {
         // Try to get error message from response
         try {
           const errorResult = await response.json();
-          toast.error(errorResult.error || errorResult.message || "Erro ao reenviar email de verificação.");
+          toast.error(
+            errorResult.error ||
+              errorResult.message ||
+              "Erro ao reenviar email de verificação."
+          );
         } catch {
           // If JSON parsing fails, show default error message
-          toast.error(`Erro ao reenviar email de verificação. Status: ${response.status}`);
+          toast.error(
+            `Erro ao reenviar email de verificação. Status: ${response.status}`
+          );
         }
       }
     } catch (error) {
@@ -146,8 +153,8 @@ export const TeacherEmailVerificationStep: React.FC<TeacherOnboardingStepProps> 
               Email Verificado com Sucesso!
             </h1>
             <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-              Perfeito, {firstName}! Seu email está verificado e você pode continuar 
-              configurando seu perfil de professor.
+              Perfeito, {firstName}! Seu email está verificado e você pode
+              continuar configurando seu perfil de professor.
             </p>
           </div>
 
@@ -231,8 +238,9 @@ export const TeacherEmailVerificationStep: React.FC<TeacherOnboardingStepProps> 
             Verificação de Email Necessária
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            Para garantir a segurança da plataforma e dos alunos, precisamos verificar 
-            seu email antes de continuar com a configuração do seu perfil de professor.
+            Para garantir a segurança da plataforma e dos alunos, precisamos
+            verificar seu email antes de continuar com a configuração do seu
+            perfil de professor.
           </p>
         </div>
 
@@ -241,15 +249,14 @@ export const TeacherEmailVerificationStep: React.FC<TeacherOnboardingStepProps> 
             <div className="flex items-start gap-4">
               <ShieldWarning className="w-6 h-6 text-yellow-600 dark:text-yellow-300 mt-1" />
               <div className="flex-1">
-                <Text
-                  className="text-yellow-800 dark:text-yellow-200 font-medium mb-2"
-                >
+                <Text className="text-yellow-800 dark:text-yellow-200 font-medium mb-2">
                   Email não verificado
                 </Text>
                 <Text className="text-yellow-700 dark:text-yellow-300 text-sm mb-4">
                   Enviamos um email de verificação para{" "}
                   <span className="font-medium">{session?.user?.email}</span>.
-                  Por favor, verifique sua caixa de entrada e clique no link de verificação.
+                  Por favor, verifique sua caixa de entrada e clique no link de
+                  verificação.
                 </Text>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Button
@@ -285,9 +292,14 @@ export const TeacherEmailVerificationStep: React.FC<TeacherOnboardingStepProps> 
                 </h4>
                 <ul className="text-blue-800 dark:text-blue-200 text-sm space-y-1">
                   <li>• Verifique sua pasta de spam ou lixo eletrônico</li>
-                  <li>• Aguarde alguns minutos, emails podem demorar para chegar</li>
-                  <li>• Certifique-se de que o email {session?.user?.email} está correto</li>
-                  <li>• Use o botão "Reenviar email" se necessário</li>
+                  <li>
+                    • Aguarde alguns minutos, emails podem demorar para chegar
+                  </li>
+                  <li>
+                    • Certifique-se de que o email {session?.user?.email} está
+                    correto
+                  </li>
+                  <li>• Use o botão Reenviar email se necessário</li>
                 </ul>
               </div>
             </div>
@@ -301,10 +313,10 @@ export const TeacherEmailVerificationStep: React.FC<TeacherOnboardingStepProps> 
                   Por que verificamos o email de professores?
                 </h4>
                 <p className="text-green-700 dark:text-green-300 text-sm leading-relaxed">
-                  A verificação de email é essencial para professores pois garante que você 
-                  receberá notificações importantes sobre aulas, pagamentos e comunicações 
-                  com alunos. Também é uma medida de segurança para proteger a comunidade 
-                  da plataforma.
+                  A verificação de email é essencial para professores pois
+                  garante que você receberá notificações importantes sobre
+                  aulas, pagamentos e comunicações com alunos. Também é uma
+                  medida de segurança para proteger a comunidade da plataforma.
                 </p>
               </div>
             </div>

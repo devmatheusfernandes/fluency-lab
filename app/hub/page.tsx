@@ -15,9 +15,9 @@ export default function HubEntryPoint() {
 
       // UPDATED: Maps each role to the new URL structure
       const roleToPathMap: { [key: string]: string } = {
-        admin: "hub/plataforma/admin",
-        teacher: "hub/plataforma/teacher",
-        student: "hub/plataforma/profile",
+        admin: "hub/plataforma/admin/meu-perfil",
+        teacher: "hub/plataforma/teacher/meu-perfil",
+        student: "hub/plataforma/student/meu-perfil",
       };
 
       const destination = roleToPathMap[userRole] || "/";

@@ -3,10 +3,11 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { Card } from "@/components/ui/Card";
+import BackgroundLogin from "@/public/images/login/background";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Text } from "@/components/ui/Text";
+import { Switch } from "@/components/ui/Switch";
+import { useTheme } from "@/context/ThemeContext";
 
 function TwoFactorForm() {
   const [code, setCode] = useState("");
@@ -25,17 +26,17 @@ function TwoFactorForm() {
     const loadStoredCredentials = async () => {
       try {
         // Try server-side storage first
-        const { getTwoFactorData } = await import('@/lib/auth/twoFactorStorage');
+        const { getTwoFactorData } = await import("@/lib/auth/twoFactorStorage");
         const data = await getTwoFactorData();
-        
+
         if (data) {
           setEmail(data.email);
           setPassword(data.password);
           return;
         }
-        
+
         // Fallback to sessionStorage
-        const fallbackData = sessionStorage.getItem('temp-2fa-data');
+        const fallbackData = sessionStorage.getItem("temp-2fa-data");
         if (fallbackData) {
           const parsed = JSON.parse(fallbackData);
           // Check if data is not too old (10 minutes)
@@ -45,17 +46,17 @@ function TwoFactorForm() {
             setPassword(parsed.password);
             return;
           } else {
-            sessionStorage.removeItem('temp-2fa-data');
+            sessionStorage.removeItem("temp-2fa-data");
           }
         }
 
         // If no valid data found, redirect to signin
-        router.push('/signin');
+        router.push("/signin");
       } catch (error) {
-        console.error('Erro ao carregar dados do 2FA:', error);
+        console.error("Erro ao carregar dados do 2FA:", error);
         // Try sessionStorage as last resort
         try {
-          const fallbackData = sessionStorage.getItem('temp-2fa-data');
+          const fallbackData = sessionStorage.getItem("temp-2fa-data");
           if (fallbackData) {
             const parsed = JSON.parse(fallbackData);
             const isExpired = Date.now() - parsed.timestamp > 10 * 60 * 1000;
@@ -66,9 +67,9 @@ function TwoFactorForm() {
             }
           }
         } catch (fallbackError) {
-          console.error('Erro no fallback storage:', fallbackError);
+          console.error("Erro no fallback storage:", fallbackError);
         }
-        router.push('/signin');
+        router.push("/signin");
       }
     };
 
@@ -98,20 +99,32 @@ function TwoFactorForm() {
 
       if (result?.error) {
         console.error("SignIn error:", result.error);
-        
+
         if (result.error === "Invalid 2FA code") {
           setError("Código 2FA inválido. Tente novamente.");
         } else if (result.error === "2FA_REQUIRED") {
-          setError("Código 2FA é obrigatório. Digite o código do seu aplicativo autenticador.");
+          setError(
+            "Código 2FA é obrigatório. Digite o código do seu aplicativo autenticador."
+          );
         } else if (result.error === "CredentialsSignin") {
-          setError("Erro de autenticação. Verifique suas credenciais e tente novamente.");
+          setError(
+            "Erro de autenticação. Verifique suas credenciais e tente novamente."
+          );
         } else if (result.error.includes("fetch")) {
           setError("Erro de conexão. Verifique sua internet e tente novamente.");
         } else if (result.error.includes("timeout")) {
           setError("Tempo limite excedido. Tente novamente.");
-        } else if (result.error.includes("500") || result.error.includes("Internal Server Error")) {
-          setError("Erro interno do servidor. Tente novamente em alguns instantes.");
-        } else if (result.error.includes("401") || result.error.includes("Unauthorized")) {
+        } else if (
+          result.error.includes("500") ||
+          result.error.includes("Internal Server Error")
+        ) {
+          setError(
+            "Erro interno do servidor. Tente novamente em alguns instantes."
+          );
+        } else if (
+          result.error.includes("401") ||
+          result.error.includes("Unauthorized")
+        ) {
           setError("Não autorizado. Faça login novamente.");
         } else {
           setError(`Erro na verificação: ${result.error}. Tente novamente.`);
@@ -136,14 +149,18 @@ function TwoFactorForm() {
       }
     } catch (err: any) {
       console.error("2FA verification error:", err);
-      
+
       // Handle different types of network/fetch errors
       if (err.name === "TypeError" && err.message.includes("fetch")) {
-        setError("Erro de conexão de rede. Verifique sua internet e tente novamente.");
+        setError(
+          "Erro de conexão de rede. Verifique sua internet e tente novamente."
+        );
       } else if (err.name === "AbortError") {
         setError("Requisição cancelada. Tente novamente.");
       } else if (err.message?.includes("JSON")) {
-        setError("Erro de formato de resposta do servidor. Tente novamente.");
+        setError(
+          "Erro de formato de resposta do servidor. Tente novamente."
+        );
       } else if (err.message?.includes("timeout")) {
         setError("Tempo limite da requisição excedido. Tente novamente.");
       } else {
@@ -155,97 +172,126 @@ function TwoFactorForm() {
   };
 
   return (
-    <Card className="w-full max-w-md p-6">
+    <div className="max-w-md mx-auto w-full">
       <div className="text-center mb-6">
-        <Text variant="title" size="xl" weight="bold">
+        <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-2">
           Verificação em Duas Etapas
-        </Text>
-        <Text className="mt-2 text-gray-600">
+        </h2>
+        <p className="text-gray-600 dark:text-gray-300">
           Digite o código de 6 dígitos do seu aplicativo autenticador
-        </Text>
+        </p>
         {email && (
-          <Text className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Fazendo login como: {email}
-          </Text>
+          </p>
         )}
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+        <p className="text-red-600 dark:text-red-400 text-center text-sm mb-4">
           {error}
-        </div>
+        </p>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <Input
-            type="text"
-            value={code}
-            onChange={(e) =>
-              setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
-            }
-            placeholder="000000"
-            maxLength={6}
-            className="text-center text-lg tracking-widest"
-            required
-            autoFocus
-          />
-        </div>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <Input
+          type="text"
+          value={code}
+          onChange={(e) =>
+            setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+          }
+          placeholder="000000"
+          maxLength={6}
+          className="text-center tracking-widest"
+          required
+          inputSize="lg"
+          autoFocus
+        />
 
         <Button
           type="submit"
-          className="w-full"
+          fullWidth
+          size="lg"
           disabled={isLoading || code.length !== 6}
+          variant="primary"
         >
           {isLoading ? "Verificando..." : "Verificar"}
         </Button>
-      </form>
 
-      <div className="text-center mt-4">
-        <Button
-          variant="link"
-          onClick={async () => {
-            // Clear stored credentials when using a different account
-            try {
-              const { clearTwoFactorData } = await import(
-                "@/lib/auth/twoFactorStorage"
-              );
-              await clearTwoFactorData();
-            } catch (error) {
-              console.error("Erro ao limpar dados do 2FA:", error);
-            }
-            router.push("/signin");
-          }}
-          className="text-sm"
-        >
-          Usar uma conta diferente
-        </Button>
-      </div>
-    </Card>
+        <div className="text-center">
+          <Button
+            variant="link"
+            onClick={async () => {
+              // Clear stored credentials when using a different account
+              try {
+                const { clearTwoFactorData } = await import(
+                  "@/lib/auth/twoFactorStorage"
+                );
+                await clearTwoFactorData();
+              } catch (error) {
+                console.error("Erro ao limpar dados do 2FA:", error);
+              }
+              router.push("/signin");
+            }}
+            className="text-sm"
+          >
+            Usar uma conta diferente
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 }
 
 function LoadingFallback() {
   return (
-    <Card className="w-full max-w-md p-6">
+    <div className="max-w-md mx-auto w-full">
       <div className="text-center">
-        <Text variant="title" size="xl" weight="bold">
+        <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-2">
           Carregando...
-        </Text>
-        <Text className="mt-2 text-gray-600">
+        </h2>
+        <p className="text-gray-600 dark:text-gray-300">
           Preparando verificação em duas etapas
-        </Text>
+        </p>
       </div>
-    </Card>
+    </div>
   );
 }
 
 export default function TwoFactorVerificationPage() {
+  const { isDark, setTheme } = useTheme();
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <Suspense fallback={<LoadingFallback />}>
-        <TwoFactorForm />
-      </Suspense>
+    <div className="min-h-dvh w-full bg-background dark:bg-gray-950 flex items-center justify-center p-4 sm:p-6">
+      <div className="w-full max-w-5xl bg-white dark:bg-gray-900 rounded-xl shadow-2xl overflow-hidden">
+        <div className="flex flex-col lg:flex-row">
+          {/* Left Side - Background/Illustration (hidden on mobile) */}
+          <div className="hidden lg:block lg:w-1/2 bg-gray-100 dark:bg-gray-800 p-8 lg:p-12 relative min-h-[300px] lg:min-h-[600px]">
+            <BackgroundLogin />
+          </div>
+
+          {/* Right Side - 2FA Form */}
+          <div className="w-full lg:w-1/2 p-6 sm:p-8 lg:p-12 flex flex-col justify-center">
+            <div className="max-w-md mx-auto w-full">
+              {/* Top Bar with Dark Mode Toggle */}
+              <div className="flex justify-end mb-6">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600 dark:text-gray-300">Dark Mode</span>
+                  <Switch
+                    checked={isDark}
+                    onCheckedChange={(checked) => setTheme(!!checked)}
+                    aria-label="Alternar tema"
+                  />
+                </div>
+              </div>
+
+              <Suspense fallback={<LoadingFallback />}>
+                <TwoFactorForm />
+              </Suspense>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

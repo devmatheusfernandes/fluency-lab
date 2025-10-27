@@ -97,7 +97,7 @@ export default function UserClassesTab({
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loadingTeachers, setLoadingTeachers] = useState(true);
   const [classes, setClasses] = useState<StudentClass[]>(initialClasses || []);
-  
+
   // State for confirmation modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pendingTeacherUpdate, setPendingTeacherUpdate] = useState<{
@@ -432,7 +432,7 @@ export default function UserClassesTab({
 
                               {/* Teacher Assignment Section */}
                               <div className="mt-3">
-                                <label className="block text-sm font-medium text-fluency-gray-700 dark:text-fluency-gray-300 mb-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                   Professor:
                                 </label>
                                 <div className="flex items-center space-x-2">
@@ -469,7 +469,7 @@ export default function UserClassesTab({
                                     </SelectContent>
                                   </Select>
                                   {loadingTeachers && (
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-fluency-blue-500"></div>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
                                   )}
                                 </div>
                               </div>
@@ -534,7 +534,7 @@ export default function UserClassesTab({
 
                         {/* Teacher Assignment Section */}
                         <div className="mt-3">
-                          <label className="block text-sm font-medium text-fluency-gray-700 dark:text-fluency-gray-300 mb-1">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                             Professor:
                           </label>
                           <div className="flex items-center space-x-2">
@@ -571,7 +571,7 @@ export default function UserClassesTab({
                               </SelectContent>
                             </Select>
                             {loadingTeachers && (
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-fluency-blue-500"></div>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
                             )}
                           </div>
                         </div>

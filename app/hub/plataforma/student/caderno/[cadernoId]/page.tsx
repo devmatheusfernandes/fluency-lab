@@ -45,7 +45,10 @@ export default function CadernoID() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-fluency-blue-500"></div>
+        <div
+          className="animate-spin rounded-full h-12 w-12 border-b-2 border-
+blue-500"
+        ></div>
       </div>
     );
   }
@@ -86,24 +89,42 @@ export default function CadernoID() {
       animate={{ opacity: 1, y: 0 }}
       className="fade-in p-4 h-full"
     >
-      <div className="bg-fluency-pages-light dark:bg-fluency-pages-dark rounded-lg p-6 h-full">
+      <div
+        className="bg-
+pages-light dark:bg-
+pages-dark rounded-lg p-6 h-full"
+      >
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-fluency-primary dark:text-fluency-primary-dark mb-2">
+          <h1
+            className="text-2xl font-bold text-
+primary dark:text-primary-dark mb-2"
+          >
             {notebook.title}
           </h1>
-          <p className="text-fluency-gray-600 dark:text-fluency-gray-300">
+          <p
+            className="text-
+gray-600 dark:text-
+gray-300"
+          >
             {notebook.description || "Sem descrição"}
           </p>
         </div>
 
-        <div className="border-t border-fluency-gray-200 dark:border-fluency-gray-700 pt-4">
+        <div
+          className="border-t border-
+gray-200 dark:border-
+gray-700 pt-4"
+        >
           {notebook.content ? (
             <div
               className="prose dark:prose-invert max-w-none"
               dangerouslySetInnerHTML={{ __html: notebook.content }}
             />
           ) : (
-            <p className="text-fluency-gray-500 italic">
+            <p
+              className="text-
+gray-500 italic"
+            >
               Nenhum conteúdo disponível para este caderno.
             </p>
           )}

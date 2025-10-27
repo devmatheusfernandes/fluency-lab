@@ -137,9 +137,9 @@ export default function Badges({
         <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
           <div
             onClick={(e) => e.stopPropagation()}
-            className="text-fluency-text-light dark:text-fluency-text-dark bg-fluency-pages-light dark:bg-fluency-pages-dark rounded-lg lg:w-[50%] md:w-[90vw] w-[85vw] h-[85vh] overflow-hidden"
+            className="text-text-light dark:text-text-dark bg-pages-light dark:bg-pages-dark rounded-lg lg:w-[50%] md:w-[90vw] w-[85vw] h-[85vh] overflow-hidden"
           >
-            <div className="flex justify-between items-center py-3 px-6 bg-fluency-gray-100 dark:bg-fluency-gray-800">
+            <div className="flex justify-between items-center py-3 px-6 bg-gray-100 dark:bg-gray-800">
               <p className="text-xl font-semibold">
                 Sobre seu nível de domínio
               </p>

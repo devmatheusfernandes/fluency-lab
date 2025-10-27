@@ -43,7 +43,7 @@ export default function HubLayout({ children }: { children: React.ReactNode }) {
   if (hideLayoutElements) {
     return (
       <div className="flex flex-col min-h-screen bg-background">
-        <Container className="flex-1 flex flex-col">{children}</Container>
+        <Container className="!p-0 flex-1 flex flex-col">{children}</Container>
       </div>
     );
   }

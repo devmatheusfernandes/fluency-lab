@@ -80,7 +80,7 @@ export default function StudentCard({ student }: StudentCardProps) {
 
         <div className="flex-1 min-w-0">
           <h3 className="font-bold text-lg truncate">{student.name}</h3>
-          <p className="text-fluency-gray-600 dark:text-fluency-gray-300 text-sm truncate">
+          <p className="text-gray-600 dark:text-gray-300 text-sm truncate">
             {student.email}
           </p>
           {student.nextClass ? (
@@ -92,7 +92,7 @@ export default function StudentCard({ student }: StudentCardProps) {
             </div>
           ) : (
             <div className="mt-2">
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-fluency-gray-100 text-fluency-gray-800">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                 Sem aulas agendadas
               </span>
             </div>

@@ -72,7 +72,7 @@ interface LevelsProps {
 export function Levels({ onClose }: LevelsProps) {
   return (
     <div className="fixed inset-0 bg-gray-400 bg-opacity-65 flex justify-center items-center z-50">
-      <div className="relative text-fluency-text-light dark:text-fluency-text-dark bg-fluency-pages-light dark:bg-fluency-pages-dark rounded-lg w-[90%] lg:w-[70%] max-h-[90vh] overflow-y-auto shadow-xl p-8">
+      <div className="relative text-text-light dark:text-text-dark bg-pages-light dark:bg-pages-dark rounded-lg w-[90%] lg:w-[70%] max-h-[90vh] overflow-y-auto shadow-xl p-8">
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -99,7 +99,7 @@ export function Levels({ onClose }: LevelsProps) {
           {badgesData.map((badge, index) => (
             <div
               key={index}
-              className="p-4 border rounded-xl lg:flex lg:flex-row md:flex md:flex-col flex flex-col items-center justify-center gap-4 bg-gray-100 dark:bg-fluency-bg-dark"
+              className="p-4 border rounded-xl lg:flex lg:flex-row md:flex md:flex-col flex flex-col items-center justify-center gap-4 bg-gray-100 dark:bg-bg-dark"
             >
               <div className="border-4 bg-white rounded-full">
                 <Image

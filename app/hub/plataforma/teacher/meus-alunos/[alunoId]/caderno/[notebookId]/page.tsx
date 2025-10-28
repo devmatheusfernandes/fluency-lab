@@ -1,11 +1,15 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
 import TiptapEditor from "@/components/ui/TiptapEditor";
 import { Loading } from "@/components/ui/Loading";
+import * as Y from "yjs";
+import { FirestoreProvider } from "@gmcfall/yjs-firestore-provider";
+import { app, db } from "@/lib/firebase/config";
+import { doc, getDoc, updateDoc, collection, addDoc, getDocs } from "firebase/firestore";
 
 interface Notebook {
   id: string;
@@ -24,66 +28,155 @@ export default function VisualizarCaderno() {
   const [notebook, setNotebook] = useState<Notebook | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [provider, setProvider] = useState<FirestoreProvider | null>(null);
+  const [content, setContent] = useState<string>("");
+  const [timeLeft, setTimeLeft] = useState<number>(600000); // 10 minutes in milliseconds
+  const ydocRef = useRef<Y.Doc | null>(null);
+
+  // Y.js and FirestoreProvider setup
   useEffect(() => {
-    const fetchNotebook = async () => {
-      if (!alunoId || !notebookId || !session?.user?.id) return;
+    if (!alunoId || !notebookId) return;
+
+    if (!ydocRef.current) {
+      ydocRef.current = new Y.Doc();
+    }
+
+    const basePath: string[] = ["users", alunoId as string, "Notebooks", notebookId as string];
+    const newProvider = new FirestoreProvider(app, ydocRef.current, basePath);
+    
+    newProvider.on('synced', (isSynced: boolean) => {
+      console.log('Provider synced:', isSynced);
+    });
+    
+    newProvider.on('update', (update: any) => {
+      console.log('Update sent to Firestore:', update);
+    });
+
+    setProvider(newProvider);
+    return () => {
+      if (newProvider) {
+        newProvider.destroy();
+      }
+    };
+  }, [alunoId, notebookId]);
+
+  // Fetch notebook content and initialize Y.js document
+  useEffect(() => {
+    const fetchNotebookContent = async () => {
+      if (!alunoId || !notebookId) return;
 
       try {
         setLoading(true);
-        const response = await fetch(
-          `/api/teacher/students/${alunoId}/notebooks/${notebookId}`
-        );
+        const notebookDoc = await getDoc(doc(db, `users/${alunoId}/Notebooks/${notebookId}`));
+        
+        if (notebookDoc.exists()) {
+          const notebookData = notebookDoc.data();
+          const fetchedContent = notebookData.content || "";
+          
+          // Set notebook data
+          setNotebook({
+            id: notebookId as string,
+            title: notebookData.title || "Caderno",
+            description: notebookData.description || "",
+            createdAt: notebookData.createdAt,
+            updatedAt: notebookData.updatedAt,
+            student: alunoId as string,
+            content: fetchedContent
+          });
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch notebook");
+          const versionRef = collection(db, `users/${alunoId}/Notebooks/${notebookId}/versions`);
+          const versionSnapshot = await getDocs(versionRef);
+    
+          const isAlreadySaved = versionSnapshot.docs.some( 
+            (doc) => doc.data().content === fetchedContent 
+          ); 
+    
+          if (!isAlreadySaved && fetchedContent) { 
+            const timestamp = new Date(); 
+            await addDoc(versionRef, { 
+              content: fetchedContent, 
+              date: timestamp.toLocaleDateString(), 
+              time: timestamp.toLocaleTimeString(), 
+            }); 
+          } else { 
+            console.log('Fetched content is already saved, skipping...'); 
+          } 
+    
+          if (ydocRef.current) { 
+            ydocRef.current.getText('content').delete(0, ydocRef.current.getText('content').length); 
+            ydocRef.current.getText('content').insert(0, fetchedContent); 
+          } 
+          
+          setContent(fetchedContent);
         }
-
-        const data = await response.json();
-        setNotebook(data);
-      } catch (error: any) {
-        console.error("Error fetching notebook:", error);
+      } catch (error) {
+        console.error('Error fetching notebook content:', error);
         setError("Erro ao carregar o caderno. Por favor, tente novamente.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchNotebook();
-  }, [alunoId, notebookId, session?.user?.id]);
+    fetchNotebookContent();
+  }, [alunoId, notebookId]);
 
-  const handleContentSave = useCallback(
-    async (content: string) => {
-      if (!alunoId || !notebookId) return;
-
-      try {
-        const response = await fetch(
-          `/api/teacher/students/${alunoId}/notebooks/${notebookId}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              content,
-            }),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Falha ao salvar o conteúdo.");
-        }
-
-        // Atualiza o notebook local com o novo conteúdo
-        if (notebook) {
-          setNotebook({ ...notebook, content });
-        }
-      } catch (error: any) {
-        console.error("Error auto-saving content:", error);
-        // Não mostra erro para o usuário em auto-save para não interromper a escrita
+  const handleContentChange = async (newContent: string) => {
+    setContent(newContent);
+    
+    if (!alunoId || !notebookId) return;
+    
+    try {
+      await updateDoc(doc(db, `users/${alunoId}/Notebooks/${notebookId}`), {
+        content: newContent,
+      });
+      
+      // Update local notebook state
+      if (notebook) {
+        setNotebook({ ...notebook, content: newContent });
       }
-    },
-    [alunoId, notebookId, notebook]
-  );
+    } catch (error) {
+      console.error('Error saving content to Firestore:', error);
+    }
+  };
+
+  // Version saving with intervals and beforeunload
+  useEffect(() => {
+    if (!alunoId || !notebookId || !content) return;
+    
+    const saveVersion = async () => {
+      try {
+        const timestamp = new Date();
+        await addDoc(collection(db, `users/${alunoId}/Notebooks/${notebookId}/versions`), {
+          content,
+          date: timestamp.toLocaleDateString(),
+          time: timestamp.toLocaleTimeString(),
+        });
+      } catch (error) {
+        console.error('Error saving version: ', error);
+      }
+    };
+  
+    const saveInterval = setInterval(() => {
+      saveVersion();
+      setTimeLeft(600000); // Reset to 10 minutes
+    }, 600000); // Save every 10 minutes
+  
+    const countdownInterval = setInterval(() => {
+      setTimeLeft(prev => Math.max(prev - 1000, 0));
+    }, 1000);
+  
+    const handleBeforeUnload = () => {
+      saveVersion();
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+  
+    return () => {
+      clearInterval(saveInterval);
+      clearInterval(countdownInterval);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [content, alunoId, notebookId]);
 
   if (loading) {
     return (
@@ -130,10 +223,11 @@ export default function VisualizarCaderno() {
       className="fade-in min-h-screen"
     >
       <TiptapEditor
-        content={notebook.content || ""}
-        onSave={handleContentSave}
+        content={content || notebook.content || ""}
+        onSave={handleContentChange}
         placeholder="Comece a escrever o conteúdo do caderno..."
         className="min-h-screen"
+        ydoc={ydocRef.current}
       />
     </motion.div>
   );

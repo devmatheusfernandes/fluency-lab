@@ -9,6 +9,8 @@ import { TextStyle } from "@tiptap/extension-text-style";
 import Color from "@tiptap/extension-color";
 import Highlight from "@tiptap/extension-highlight";
 import Link from "@tiptap/extension-link";
+import Collaboration from "@tiptap/extension-collaboration";
+import * as Y from "yjs";
 import TiptapToolbar from "../TiptapToolbar";
 
 interface TiptapEditorProps {
@@ -17,6 +19,7 @@ interface TiptapEditorProps {
   placeholder?: string;
   autoSaveDelay?: number;
   className?: string;
+  ydoc?: Y.Doc | null;
 }
 
 const TiptapEditor: React.FC<TiptapEditorProps> = ({
@@ -25,6 +28,7 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
   placeholder = "Comece a escrever...",
   autoSaveDelay = 2000,
   className = "",
+  ydoc = null,
 }) => {
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastSavedContentRef = useRef<string>(content);
@@ -65,6 +69,7 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
         heading: {
           levels: [1, 2, 3, 4, 5, 6],
         },
+        undoRedo: false,
       }),
       Underline,
       TextAlign.configure({
@@ -82,6 +87,15 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
             "text-blue-500 dark:text-blue-400 underline hover:text-blue-600 dark:hover:text-blue-300",
         },
       }),
+      // Add collaboration extension when ydoc is provided
+      ...(ydoc
+        ? [
+            Collaboration.configure({
+              document: ydoc,
+              field: "content",
+            }),
+          ]
+        : []),
     ],
     content,
     immediatelyRender: false,
@@ -96,17 +110,18 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
       debouncedSave(html);
     },
     onCreate: ({ editor }) => {
-      // Define o conteúdo inicial
-      if (content && content !== "<p></p>") {
+      // Define o conteúdo inicial apenas se não estiver usando colaboração
+      if (!ydoc && content && content !== "<p></p>") {
         editor.commands.setContent(content);
         lastSavedContentRef.current = content;
       }
     },
   });
 
-  // Atualiza o conteúdo quando a prop content muda externamente
+  // Atualiza o conteúdo quando a prop content muda externamente (apenas sem colaboração)
   useEffect(() => {
     if (
+      !ydoc &&
       editor &&
       content !== editor.getHTML() &&
       content !== lastSavedContentRef.current
@@ -114,7 +129,7 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
       editor.commands.setContent(content);
       lastSavedContentRef.current = content;
     }
-  }, [content, editor]);
+  }, [content, editor, ydoc]);
 
   // Cleanup do timeout quando o componente é desmontado
   useEffect(() => {

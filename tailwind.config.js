@@ -1,5 +1,3 @@
-const { designTokens } = require('./Theme');
-
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -10,12 +8,6 @@ module.exports = {
   darkMode: 'class',
   theme: {
     extend: {
-      fontFamily: designTokens.typography.fontFamily,
-      fontSize: designTokens.typography.fontSize,
-      lineHeight: designTokens.typography.lineHeight,
-      spacing: designTokens.spacing,
-      borderRadius: designTokens.borders.borderRadius,
-      boxShadow: designTokens.shadows,
       animation: {
         shimmer: "var(--animate-shimmer)",
       },

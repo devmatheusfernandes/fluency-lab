@@ -6,16 +6,10 @@ import {
   ReactNode,
   useEffect,
 } from "react";
-import { designTokens } from "@/Theme";
-
 interface ThemeContextType {
   isDark: boolean;
   toggleTheme: () => void;
   setTheme: (isDark: boolean) => void;
-  typography: typeof designTokens.typography;
-  spacing: typeof designTokens.spacing;
-  borders: typeof designTokens.borders;
-  shadows: typeof designTokens.shadows;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -58,10 +52,6 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
         isDark,
         toggleTheme,
         setTheme,
-        typography: designTokens.typography,
-        spacing: designTokens.spacing,
-        borders: designTokens.borders,
-        shadows: designTokens.shadows,
       }}
     >
       {children}
